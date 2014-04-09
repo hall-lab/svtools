@@ -1,0 +1,123 @@
+#!/usr/bin/python
+
+import sys
+from optparse import OptionParser
+import os
+
+def splitterToBreakpoint(contigFile,splitReadSlop,localRange):
+#Define whether event is inv, del, or dup (classifying translocations as if they were local intrachromosomal events)
+    if contigFile == "stdin":
+        contigs = sys.stdin
+    else:
+        contigs = open(str(contigFile))
+    for line in contigs:
+        split = line.split()       
+        if (split[0] > split[3]) or ((split[0] == split[3]) and (int(split[1]) > int(split[4]))):
+            chrom1 = split[3]
+            start1 = int(split[4])
+            end1 = int(split[5])
+            chrom2 = split[0]
+            start2 = int(split[1])
+            end2 = int(split[2])
+            ID = split[6]
+            score = int(split[7])
+            strand1 = split[9]
+            strand2 = split[8]
+            queryStart1 = int(split[12])
+            queryEnd1 = int(split[13])
+            queryStart2 = int(split[10])
+            queryEnd2 = int(split[11])
+            minNonOverlap = int(split[14])
+            queryLength = int(split[15])
+            if len(split) > 16: qualScores = split[16]
+            else: qualScores = '*'
+
+        else:
+            chrom1 = split[0]
+            start1 = int(split[1])
+            end1 = int(split[2])
+            chrom2 = split[3]
+            start2 = int(split[4])
+            end2 = int(split[5])
+            ID = split[6]
+            score = int(split[7])
+            strand1 = split[8]
+            strand2 = split[9]
+            queryStart1 = int(split[10])
+            queryEnd1 = int(split[11])
+            queryStart2 = int(split[12])
+            queryEnd2 = int(split[13])         
+       	    minNonOverlap = int(split[14])
+       	    queryLength = int(split[15])
+            if len(split) > 16: qualScores = split[16]
+            else: qualScores = '*'
+        
+        if (queryStart1 == queryStart2):
+            raise StandardError("spitterToBreakpoint cannot handle bedpe with equal starting query offsets in " + ID);
+
+        if strand1 != strand2: #Classifying Inversions
+            if chrom1  == chrom2 and abs(end2 - start1) <= localRange:
+                variant = "local_inversion"
+            else:
+                variant = "distant_inversion"
+        elif ((strand1=="+" and strand2=="+" and queryStart1 < queryStart2) or (strand1=="-" and strand2=="-" and queryStart1 > queryStart2)): #Classifying Deletions
+            if chrom1  == chrom2 and (end2 - start1) <= localRange:
+                variant = "local_deletion"
+            else:
+                variant = "distant_deletion"
+        elif ((strand1=="+" and strand2=="+" and queryStart1 > queryStart2) or (strand1=="-" and strand2=="-" and queryStart1 < queryStart2)): #Classifying Tandem Duplications
+            if chrom1  == chrom2 and (end2 - start1) <= localRange:
+                variant = "local_duplication"
+            else:
+                variant = "distant_duplication"
+        else:
+            print "ERROR: variant " + ID + " is lost in variant classification step. Contact Mitchell"
+        # Below modifed by GGF to account for zero-based half-open coordinate system.
+        # When a start takes its coordinate from an end, subtract one.
+        # When an end takes its coordinate from a start, add one.        
+        if variant == "local_inversion" or variant == "distant_inversion":
+            if ((queryStart1 < queryStart2) and (strand1 == "-") and (strand2 == "+")) or ((queryStart1 > queryStart2) and (strand1 == "+") and (strand2 == "-")):
+                breakStart1 = str(start1-splitReadSlop)
+                breakEnd1 = str(start1+1+splitReadSlop)
+                breakStart2 = str(start2-splitReadSlop) 
+                breakEnd2 = str(start2+1+splitReadSlop)
+            elif ((queryStart1 < queryStart2) and (strand1 == "+") and (strand2 == "-")) or ((queryStart1 > queryStart2) and (strand1 == "-") and (strand2 == "+")):
+                breakStart1 = str(end1-1-splitReadSlop)
+                breakEnd1 = str(end1+splitReadSlop)
+                breakStart2 = str(end2-1-splitReadSlop)
+                breakEnd2 = str(end2+splitReadSlop)
+        elif variant == "local_deletion" or variant == "distant_deletion":
+            breakStart1 = str(end1-1-splitReadSlop)
+            breakEnd1 = str(end1+splitReadSlop)
+            breakStart2 = str(start2-splitReadSlop)
+            breakEnd2 = str(start2+1+splitReadSlop)
+        elif variant == "local_duplication" or variant == "distant_duplication":
+            breakStart1 = str(start1-splitReadSlop)
+            breakEnd1 = str(start1+1+splitReadSlop)
+            breakStart2 = str(end2-1-splitReadSlop)
+            breakEnd2 = str(end2+splitReadSlop)
+        else:
+            print "ERROR: " + ID + " is lost in breakpoint locus prediction step. Contact Mitchell"
+        print '\t'.join(map(str, [chrom1, breakStart1, breakEnd1, chrom2, breakStart2, breakEnd2, ID, score, strand1, strand2, queryStart1, queryEnd1, queryStart2, queryEnd2, minNonOverlap, queryLength, qualScores, variant]))
+    
+def main():
+    usage = "%prog -b <bedpe> -c <contigFile.bedpe> [options]\nVersion: 0.2\nAuthor: Mitchell L. Leibowitz\nEdited: Aug, 2011 by Colby Chiang (details below)\n \
+\nEdits included:\n 1) When switching ordering of bedpe positioning (if start2>start1), also switch orientation \n 2) Makes sure all comparisons are integer/integer comparisons or \
+string/string comparisons. \n 3) Allowed for bedpe files of larger lengths (17 fields; see -s help).\n\n \
+Note: Add slop at your own risk.\n\nPrints modified bedpe so bedpe entry 1 is always less than bedpe entry 2\n\nModified by GGF on 2/13/2012 to account for zero-base half-open coordinates."
+    parser = OptionParser(usage)
+    parser.add_option("-i", dest="contigFile", metavar="FILE", help="BEDPE file containing the split contigs; requires 10 column bedpe plus 11-14 as query coordinates, field 15 as query length \
+and field 16 minimum non overlap.")
+    parser.add_option("-s", dest="splitReadSlop", metavar="INT", type="int", default=1, help="Bidirectional slop around the breakpoint [default = 1]")
+    parser.add_option("-r", dest="localRange", default=1000000, type="int", metavar="INT", help="the range of coordinates considered local (for breakpoint classification) [default = 1000000]; Calculated by subtracting field 6 from field 2.")
+    
+    (opts, args) = parser.parse_args()
+
+    if opts.contigFile is None:
+        parser.print_help()
+        print
+    else:
+        splitterToBreakpoint(opts.contigFile, opts.splitReadSlop, opts.localRange)
+   
+if __name__ == "__main__":
+        sys.exit(main())
