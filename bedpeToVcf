@@ -51,7 +51,6 @@ class Bedpe(object):
             self.o2 = bedList[9]
             self.misc = bedList[10:]
 
-
         # parse LUMPY specific attributes
         def parse_lumpy(self):
             # Phred quality score
@@ -106,56 +105,6 @@ class Vcf(object):
         self.format_list = []
         self.alt_list = []
 
-        # add info fields
-        self.add_info('SVTYPE', 1, 'String', 'Type of structural variant')
-        self.add_info('SVLEN', '.', 'Integer', 'Difference in length between REF and ALT alleles')
-        self.add_info('END', 1, 'Integer', 'End position of the variant described in this record')
-        self.add_info('STR', '.', 'String', 'Strand orientation of the adjacency in BEDPE format')
-        self.add_info('IMPRECISE', 0, 'Flag', 'Imprecise structural variation')
-        self.add_info('CIPOS', 2, 'Integer', 'Confidence interval around POS for imprecise variants')
-        self.add_info('CIEND', 2, 'Integer', 'Confidence interval around END for imprecise variants')
-        self.add_info('CIPOS95', 2, 'Integer', '95% confidence interval around POS for imprecise variants')
-        self.add_info('CIEND95', 2, 'Integer', '95% confidence interval around END for imprecise variants')
-        self.add_info('BKPTID', '.', 'String', 'ID of the assembled alternate allele in the assembly file')
-        self.add_info('PARID', 1, 'String', 'ID of partner breakend')
-        self.add_info('MATEID', '.', 'String', 'ID of mate breakends')
-        self.add_info('EVENT', 1, 'String', 'ID of event associated to breakend')
-        self.add_info('HOMLEN', '.', 'Integer', 'Length of base pair identical micro-homology at event breakpoints')
-        self.add_info('HOMSEQ', '.', 'String', 'Sequence of base pair identical micro-homology at event breakpoints')
-        self.add_info('SOMATIC', 0, 'Flag', 'Somatic mutation')
-        self.add_info('AC', 'A', 'Integer', 'Allele count in genotypes, for each ALT allele, in the same order as listed')
-        self.add_info('AF', 'A', 'Float', 'Allele frequency, for each ALT allele, in the same order as listed')
-        self.add_info('AN', 1, 'Integer', 'Allele count in genotypes, for each ALT allele, in the same order as listed')
-        self.add_info('NS', 1, 'Integer', 'Number of samples with data')
-        self.add_info('SUP', '.', 'Integer', 'Number of pieces of evidence supporting the variant across all samples')
-        self.add_info('PESUP', '.', 'Integer', 'Number of paired-end reads supporting the variant across all samples')
-        self.add_info('SRSUP', '.', 'Integer', 'Number of split reads supporting the variant across all samples')
-        self.add_info('EVTYPE', '.', 'String', 'Type of LUMPY evidence contributing to the variant call')
-        self.add_info('PRIN', 0, 'Flag', 'Indicates variant as the principal variant in a BEDPE pair')
-        self.add_info('LUMPYQ', 1, 'Float', 'LUMPY score for variant')
-
-        # add alt fields
-        self.add_alt('DEL', 'Deletion')
-        self.add_alt('DUP', 'Duplication')
-        self.add_alt('INV', 'Inversion')
-        self.add_alt('DUP:TANDEM', 'Tandem duplication')
-        self.add_alt('INS', 'Insertion of novel sequence')
-        self.add_alt('CNV', 'Copy number variable region')
-
-        # add format fields
-        self.add_format('GT', 1, 'String', 'Genotype')
-        self.add_format('SUP', 1, 'Integer', 'Number of pieces of evidence supporting the variant')
-        self.add_format('PE', 1, 'Integer', 'Number of paired-end reads supporting the variant')
-        self.add_format('SR', 1, 'Integer', 'Number of split reads supporting the variant')
-        self.add_format('GQ', 1, 'Float', 'Genotype quality')
-        self.add_format('DP', 1, 'Integer', 'Read depth')
-        self.add_format('CN', 1, 'Integer', 'Copy number genotype for imprecise events')
-        self.add_format('CNQ', 1, 'Float', 'Copy number genotype quality for imprecise events')
-        self.add_format('CNL', '.', 'Float', 'Copy number genotype likelihood form imprecise events')
-        self.add_format('NQ', 1, 'Integer', 'Phred style probability score that the variant is novel')
-        self.add_format('HAP', 1, 'Integer', 'Unique haplotype identifier')
-        self.add_format('AHAP', 1, 'Integer', 'Unique identifier of ancestral haplotype')
-
     def add_info(self, id, number, type, desc):
         inf = Info(id, number, type, desc)
         self.info_list.append(inf)
@@ -190,8 +139,7 @@ class Vcf(object):
                                'INFO',
                                'FORMAT'] + \
                                       self.sample_list
-                                  )]
-                       )
+                                  )])
         return header
 
 class Info(object):
@@ -331,6 +279,54 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
 
     # Create a new VCF object
     myvcf = Vcf(fasta)
+    # add info fields
+    myvcf.add_info('SVTYPE', 1, 'String', 'Type of structural variant')
+    myvcf.add_info('SVLEN', '.', 'Integer', 'Difference in length between REF and ALT alleles')
+    myvcf.add_info('END', 1, 'Integer', 'End position of the variant described in this record')
+    myvcf.add_info('STR', '.', 'String', 'Strand orientation of the adjacency in BEDPE format')
+    myvcf.add_info('IMPRECISE', 0, 'Flag', 'Imprecise structural variation')
+    myvcf.add_info('CIPOS', 2, 'Integer', 'Confidence interval around POS for imprecise variants')
+    myvcf.add_info('CIEND', 2, 'Integer', 'Confidence interval around END for imprecise variants')
+    myvcf.add_info('CIPOS95', 2, 'Integer', '95% confidence interval around POS for imprecise variants')
+    myvcf.add_info('CIEND95', 2, 'Integer', '95% confidence interval around END for imprecise variants')
+    myvcf.add_info('BKPTID', '.', 'String', 'ID of the assembled alternate allele in the assembly file')
+    myvcf.add_info('PARID', 1, 'String', 'ID of partner breakend')
+    myvcf.add_info('MATEID', '.', 'String', 'ID of mate breakends')
+    myvcf.add_info('EVENT', 1, 'String', 'ID of event associated to breakend')
+    myvcf.add_info('HOMLEN', '.', 'Integer', 'Length of base pair identical micro-homology at event breakpoints')
+    myvcf.add_info('HOMSEQ', '.', 'String', 'Sequence of base pair identical micro-homology at event breakpoints')
+    myvcf.add_info('SOMATIC', 0, 'Flag', 'Somatic mutation')
+    myvcf.add_info('AC', 'A', 'Integer', 'Allele count in genotypes, for each ALT allele, in the same order as listed')
+    myvcf.add_info('AF', 'A', 'Float', 'Allele frequency, for each ALT allele, in the same order as listed')
+    myvcf.add_info('AN', 1, 'Integer', 'Allele count in genotypes, for each ALT allele, in the same order as listed')
+    myvcf.add_info('NS', 1, 'Integer', 'Number of samples with data')
+    myvcf.add_info('SUP', '.', 'Integer', 'Number of pieces of evidence supporting the variant across all samples')
+    myvcf.add_info('PESUP', '.', 'Integer', 'Number of paired-end reads supporting the variant across all samples')
+    myvcf.add_info('SRSUP', '.', 'Integer', 'Number of split reads supporting the variant across all samples')
+    myvcf.add_info('EVTYPE', '.', 'String', 'Type of LUMPY evidence contributing to the variant call')
+    myvcf.add_info('PRIN', 0, 'Flag', 'Indicates variant as the principal variant in a BEDPE pair')
+    myvcf.add_info('LUMPYQ', 1, 'Float', 'LUMPY score for variant')
+    # add alt fields
+    myvcf.add_alt('DEL', 'Deletion')
+    myvcf.add_alt('DUP', 'Duplication')
+    myvcf.add_alt('INV', 'Inversion')
+    myvcf.add_alt('DUP:TANDEM', 'Tandem duplication')
+    myvcf.add_alt('INS', 'Insertion of novel sequence')
+    myvcf.add_alt('CNV', 'Copy number variable region')
+    # add format fields
+    myvcf.add_format('GT', 1, 'String', 'Genotype')
+    myvcf.add_format('SUP', 1, 'Integer', 'Number of pieces of evidence supporting the variant')
+    myvcf.add_format('PE', 1, 'Integer', 'Number of paired-end reads supporting the variant')
+    myvcf.add_format('SR', 1, 'Integer', 'Number of split reads supporting the variant')
+    myvcf.add_format('GQ', 1, 'Float', 'Genotype quality')
+    myvcf.add_format('DP', 1, 'Integer', 'Read depth')
+    myvcf.add_format('CN', 1, 'Integer', 'Copy number genotype for imprecise events')
+    myvcf.add_format('CNQ', 1, 'Float', 'Copy number genotype quality for imprecise events')
+    myvcf.add_format('CNL', '.', 'Float', 'Copy number genotype likelihood form imprecise events')
+    myvcf.add_format('NQ', 1, 'Integer', 'Phred style probability score that the variant is novel')
+    myvcf.add_format('HAP', 1, 'Integer', 'Unique haplotype identifier')
+    myvcf.add_format('AHAP', 1, 'Integer', 'Unique identifier of ancestral haplotype')
+    # add samples
     for s in sample_list:
         myvcf.add_sample(s)
 
@@ -564,5 +560,5 @@ if __name__ == '__main__':
     try:
         sys.exit(main())
     except IOError, e:
-        if e.errno != 32:  # ignore SIGPIPE
+        if e.errno != 32: # ignore SIGPIPE
             raise 
