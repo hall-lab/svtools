@@ -1,0 +1,308 @@
+#!/usr/bin/env python
+
+import argparse, sys
+import math, time
+from argparse import RawTextHelpFormatter
+
+__author__ = "Colby Chiang (cc2qe@virginia.edu)"
+__version__ = "$Revision: 0.0.1 $"
+__date__ = "$Date: 2014-04-23 14:31 $"
+
+# --------------------------------------
+# define functions
+
+def get_args():
+    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
+bedpeToVcf\n\
+author: " + __author__ + "\n\
+version: " + __version__ + "\n\
+description: Convert a LUMPY bedpe file to VCF")
+    parser.add_argument('-v', '--vcf', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
+
+    # parse the arguments
+    args = parser.parse_args()
+
+    # if no input, check if part of pipe and if so, read stdin.
+    if args.vcf == None:
+        if sys.stdin.isatty():
+            parser.print_help()
+            exit(1)
+        else:
+            args.vcf = sys.stdin
+
+    # send back the user input
+    return args
+
+class Genotype(object):
+    def __init__(self, variant, sample_name):
+        self.format = dict()
+        self.variant = variant
+
+    
+    def get_format(self, field):
+        return self.format[field]
+
+    def get_gt_string(self):
+        g_list = list()
+
+        # need to make sure that the FORMAT output is in the same order as the VCF header
+        for f in [x for (y,x) in sorted(zip([f.id for f in self.variant.format_list], self.variant.active_formats))]:
+            if f in self.format:
+                g_list.append(self.format[f])
+            else:
+                g_list.append('.')
+        return ':'.join(map(str,g_list))
+
+class Variant(object):
+    def __init__(self, var_list, sample_list):
+        self.chrom = var_list[0]
+        self.pos = int(var_list[1])
+        self.var_id = var_list[2]
+        self.ref = var_list[3]
+        self.alt = var_list[4]
+        self.qual = var_list[5]
+        self.filter = var_list[6]
+        self.sample_list = sample_list
+
+        self.gts = dict()
+        # make a genotype for each sample at variant
+        for s in self.sample_list:
+            self.gts[s] = Genotype(self, s)        
+        
+        self.info = dict()
+        i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
+        for i in i_split:
+            if len(i) == 1:
+                i.append(True)
+            self.info[i[0]] = i[1]
+
+# primary function
+def vcfToBedpe(vcf_file, bedpe_out):
+    in_header = True
+
+    # list of BND variant lines that have not yet been matched.
+    unmatched = []
+
+    for line in vcf_file:
+        if in_header:
+            if line[0] == '#':
+                if line[1] != '#':
+                    sample_list = line.rstrip().split('\t')[9:]
+                continue
+            else:
+                in_header = False
+
+        # print line.rstrip()
+        v = line.rstrip().split('\t')
+
+        var = Variant(v, sample_list)
+
+        if var.info['SVTYPE'] != 'BND':
+            b1 = var.pos
+            b2 = int(var.info['END'])
+            name = v[2]
+            score = var.info['LUMPYQ']
+
+            strands = var.info['STR']
+            o1 = strands[0]
+            o2 = strands[1]
+
+            support = var.info['SUP']
+
+            span = map(int, var.info['CIPOS'].split(','))
+            s1 = b1 + span[0] - 1
+            e1 = b1 + span[1]
+
+            span = map(int, var.info['CIEND'].split(','))
+            s2 = b2 + span[0]
+            e2 = b2 + span[1] + 1
+
+            ispan = s2 - e1
+            ospan = e2 - s1
+
+            if ospan > 1000000:
+                svtype = 'DISTANT_'
+            else:
+                svtype = 'LOCAL_'
+
+            if o1 == '+':
+                if o2 == '-':
+                    svtype += 'DEL'
+                elif o2 == '+':
+                    svtype += 'INV'
+            elif o1 == '-':
+                if o2 == '+':
+                    svtype += 'DUP'
+                elif o2 == '-':
+                    svtype += 'INV'
+
+
+            evtype = var.info['EVTYPE']
+
+            format_list = v[8].split(':')
+            sample_gt = dict()
+            var_sample_list = []
+            for i in range(len(sample_list)):
+                s = sample_list[i]
+                gt = v[9 + i]
+                format_dict = dict(zip(format_list, gt.split(':')))
+                format_dict['PE'] = int(format_dict['PE'])
+                format_dict['SR'] = int(format_dict['SR'])
+                format_dict['SUP'] = int(format_dict['SUP'])
+                if format_dict['SUP'] > 0:
+                    var_sample_list.append(sample_list[i])
+                sample_gt[s] = format_dict
+
+            gt_string = '\t'.join(['\t'.join(map(str,
+                                                 (sample_gt[s]['SUP'],
+                                                  sample_gt[s]['PE'],
+                                                  sample_gt[s]['SR'])
+                                             )) for s in sample_list])
+
+            bedpe_out.write('\t'.join(map(str,
+                                          [var.chrom,
+                                           s1,
+                                           e1,
+                                           var.chrom,
+                                           s2,
+                                           e2,
+                                           name,
+                                           support,
+                                           o1,
+                                           o2,
+                                           svtype,
+                                           ispan,
+                                           ospan,
+                                           score,
+                                           ','.join(var_sample_list),
+                                           ','.join([','.join([s + '_' + ev + ':' + str(sample_gt[s][ev]) for ev in ('PE', 'SR') if sample_gt[s][ev] > 0]) for s in sample_list]),
+                                           strands,
+                                           evtype,
+                                           len(var_sample_list),
+                                           gt_string
+                                       ])) + '\n')
+
+        else:
+            if var.info['MATEID'] in [mate.var_id for mate in unmatched]:
+                if 'PRIN' in var.info.keys():
+                    prim = var
+                    sec = mate
+                elif 'PRIN' in mate.info.keys():
+                    prim = mate
+                    sec = var
+
+                b1 = prim.pos
+                b2 = sec.pos
+                score = prim.info['LUMPYQ']
+
+                strands = prim.info['STR']
+                o1 = strands[0]
+                o2 = strands[1]
+
+                support = prim.info['SUP']
+
+                span = map(int, prim.info['CIPOS'].split(','))
+                s1 = b1 + span[0] - 1
+                e1 = b1 + span[1]
+
+                span = map(int, sec.info['CIPOS'].split(','))
+                s2 = b2 + span[0]
+                e2 = b2 + span[1] + 1
+
+                ispan = s2 - e1
+                ospan = e2 - s1
+
+                if ospan > 1000000:
+                    svtype = 'DISTANT_'
+                else:
+                    svtype = 'LOCAL_'
+
+                if o1 == '+':
+                    if o2 == '-':
+                        svtype += 'DEL'
+                    elif o2 == '+':
+                        svtype += 'INV'
+                elif o1 == '-':
+                    if o2 == '+':
+                        svtype += 'DUP'
+                    elif o2 == '-':
+                        svtype += 'INV'
+
+
+                evtype = var.info['EVTYPE']
+
+                format_list = v[8].split(':')
+                sample_gt = dict()
+                var_sample_list = []
+                for i in range(len(sample_list)):
+                    s = sample_list[i]
+                    gt = v[9 + i]
+                    format_dict = dict(zip(format_list, gt.split(':')))
+                    format_dict['PE'] = int(format_dict['PE'])
+                    format_dict['SR'] = int(format_dict['SR'])
+                    format_dict['SUP'] = int(format_dict['SUP'])
+                    if format_dict['SUP'] > 0:
+                        var_sample_list.append(sample_list[i])
+                    sample_gt[s] = format_dict
+
+                gt_string = '\t'.join(['\t'.join(map(str,
+                                                     (sample_gt[s]['SUP'],
+                                                      sample_gt[s]['PE'],
+                                                      sample_gt[s]['SR'])
+                                                 )) for s in sample_list])
+
+
+                bedpe_out.write('\t'.join(map(str,
+                                              [prim.chrom,
+                                               s1,
+                                               e1,
+                                               sec.chrom,
+                                               s2,
+                                               e2,
+                                               prim.info['EVENT'],
+                                               support,
+                                               o1,
+                                               o2,
+                                               svtype,
+                                               ispan,
+                                               ospan,
+                                               score,
+                                               ','.join(var_sample_list),
+                                               ','.join([','.join([s + '_' + ev + ':' + str(sample_gt[s][ev]) for ev in ('PE', 'SR') if sample_gt[s][ev] > 0]) for s in sample_list]),
+                                               strands,
+                                               evtype,
+                                               len(var_sample_list),
+                                               gt_string
+                                           ])) + '\n')
+
+                unmatched.remove(mate)
+
+                
+            else:
+                unmatched.append(var)
+
+    bedpe_out.close()
+    
+    return
+
+# --------------------------------------
+# wrapper function
+
+def main():
+    # parse the command line args
+    args = get_args()
+
+    # call primary function
+    vcfToBedpe(args.vcf, args.output)
+
+    # close the files
+    args.vcf.close()
+
+# initialize the script
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except IOError, e:
+        if e.errno != 32:  # ignore SIGPIPE
+            raise 

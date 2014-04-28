@@ -1,0 +1,576 @@
+#!/usr/bin/env python
+
+import pysam
+import argparse, sys, re
+import math, time
+from argparse import RawTextHelpFormatter
+
+__author__ = "Colby Chiang (cc2qe@virginia.edu)"
+__version__ = "$Revision: 0.0.1 $"
+__date__ = "$Date: 2014-04-23 14:31 $"
+
+# --------------------------------------
+# define functions
+
+def get_args():
+    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
+bedpeToVcf\n\
+author: " + __author__ + "\n\
+version: " + __version__ + "\n\
+description: Convert a LUMPY bedpe file to VCF")
+    # parser.add_argument('-a', '--argA', metavar='argA', type=str, required=True, help='description of argument')
+    # parser.add_argument('-b', '--argB', metavar='argB', required=False, help='description of argument B')
+    # parser.add_argument('-c', '--flagC', required=False, action='store_true', help='sets flagC to true')
+    parser.add_argument('-c', '--sample_config', type=argparse.FileType('r'), required=True, help='Tab delimited sample config file of NAME id TYPE\n(Example: NA12878 10  PE)')
+    parser.add_argument('-f', '--fasta', type=pysam.Fastafile, required=True, help='Indexed fasta file of the reference genome')
+    parser.add_argument('-b', '--bedpe', type=argparse.FileType('r'), default=None, help='BEDPE input (default: stdin)')
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
+
+    # parse the arguments
+    args = parser.parse_args()
+
+    # if no input, check if part of pipe and if so, read stdin.
+    if args.bedpe == None:
+        if sys.stdin.isatty():
+            parser.print_help()
+            exit(1)
+        else:
+            args.bedpe = sys.stdin
+
+    # send back the user input
+    return args
+
+class Bedpe(object):
+        def __init__(self, bedList):
+            self.c1 = bedList[0]
+            self.s1 = int(bedList[1])
+            self.e1 = int(bedList[2])
+            self.c2 = bedList[3]
+            self.s2 = int(bedList[4])
+            self.e2 = int(bedList[5])
+            self.name = bedList[6]
+            self.score = float(bedList[7])
+            self.o1 = bedList[8]
+            self.o2 = bedList[9]
+            self.misc = bedList[10:]
+
+
+        # parse LUMPY specific attributes
+        def parse_lumpy(self):
+            # Phred quality score
+            if self.score == 0:
+                self.phred = float(5000) # arbitrarily setting 5000 as the phred score of LUMPY vars with p-value of 0
+            elif self.score == float('Inf'):
+                self.phred = float(0)
+            else:
+                self.phred = -10 * math.log(self.score, 10)
+
+            # get svtype based on strand orientation
+            if self.c1 == self.c2:
+                if self.o1 == '+' and self.o2 == '-':
+                    self.svtype = 'DEL'
+                elif self.o1 == '-' and self.o2 == '+':
+                    self.svtype = 'DUP'
+                elif self.o1 == self.o2:
+                    self.svtype = 'INV'
+            else:
+                self.svtype = 'BND'
+
+            # get the max probability breakend locations
+            self.b1, self.b2 = map(int,[a.split(':')[1] for a in self.misc[3][4:].split(';')])
+
+            # get the 95% confidence interval
+            ci95_1, ci95_2 = [a.split(':')[1] for a in self.misc[4][3:].split(';')]
+            self.ci95_s1, self.ci95_e1 = map(int,ci95_1.split('-'))
+            self.ci95_s2, self.ci95_e2 = map(int,ci95_2.split('-'))
+
+            # get all supporting strand info:
+            self.strands = self.misc[2][8:]
+            self.strands = re.sub(',', ':', self.strands)
+            self.strands = re.sub(';', ',', self.strands)
+
+            # get variant samples
+            self.sample_ids = [b[0] for b in [a.split(',') for a in self.misc[1][4:].split(';')]]
+
+            # get evidence amount for each sample id
+            self.id_evidence = dict()
+            s = [b[0] for b in [a.split(',') for a in self.misc[1][4:].split(';')]]
+            e = map(int,[b[1] for b in [a.split(',') for a in self.misc[1][4:].split(';')]])
+            for i in range(len(s)):
+                self.id_evidence[s[i]] = e[i]
+
+class Vcf(object):
+    def __init__(self, fasta):
+        self.file_format = 'VCFv4.2'
+        self.fasta = fasta
+        self.reference = fasta.filename
+        self.sample_list = []
+        self.info_list = []
+        self.format_list = []
+        self.alt_list = []
+
+        # add info fields
+        self.add_info('SVTYPE', 1, 'String', 'Type of structural variant')
+        self.add_info('SVLEN', '.', 'Integer', 'Difference in length between REF and ALT alleles')
+        self.add_info('END', 1, 'Integer', 'End position of the variant described in this record')
+        self.add_info('STR', '.', 'String', 'Strand orientation of the adjacency in BEDPE format')
+        self.add_info('IMPRECISE', 0, 'Flag', 'Imprecise structural variation')
+        self.add_info('CIPOS', 2, 'Integer', 'Confidence interval around POS for imprecise variants')
+        self.add_info('CIEND', 2, 'Integer', 'Confidence interval around END for imprecise variants')
+        self.add_info('CIPOS95', 2, 'Integer', '95% confidence interval around POS for imprecise variants')
+        self.add_info('CIEND95', 2, 'Integer', '95% confidence interval around END for imprecise variants')
+        self.add_info('BKPTID', '.', 'String', 'ID of the assembled alternate allele in the assembly file')
+        self.add_info('PARID', 1, 'String', 'ID of partner breakend')
+        self.add_info('MATEID', '.', 'String', 'ID of mate breakends')
+        self.add_info('EVENT', 1, 'String', 'ID of event associated to breakend')
+        self.add_info('HOMLEN', '.', 'Integer', 'Length of base pair identical micro-homology at event breakpoints')
+        self.add_info('HOMSEQ', '.', 'String', 'Sequence of base pair identical micro-homology at event breakpoints')
+        self.add_info('SOMATIC', 0, 'Flag', 'Somatic mutation')
+        self.add_info('AC', 'A', 'Integer', 'Allele count in genotypes, for each ALT allele, in the same order as listed')
+        self.add_info('AF', 'A', 'Float', 'Allele frequency, for each ALT allele, in the same order as listed')
+        self.add_info('AN', 1, 'Integer', 'Allele count in genotypes, for each ALT allele, in the same order as listed')
+        self.add_info('NS', 1, 'Integer', 'Number of samples with data')
+        self.add_info('SUP', '.', 'Integer', 'Number of pieces of evidence supporting the variant across all samples')
+        self.add_info('PESUP', '.', 'Integer', 'Number of paired-end reads supporting the variant across all samples')
+        self.add_info('SRSUP', '.', 'Integer', 'Number of split reads supporting the variant across all samples')
+        self.add_info('EVTYPE', '.', 'String', 'Type of LUMPY evidence contributing to the variant call')
+        self.add_info('PRIN', 0, 'Flag', 'Indicates variant as the principal variant in a BEDPE pair')
+        self.add_info('LUMPYQ', 1, 'Float', 'LUMPY score for variant')
+
+        # add alt fields
+        self.add_alt('DEL', 'Deletion')
+        self.add_alt('DUP', 'Duplication')
+        self.add_alt('INV', 'Inversion')
+        self.add_alt('DUP:TANDEM', 'Tandem duplication')
+        self.add_alt('INS', 'Insertion of novel sequence')
+        self.add_alt('CNV', 'Copy number variable region')
+
+        # add format fields
+        self.add_format('GT', 1, 'String', 'Genotype')
+        self.add_format('SUP', 1, 'Integer', 'Number of pieces of evidence supporting the variant')
+        self.add_format('PE', 1, 'Integer', 'Number of paired-end reads supporting the variant')
+        self.add_format('SR', 1, 'Integer', 'Number of split reads supporting the variant')
+        self.add_format('GQ', 1, 'Float', 'Genotype quality')
+        self.add_format('DP', 1, 'Integer', 'Read depth')
+        self.add_format('CN', 1, 'Integer', 'Copy number genotype for imprecise events')
+        self.add_format('CNQ', 1, 'Float', 'Copy number genotype quality for imprecise events')
+        self.add_format('CNL', '.', 'Float', 'Copy number genotype likelihood form imprecise events')
+        self.add_format('NQ', 1, 'Integer', 'Phred style probability score that the variant is novel')
+        self.add_format('HAP', 1, 'Integer', 'Unique haplotype identifier')
+        self.add_format('AHAP', 1, 'Integer', 'Unique identifier of ancestral haplotype')
+
+    def add_info(self, id, number, type, desc):
+        inf = Info(id, number, type, desc)
+        self.info_list.append(inf)
+
+    def add_alt(self, id, desc):
+        alt = Alt(id, desc)
+        self.alt_list.append(alt)
+
+    def add_format(self, id, number, type, desc):
+        fmt = Format(id, number, type, desc)
+        self.format_list.append(fmt)
+        
+    def add_sample(self, name):
+        self.sample_list.append(name)
+
+    # return the VCF header
+    def get_header(self):
+        header = '\n'.join(['##fileformat=' + self.file_format,                            
+                            '##fileDate=' + time.strftime('%Y%m%d'),
+                            '##reference=' + self.reference] + \
+                           [i.hstring for i in self.info_list] + \
+                           [a.hstring for a in self.alt_list] + \
+                           [f.hstring for f in self.format_list] + \
+                           ['\t'.join([
+                               '#CHROM',
+                               'POS',
+                               'ID',
+                               'REF',
+                               'ALT',
+                               'QUAL',
+                               'FILTER',
+                               'INFO',
+                               'FORMAT'] + \
+                                      self.sample_list
+                                  )]
+                       )
+        return header
+
+class Info(object):
+    def __init__(self, id, number, type, desc):
+        self.id = str(id)
+        self.number = str(number)
+        self.type = str(type)
+        self.desc = str(desc)
+        self.hstring = '##INFO=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
+
+class Alt(object):
+    def __init__(self, id, desc):
+        self.id = str(id)
+        self.desc = str(desc)
+        self.hstring = '##ALT=<ID=' + self.id + ',Description=\"' + self.desc + '\">'
+
+class Format(object):
+    def __init__(self, id, number, type, desc):
+        self.id = str(id)
+        self.number = str(number)
+        self.type = str(type)
+        self.desc = str(desc)
+        self.hstring = '##FORMAT=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
+
+class Variant(object):
+    def __init__(self, vcf_file, chrom, pos, ref, alt, var_id, qual):
+        self.vcf = vcf_file
+        self.chrom = chrom
+        self.pos = pos
+        self.ref = ref
+        self.alt = alt
+        self.var_id = var_id
+        self.qual = qual
+        self.filter = '.'
+        self.sample_list = vcf_file.sample_list
+        self.info_list = vcf_file.info_list
+        self.info = dict()
+        self.format_list = vcf_file.format_list
+        self.active_formats = list()
+        self.gts = dict()
+
+        # make a genotype for each sample at variant
+        for s in self.sample_list:
+            self.gts[s] = Genotype(self, s)
+
+    def set_info(self, field, value):
+        if field in [i.id for i in self.info_list]:
+            self.info[field] = value
+        else:
+            sys.stderr.write('\nError: invalid INFO field, \"' + field + '\"\n')
+            exit(1)
+
+    def get_info(self, field):
+        return self.info[field]
+
+    def get_info_string(self):
+        i_list = list()
+        for info_field in self.info_list:
+            if info_field.id in self.info.keys():
+                if info_field.type == 'Flag':
+                    i_list.append(info_field.id)
+                else:
+                    i_list.append('%s=%s' % (info_field.id, self.info[info_field.id]))
+
+        return ';'.join(i_list)
+
+    def get_format_string(self):
+        f_list = list()
+        for f in self.format_list:
+            if f.id in self.active_formats:
+                f_list.append(f.id)
+        return ':'.join(f_list)
+
+    def genotype(self, sample_name):
+        if sample_name in self.sample_list:
+            return self.gts[sample_name]
+        else:
+            sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')            
+
+    def get_var_string(self):
+        s = '\t'.join(map(str,[
+            self.chrom,
+            self.pos,
+            self.var_id,
+            self.ref,
+            self.alt,
+            '%0.2f' % self.qual,
+            self.filter,
+            self.get_info_string(),
+            self.get_format_string(),
+            '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
+        ]))
+        return s
+
+class Genotype(object):
+    def __init__(self, variant, sample_name):
+        self.format = dict()
+        self.variant = variant
+        self.set_format('GT', './.')
+        
+    def set_format(self, field, value):
+        if field in [i.id for i in self.variant.format_list]:
+            self.format[field] = value
+            if field not in self.variant.active_formats:
+                self.variant.active_formats.append(field)
+        else:
+            sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
+            exit(1)
+    
+    def get_format(self, field):
+        return self.format[field]
+
+    def get_gt_string(self):
+        g_list = list()
+
+        # need to make sure that the FORMAT output is in the same order as the VCF header
+        for f in [x for (y,x) in sorted(zip([f.id for f in self.variant.format_list], self.variant.active_formats))]:
+            if f in self.format:
+                g_list.append(self.format[f])
+            else:
+                g_list.append('.')
+        return ':'.join(map(str,g_list))
+
+def get_sample_support(sample_info, id_evidence):
+    
+    return
+
+# primary function
+def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
+    # parse the sample config file
+    sample_info = dict()
+    sample_list = list()
+    for l in config:
+        v = l.rstrip().split('\t')
+        name = v[0]
+        sample_id = v[1]
+        data_type = v[2]
+        sample_info[sample_id] = [name, data_type]
+        if name not in sample_list:
+            sample_list.append(name)
+
+    # Create a new VCF object
+    myvcf = Vcf(fasta)
+    for s in sample_list:
+        myvcf.add_sample(s)
+
+    # write header
+    vcf_out.write(myvcf.get_header() + '\n')
+
+    # parse the bedpe data
+    for line in bedpe_file:
+        bedpe = Bedpe(line.rstrip().split('\t'))
+        bedpe.parse_lumpy()
+
+        # special case to deal with breakends. each BEDPE line spawn 2 VCF variant records
+        if bedpe.svtype == 'BND':
+            # print line.rstrip()
+            var1 = Variant(myvcf,
+                           bedpe.c1,
+                           bedpe.b1,
+                           fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1),
+                           '<' + str(bedpe.svtype) + '>',
+                           bedpe.name + '_1',
+                           bedpe.phred
+                       )
+
+            var1.set_info('SVTYPE', bedpe.svtype)
+            var1.set_info('MATEID', bedpe.name + '_2')
+            var1.set_info('CIPOS', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
+            var1.set_info('CIEND', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
+            var1.set_info('CIPOS95', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
+            var1.set_info('CIEND95', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
+            var1.set_info('IMPRECISE', True)
+            var1.set_info('PRIN', True)
+            var1.set_info('EVENT', bedpe.name)
+            var1.set_info('STR', bedpe.strands)
+            var1.set_info('LUMPYQ', bedpe.score)
+
+            if bedpe.o1 == '+':
+                if bedpe.o2 == '-':
+                    var1.alt = '%s[%s:%s[' % (var1.ref, bedpe.c2, bedpe.b2)
+                elif bedpe.o2 == '+':
+                    var1.alt = '%s]%s:%s]' % (var1.ref, bedpe.c2, bedpe.b2)
+            elif bedpe.o1 == '-':
+                if bedpe.o2 == '+':
+                    var1.alt = ']%s:%s]%s' % (bedpe.c2, bedpe.b2, var1.ref)
+                elif bedpe.o2 == '-':
+                    var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2, var1.ref)
+
+            var2 = Variant(myvcf,
+                           bedpe.c2,
+                           bedpe.b2,
+                           fasta.fetch(bedpe.c2, bedpe.b2 - 1, bedpe.b2),
+                           '<' + str(bedpe.svtype) + '>',
+                           bedpe.name + '_2',
+                           bedpe.phred
+                       )
+            var2.set_info('SVTYPE', bedpe.svtype)
+            var2.set_info('MATEID', bedpe.name + '_1')
+            var2.set_info('CIPOS', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
+            var2.set_info('CIEND', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
+            var2.set_info('CIPOS95', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
+            var2.set_info('CIEND95', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
+            var2.set_info('IMPRECISE', True)
+            var2.set_info('EVENT', bedpe.name)
+            var2.set_info('LUMPYQ', bedpe.score)
+            # add the strands field. For variant 2 must switch the order
+            strands_flipped = ','.join([ev[0][1] + ev[0][0] + ':' + ev[1] for ev in  [t.split(':') for t in [s for s in bedpe.strands.split(',')]]])
+            var2.set_info('STR', strands_flipped)
+            if bedpe.o2 == '+':
+                if bedpe.o1 == '-':
+                    var2.alt = '%s[%s:%s[' % (var2.ref, bedpe.c1, bedpe.b1)
+                elif bedpe.o1 == '+':
+                    var2.alt = '%s]%s:%s]' % (var2.ref, bedpe.c1, bedpe.b1)
+            elif bedpe.o2 == '-':
+                if bedpe.o1 == '+':
+                    var2.alt = ']%s:%s]%s' % (bedpe.c1, bedpe.b1, var2.ref)
+                elif bedpe.o1 == '-':
+                    var2.alt = '[%s:%s[%s' % (bedpe.c1, bedpe.b1, var2.ref)
+
+            # var2.set_info('STR', bedpe.o2 + bedpe.o1)
+
+
+            # get PE and SR support for each sample
+            for s_id in sample_info:
+                g1 = var1.genotype(sample_info[s_id][0])
+                g2 = var2.genotype(sample_info[s_id][0])
+                if sample_info[s_id][1] == 'PE':
+                    if s_id in bedpe.id_evidence.keys():
+                        g1.set_format('PE', bedpe.id_evidence[s_id])
+                        g2.set_format('PE', bedpe.id_evidence[s_id])
+                    else:
+                        g1.set_format('PE', 0)
+                        g2.set_format('PE', 0)
+                elif sample_info[s_id][1] == 'SR':
+                    if s_id in bedpe.id_evidence.keys():
+                        g1.set_format('SR', bedpe.id_evidence[s_id])
+                        g2.set_format('SR', bedpe.id_evidence[s_id])
+                    else:
+                        g1.set_format('SR', 0)
+                        g2.set_format('SR', 0)
+            # get the PE + SR support and set the genotype
+            for s in sample_list:
+                g1 = var1.genotype(s)
+                g2 = var2.genotype(s)
+                g1.set_format('SUP', g1.get_format('PE') + g1.get_format('SR'))
+                g2.set_format('SUP', g2.get_format('PE') + g2.get_format('SR'))
+                if g1.get_format('SUP') > 0:
+                    g1.set_format('GT', '0/1')
+                    g2.set_format('GT', '0/1')
+                else:
+                    g1.set_format('GT', '0/0')
+                    g2.set_format('GT', '0/0')
+
+            # get PE and SR support for the variant
+            sum_pe = sum((var1.genotype(s).get_format('PE') for s in sample_list))
+            sum_sr = sum((var1.genotype(s).get_format('SR') for s in sample_list))
+            var1.set_info('PESUP', sum_pe)
+            var1.set_info('SRSUP', sum_sr)
+            var1.set_info('SUP', sum_pe + sum_sr)
+            var2.set_info('PESUP', sum_pe)
+            var2.set_info('SRSUP', sum_sr)
+            var2.set_info('SUP', sum_pe + sum_sr)
+            if sum_pe > 0:
+                if sum_sr > 0:
+                    var1.set_info('EVTYPE', 'PE_SR')
+                    var2.set_info('EVTYPE', 'PE_SR')
+                else:
+                    var1.set_info('EVTYPE', 'PE_ALONE')
+                    var2.set_info('EVTYPE', 'PE_ALONE')
+            elif sum_sr > 0:
+                var1.set_info('EVTYPE', 'SR_ALONE')
+                var2.set_info('EVTYPE', 'SR_ALONE')
+
+            # set the QUAL as the total support
+            var1.qual = var1.get_info('SUP')
+            var2.qual = var2.get_info('SUP')
+
+            # write the record to the VCF output file
+            vcf_out.write(var1.get_var_string() + '\n')
+            vcf_out.write(var2.get_var_string() + '\n')
+
+        else:
+            # set VCF info elements for simple events
+            var = Variant(myvcf,
+                          bedpe.c1,
+                          bedpe.b1,
+                          fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1),
+                          '<' + str(bedpe.svtype) + '>',
+                          bedpe.name,
+                          bedpe.phred
+                      )
+
+            var.set_info('SVTYPE', bedpe.svtype)
+            var.alt = '<' + bedpe.svtype + '>'
+            var.set_info('END', bedpe.b2 - 1) # (VCF 4.2 spec: POS + length of REF allele - 1)
+            if bedpe.svtype == 'DEL':
+                var.set_info('SVLEN', -1*((bedpe.b2 - 1) - bedpe.b1))
+            else:
+                var.set_info('SVLEN', (bedpe.b2 - 1) - bedpe.b1)
+            var.set_info('STR', bedpe.strands)
+            var.set_info('CIPOS', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
+            var.set_info('CIEND', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
+            var.set_info('CIPOS95', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
+            var.set_info('CIEND95', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
+            var.set_info('IMPRECISE', 'True')
+            var.set_info('PRIN', 'True')
+            var.set_info('EVENT', bedpe.name)
+            var.set_info('SUP', sum(bedpe.id_evidence.values()))
+            var.set_info('LUMPYQ', bedpe.score)
+
+            # get PE and SR support for each sample
+            for s_id in sample_info:
+                g = var.genotype(sample_info[s_id][0])
+                if sample_info[s_id][1] == 'PE':
+                    if s_id in bedpe.id_evidence.keys():
+                        g.set_format('PE', bedpe.id_evidence[s_id])
+                    else:
+                        g.set_format('PE', 0)
+                elif sample_info[s_id][1] == 'SR':
+                    if s_id in bedpe.id_evidence.keys():
+                        g.set_format('SR', bedpe.id_evidence[s_id])
+                    else:
+                        g.set_format('SR', 0)
+            # get the PE + SR support and set the genotype
+            for s in sample_list:
+                g = var.genotype(s)
+                g.set_format('SUP', g.get_format('PE') + g.get_format('SR'))
+                if g.get_format('SUP') > 0:
+                    g.set_format('GT', '0/1')
+                else:
+                    g.set_format('GT', '0/0')
+
+            # get PE and SR support for the variant
+            sum_pe = sum((var.genotype(s).get_format('PE') for s in sample_list))
+            sum_sr = sum((var.genotype(s).get_format('SR') for s in sample_list))
+            var.set_info('PESUP', sum_pe)
+            var.set_info('SRSUP', sum_sr)
+            var.set_info('SUP', sum_pe + sum_sr)
+            if sum_pe > 0:
+                if sum_sr > 0:
+                    var.set_info('EVTYPE', 'PE_SR')
+                else:
+                    var.set_info('EVTYPE', 'PE_ALONE')
+            elif sum_sr > 0:
+                var.set_info('EVTYPE', 'SR_ALONE')
+
+            # set the QUAL as the total support
+            var.qual = var.get_info('SUP')
+
+            # write the record to the VCF output file
+            vcf_out.write(var.get_var_string() + '\n')
+
+    # close the VCF output file
+    vcf_out.close()
+    
+    return
+
+# --------------------------------------
+# main function
+
+def main():
+    # parse the command line args
+    args = get_args()
+
+    # call primary function
+    bedpeToVcf(args.bedpe, args.output, args.sample_config, args.fasta)
+
+    # close the files
+    args.bedpe.close()
+    args.fasta.close()
+
+# initialize the script
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except IOError, e:
+        if e.errno != 32:  # ignore SIGPIPE
+            raise 
