@@ -254,10 +254,9 @@ class Genotype(object):
 
     def get_gt_string(self):
         g_list = list()
-
-        # need to make sure that the FORMAT output is in the same order as the VCF header
-        for f in [x for (y,x) in sorted(zip([f.id for f in self.variant.format_list], self.variant.active_formats))]:
+        for f in [y for (x,y) in zip(self.variant.active_formats, [f.id for f in self.variant.format_list])]:
             if f in self.format:
+                #g_list.append(f)
                 g_list.append(self.format[f])
             else:
                 g_list.append('.')
