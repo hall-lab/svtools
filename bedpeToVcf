@@ -18,6 +18,7 @@ bedpeToVcf\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: Convert a LUMPY bedpe file to VCF")
+    parser.add_argument('-t', '--tool', type=str, default=None, required=False, help='Tool used to generate calls')
     parser.add_argument('-c', '--sample_config', type=argparse.FileType('r'), required=True, help='Tab delimited sample config file of NAME id TYPE\n(Example: NA12878 10  PE)')
     parser.add_argument('-f', '--fasta', type=pysam.Fastafile, required=True, help='Indexed fasta file of the reference genome')
     parser.add_argument('-b', '--bedpe', type=argparse.FileType('r'), default=None, help='BEDPE input (default: stdin)')
@@ -263,7 +264,7 @@ class Genotype(object):
         return ':'.join(map(str,g_list))
 
 # primary function
-def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
+def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
     # parse the sample config file
     sample_info = dict()
     sample_list = list()
@@ -279,6 +280,7 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
     # Create a new VCF object
     myvcf = Vcf(fasta)
     # add info fields
+    myvcf.add_info('TOOL', 1, 'String', 'Tool used to generate variant call')
     myvcf.add_info('SVTYPE', 1, 'String', 'Type of structural variant')
     myvcf.add_info('SVLEN', '.', 'Integer', 'Difference in length between REF and ALT alleles')
     myvcf.add_info('END', 1, 'Integer', 'End position of the variant described in this record')
@@ -286,8 +288,6 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
     myvcf.add_info('IMPRECISE', 0, 'Flag', 'Imprecise structural variation')
     myvcf.add_info('CIPOS', 2, 'Integer', 'Confidence interval around POS for imprecise variants')
     myvcf.add_info('CIEND', 2, 'Integer', 'Confidence interval around END for imprecise variants')
-    myvcf.add_info('CIPOS95', 2, 'Integer', '95% confidence interval around POS for imprecise variants')
-    myvcf.add_info('CIEND95', 2, 'Integer', '95% confidence interval around END for imprecise variants')
     myvcf.add_info('BKPTID', '.', 'String', 'ID of the assembled alternate allele in the assembly file')
     myvcf.add_info('PARID', 1, 'String', 'ID of partner breakend')
     myvcf.add_info('MATEID', '.', 'String', 'ID of mate breakends')
@@ -304,7 +304,7 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
     myvcf.add_info('SRSUP', '.', 'Integer', 'Number of split reads supporting the variant across all samples')
     myvcf.add_info('EVTYPE', '.', 'String', 'Type of LUMPY evidence contributing to the variant call')
     myvcf.add_info('PRIN', 0, 'Flag', 'Indicates variant as the principal variant in a BEDPE pair')
-    myvcf.add_info('LUMPYQ', 1, 'Float', 'LUMPY score for variant')
+    # myvcf.add_info('LUMPYQ', 1, 'Float', 'LUMPY score for variant')
     # add alt fields
     myvcf.add_alt('DEL', 'Deletion')
     myvcf.add_alt('DUP', 'Duplication')
@@ -347,18 +347,22 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
                            bedpe.name + '_1',
                            bedpe.phred
                        )
-
+            if tool:
+                var1.set_info('TOOL', tool)
             var1.set_info('SVTYPE', bedpe.svtype)
             var1.set_info('MATEID', bedpe.name + '_2')
-            var1.set_info('CIPOS', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
-            var1.set_info('CIEND', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
-            var1.set_info('CIPOS95', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
-            var1.set_info('CIEND95', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
-            var1.set_info('IMPRECISE', True)
+            if bedpe.ci95_s1 == bedpe.b1 and bedpe.ci95_e1 == bedpe.b1 and bedpe.ci95_s2 == bedpe.b2 and bedpe.ci95_e2 == bedpe.b2:
+                pass
+            else:
+                var1.set_info('IMPRECISE', True)
+            # var1.set_info('CIPOS', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
+            # var1.set_info('CIEND', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
+            var1.set_info('CIPOS', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
+            var1.set_info('CIEND', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
             var1.set_info('PRIN', True)
             var1.set_info('EVENT', bedpe.name)
             var1.set_info('STR', bedpe.strands)
-            var1.set_info('LUMPYQ', bedpe.score)
+            # var1.set_info('LUMPYQ', bedpe.score)
 
             if bedpe.o1 == '+':
                 if bedpe.o2 == '-':
@@ -379,15 +383,20 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
                            bedpe.name + '_2',
                            bedpe.phred
                        )
+            if tool:
+                var2.set_info('TOOL', tool)
             var2.set_info('SVTYPE', bedpe.svtype)
             var2.set_info('MATEID', bedpe.name + '_1')
-            var2.set_info('CIPOS', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
-            var2.set_info('CIEND', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
-            var2.set_info('CIPOS95', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
-            var2.set_info('CIEND95', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
-            var2.set_info('IMPRECISE', True)
+            if bedpe.ci95_s1 == bedpe.b1 and bedpe.ci95_e1 == bedpe.b1 and bedpe.ci95_s2 == bedpe.b2 and bedpe.ci95_e2 == bedpe.b2:
+                pass
+            else:
+                var2.set_info('IMPRECISE', True)
+            # var2.set_info('CIPOS', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
+            # var2.set_info('CIEND', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
+            var2.set_info('CIPOS', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
+            var2.set_info('CIEND', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
             var2.set_info('EVENT', bedpe.name)
-            var2.set_info('LUMPYQ', bedpe.score)
+            # var2.set_info('LUMPYQ', bedpe.score)
             # add the strands field. For variant 2 must switch the order
             strands_flipped = ','.join([ev[0][1] + ev[0][0] + ':' + ev[1] for ev in  [t.split(':') for t in [s for s in bedpe.strands.split(',')]]])
             var2.set_info('STR', strands_flipped)
@@ -447,14 +456,14 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
             var2.set_info('SUP', sum_pe + sum_sr)
             if sum_pe > 0:
                 if sum_sr > 0:
-                    var1.set_info('EVTYPE', 'PE_SR')
-                    var2.set_info('EVTYPE', 'PE_SR')
+                    var1.set_info('EVTYPE', 'PE,SR')
+                    var2.set_info('EVTYPE', 'PE,SR')
                 else:
-                    var1.set_info('EVTYPE', 'PE_ALONE')
-                    var2.set_info('EVTYPE', 'PE_ALONE')
+                    var1.set_info('EVTYPE', 'PE')
+                    var2.set_info('EVTYPE', 'PE')
             elif sum_sr > 0:
-                var1.set_info('EVTYPE', 'SR_ALONE')
-                var2.set_info('EVTYPE', 'SR_ALONE')
+                var1.set_info('EVTYPE', 'SR')
+                var2.set_info('EVTYPE', 'SR')
 
             # set the QUAL as the total support
             var1.qual = var1.get_info('SUP')
@@ -474,7 +483,8 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
                           bedpe.name,
                           bedpe.phred
                       )
-
+            if tool:
+                var.set_info('TOOL', tool)
             var.set_info('SVTYPE', bedpe.svtype)
             var.alt = '<' + bedpe.svtype + '>'
             var.set_info('END', bedpe.b2 - 1) # (VCF 4.2 spec: POS + length of REF allele - 1)
@@ -483,15 +493,20 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
             else:
                 var.set_info('SVLEN', (bedpe.b2 - 1) - bedpe.b1)
             var.set_info('STR', bedpe.strands)
-            var.set_info('CIPOS', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
-            var.set_info('CIEND', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
-            var.set_info('CIPOS95', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
-            var.set_info('CIEND95', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
-            var.set_info('IMPRECISE', 'True')
+
+
+            if bedpe.ci95_s1 == bedpe.b1 and bedpe.ci95_e1 == bedpe.b1 and bedpe.ci95_s2 == bedpe.b2 and bedpe.ci95_e2 == bedpe.b2:
+                pass
+            else:
+                var.set_info('IMPRECISE', True)
+            # var.set_info('CIPOS', ','.join(map(str, [(bedpe.s1 + 1) - bedpe.b1, bedpe.e1 - bedpe.b1])))
+            # var.set_info('CIEND', ','.join(map(str, [(bedpe.s2 + 1) - bedpe.b2, bedpe.e2 - bedpe.b2])))
+            var.set_info('CIPOS', ','.join(map(str, [bedpe.ci95_s1 - bedpe.b1, bedpe.ci95_e1 - bedpe.b1])))
+            var.set_info('CIEND', ','.join(map(str, [bedpe.ci95_s2 - bedpe.b2, bedpe.ci95_e2 - bedpe.b2])))
             var.set_info('PRIN', 'True')
             var.set_info('EVENT', bedpe.name)
             var.set_info('SUP', sum(bedpe.id_evidence.values()))
-            var.set_info('LUMPYQ', bedpe.score)
+            # var.set_info('LUMPYQ', bedpe.score)
 
             # get PE and SR support for each sample
             for s_id in sample_info:
@@ -523,11 +538,11 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
             var.set_info('SUP', sum_pe + sum_sr)
             if sum_pe > 0:
                 if sum_sr > 0:
-                    var.set_info('EVTYPE', 'PE_SR')
+                    var.set_info('EVTYPE', 'PE,SR')
                 else:
-                    var.set_info('EVTYPE', 'PE_ALONE')
+                    var.set_info('EVTYPE', 'PE')
             elif sum_sr > 0:
-                var.set_info('EVTYPE', 'SR_ALONE')
+                var.set_info('EVTYPE', 'SR')
 
             # set the QUAL as the total support
             var.qual = var.get_info('SUP')
@@ -548,7 +563,7 @@ def main():
     args = get_args()
 
     # call primary function
-    bedpeToVcf(args.bedpe, args.output, args.sample_config, args.fasta)
+    bedpeToVcf(args.bedpe, args.output, args.sample_config, args.tool, args.fasta)
 
     # close the files
     args.bedpe.close()
