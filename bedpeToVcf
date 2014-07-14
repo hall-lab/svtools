@@ -493,19 +493,21 @@ def bedpeToVcf(bedpe_file, vcf_out, config, fasta):
             var.set_info('SUP', sum(bedpe.id_evidence.values()))
             var.set_info('LUMPYQ', bedpe.score)
 
-            # get PE and SR support for each sample
+            # initialize the PE and SR support for each sample to 0
+            for s in sample_list:
+                var.genotype(s).set_format('PE', 0)
+                var.genotype(s).set_format('SR', 0)
+
+            # get PE and SR support for each library
             for s_id in sample_info:
                 g = var.genotype(sample_info[s_id][0])
                 if sample_info[s_id][1] == 'PE':
                     if s_id in bedpe.id_evidence.keys():
-                        g.set_format('PE', bedpe.id_evidence[s_id])
-                    else:
-                        g.set_format('PE', 0)
+                        g.set_format('PE', bedpe.id_evidence[s_id] + g.get_format('PE'))
                 elif sample_info[s_id][1] == 'SR':
                     if s_id in bedpe.id_evidence.keys():
-                        g.set_format('SR', bedpe.id_evidence[s_id])
-                    else:
-                        g.set_format('SR', 0)
+                        g.set_format('SR', bedpe.id_evidence[s_id] + g.get_format('SR'))
+
             # get the PE + SR support and set the genotype
             for s in sample_list:
                 g = var.genotype(s)
