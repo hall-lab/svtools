@@ -102,7 +102,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
             b1 = var.pos
             b2 = int(var.info['END'])
             name = v[2]
-            score = var.info['LUMPYQ']
+            score = v[5]
 
             strands = var.info['STR']
             o1 = strands[0]
