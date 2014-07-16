@@ -98,7 +98,7 @@ class Bedpe(object):
 
 class Vcf(object):
     def __init__(self, fasta):
-        self.file_format = 'VCFv4.2'
+        self.file_format = 'VCFv4.1'
         self.fasta = fasta
         self.reference = fasta.filename
         self.sample_list = []
