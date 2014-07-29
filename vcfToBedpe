@@ -193,7 +193,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
 
                 b1 = prim.pos
                 b2 = sec.pos
-                score = prim.info['LUMPYQ']
+                score = v[5]
 
                 strands = prim.info['STR']
                 o1 = strands[0]
