@@ -465,9 +465,9 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
                 var1.set_info('EVTYPE', 'SR')
                 var2.set_info('EVTYPE', 'SR')
 
-            # set the QUAL as the total support
-            var1.qual = var1.get_info('SUP')
-            var2.qual = var2.get_info('SUP')
+            # set the QUAL to zero
+            var1.qual = 0
+            var2.qual = 0
 
             # write the record to the VCF output file
             vcf_out.write(var1.get_var_string() + '\n')
@@ -546,8 +546,8 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
             elif sum_sr > 0:
                 var.set_info('EVTYPE', 'SR')
 
-            # set the QUAL as the total support
-            var.qual = var.get_info('SUP')
+            # set the QUAL to zero
+            var.qual = 0
 
             # write the record to the VCF output file
             vcf_out.write(var.get_var_string() + '\n')
