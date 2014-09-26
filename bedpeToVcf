@@ -339,10 +339,13 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
 
         # special case to deal with breakends. each BEDPE line spawn 2 VCF variant records
         if bedpe.svtype == 'BND':
+            refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
+            if not refbase:
+                refbase = 'N'
             var1 = Variant(myvcf,
                            bedpe.c1,
                            bedpe.b1,
-                           fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1),
+                           refbase,
                            '<' + str(bedpe.svtype) + '>',
                            bedpe.name + '_1',
                            bedpe.phred
@@ -375,10 +378,13 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
                 elif bedpe.o2 == '-':
                     var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2, var1.ref)
 
+            refbase = fasta.fetch(bedpe.c2, bedpe.b2 - 1, bedpe.b2)
+            if not refbase:
+                refbase = 'N'
             var2 = Variant(myvcf,
                            bedpe.c2,
                            bedpe.b2,
-                           fasta.fetch(bedpe.c2, bedpe.b2 - 1, bedpe.b2),
+                           refbase,
                            '<' + str(bedpe.svtype) + '>',
                            bedpe.name + '_2',
                            bedpe.phred
@@ -475,10 +481,13 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
 
         else:
             # set VCF info elements for simple events
+            refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
+            if not refbase:
+                refbase = 'N'
             var = Variant(myvcf,
                           bedpe.c1,
                           bedpe.b1,
-                          fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1),
+                          refbase,
                           '<' + str(bedpe.svtype) + '>',
                           bedpe.name,
                           bedpe.phred
