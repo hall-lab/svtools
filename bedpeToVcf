@@ -69,7 +69,11 @@ class Bedpe(object):
                 elif self.o1 == '-' and self.o2 == '+':
                     self.svtype = 'DUP'
                 elif self.o1 == self.o2:
-                    self.svtype = 'INV'
+                    strands = [x.split(',')[0] for x in self.misc[2][8:].split(';')]
+                    if '++' in strands and '--' in strands:
+                        self.svtype = 'INV'
+                    else:
+                        self.svtype = 'BND'
             else:
                 self.svtype = 'BND'
 
