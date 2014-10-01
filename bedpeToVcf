@@ -488,6 +488,7 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
             refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
             if not refbase:
                 refbase = 'N'
+
             var = Variant(myvcf,
                           bedpe.c1,
                           bedpe.b1,
@@ -500,14 +501,15 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
                 var.set_info('TOOL', tool)
             var.set_info('SVTYPE', bedpe.svtype)
             var.alt = '<' + bedpe.svtype + '>'
-            var.set_info('END', bedpe.b2 - 1) # (VCF 4.2 spec: POS + length of REF allele - 1)
+
+            var.set_info('END', bedpe.b2)
             if bedpe.svtype == 'DEL':
-                var.set_info('SVLEN', -1*((bedpe.b2 - 1) - bedpe.b1))
+                var.set_info('SVLEN', -1*(int(var.info['END']) - var.pos))
             else:
-                var.set_info('SVLEN', (bedpe.b2 - 1) - bedpe.b1)
+                var.set_info('SVLEN', int(var.info['END']) - var.pos)
             var.set_info('STR', bedpe.strands)
 
-
+            # set imprecise or not
             if bedpe.ci95_s1 == bedpe.b1 and bedpe.ci95_e1 == bedpe.b1 and bedpe.ci95_s2 == bedpe.b2 and bedpe.ci95_e2 == bedpe.b2:
                 pass
             else:
