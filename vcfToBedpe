@@ -212,22 +212,24 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 ispan = s2 - e1
                 ospan = e2 - s1
 
-                if ospan > 1000000:
-                    svtype = 'DISTANT_'
+                if prim.chrom != sec.chrom:
+                    svtype = 'DISTANT_INTER'
                 else:
-                    svtype = 'LOCAL_'
+                    if ospan > 1000000:
+                        svtype = 'DISTANT_'
+                    else:
+                        svtype = 'LOCAL_'
 
-                if o1 == '+':
-                    if o2 == '-':
-                        svtype += 'DEL'
-                    elif o2 == '+':
-                        svtype += 'INV'
-                elif o1 == '-':
-                    if o2 == '+':
-                        svtype += 'DUP'
-                    elif o2 == '-':
-                        svtype += 'INV'
-
+                    if o1 == '+':
+                        if o2 == '-':
+                            svtype += 'DEL'
+                        elif o2 == '+':
+                            svtype += 'INV'
+                    elif o1 == '-':
+                        if o2 == '+':
+                            svtype += 'DUP'
+                        elif o2 == '-':
+                            svtype += 'INV'
 
                 evtype = var.info['EVTYPE']
 
