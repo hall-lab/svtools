@@ -132,7 +132,7 @@ class Vcf(object):
     # return the VCF header
     def get_header(self):
         header = '\n'.join(['##fileformat=' + self.file_format,                            
-                            '##fileDate=' + time.strftime('%Y%m%d'), \
+                            '##fileDate=' + time.strftime('%Y%m%d'),
                             '##reference=' + self.reference] + \
                            [i.hstring for i in self.info_list] + \
                            [a.hstring for a in self.alt_list] + \
