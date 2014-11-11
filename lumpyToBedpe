@@ -60,8 +60,8 @@ for l in f:
     else:
         sv_type = 'DISTANT_' + sv_type
 
-    l_width = int(A[2]) - int(A[1])
-    r_width = int(A[5]) - int(A[4])
+    i_span = int(A[4]) - int(A[2])
+    o_span = int(A[5]) - int(A[1])
 
     for sample_id_amount in A[11][4:].split(';'):
         sample_id,amount = sample_id_amount.split(',')
@@ -79,11 +79,7 @@ for l in f:
         if not C_by_id[sample_id][1] in types:
             types.append(C_by_id[sample_id][1])
 
-    type_string = ''
-    if len(types) == 1:
-        type_string = types[0] + '_ALONE'
-    else:
-        type_string = '_'.join(types)
+    type_string = ','.join(types)
 
     print '\t'.join( \
             A[0:7] + \
@@ -92,15 +88,14 @@ for l in f:
                 A[8],
                 A[9],
                 sv_type,
-                str(l_width),
-                str(r_width),
+                str(i_span),
+                str(o_span),
                 A[7],
                 ','.join(who), \
                 ','.join(name_type_amount),
                 A[12],
                 type_string,\
-                str(len(who)),\
-                str(sum(amount_of_each))\
+                str(len(who))\
             ] + \
             [str(x) for x in amount_of_each]\
             )
