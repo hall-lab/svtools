@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import pysam
+# import pysam ## only import pysam if a fasta file is provided
 import argparse, sys, re
 import math, time
 from argparse import RawTextHelpFormatter
@@ -20,7 +20,7 @@ version: " + __version__ + "\n\
 description: Convert a LUMPY bedpe file to VCF")
     parser.add_argument('-t', '--tool', type=str, default=None, required=False, help='Tool used to generate calls')
     parser.add_argument('-c', '--sample_config', type=argparse.FileType('r'), required=True, help='Tab delimited sample config file of NAME id TYPE\n(Example: NA12878 10  PE)')
-    parser.add_argument('-f', '--fasta', type=pysam.Fastafile, required=True, help='Indexed fasta file of the reference genome')
+    parser.add_argument('-f', '--fasta', type=str, required=False, help='Indexed fasta file of the reference genome')
     parser.add_argument('-b', '--bedpe', type=argparse.FileType('r'), default=None, help='BEDPE input (default: stdin)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
 
@@ -103,8 +103,12 @@ class Bedpe(object):
 class Vcf(object):
     def __init__(self, fasta):
         self.file_format = 'VCFv4.1'
-        self.fasta = fasta
-        self.reference = fasta.filename
+        if fasta:
+            self.fasta = fasta
+            self.reference = fasta.filename
+        else:
+            self.fasta = None
+            self.reference = ''
         self.sample_list = []
         self.info_list = []
         self.format_list = []
@@ -128,7 +132,7 @@ class Vcf(object):
     # return the VCF header
     def get_header(self):
         header = '\n'.join(['##fileformat=' + self.file_format,                            
-                            '##fileDate=' + time.strftime('%Y%m%d'),
+                            '##fileDate=' + time.strftime('%Y%m%d'), \
                             '##reference=' + self.reference] + \
                            [i.hstring for i in self.info_list] + \
                            [a.hstring for a in self.alt_list] + \
@@ -343,7 +347,9 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
 
         # special case to deal with breakends. each BEDPE line spawn 2 VCF variant records
         if bedpe.svtype == 'BND':
-            refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
+            refbase = 'N'
+            if fasta:
+                refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
             if not refbase:
                 refbase = 'N'
             var1 = Variant(myvcf,
@@ -382,7 +388,9 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
                 elif bedpe.o2 == '-':
                     var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2, var1.ref)
 
-            refbase = fasta.fetch(bedpe.c2, bedpe.b2 - 1, bedpe.b2)
+            refbase = 'N'
+            if fasta:
+                refbase = fasta.fetch(bedpe.c2, bedpe.b2 - 1, bedpe.b2)
             if not refbase:
                 refbase = 'N'
             var2 = Variant(myvcf,
@@ -485,7 +493,9 @@ def bedpeToVcf(bedpe_file, vcf_out, config, tool, fasta):
 
         else:
             # set VCF info elements for simple events
-            refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
+            refbase = 'N'
+            if fasta:
+                refbase = fasta.fetch(bedpe.c1, bedpe.b1 - 1, bedpe.b1)
             if not refbase:
                 refbase = 'N'
 
@@ -579,8 +589,13 @@ def main():
     # parse the command line args
     args = get_args()
 
+    # only import pysam if fasta supplied
+    if args.fasta:
+        import pysam
+        fasta = pysam.Fastafile(args.fasta)
+
     # call primary function
-    bedpeToVcf(args.bedpe, args.output, args.sample_config, args.tool, args.fasta)
+    bedpeToVcf(args.bedpe, args.output, args.sample_config, args.tool, fasta)
 
     # close the files
     args.bedpe.close()
