@@ -593,6 +593,8 @@ def main():
     if args.fasta:
         import pysam
         fasta = pysam.Fastafile(args.fasta)
+    else:
+        fasta = None
 
     # call primary function
     bedpeToVcf(args.bedpe, args.output, args.sample_config, args.tool, fasta)
