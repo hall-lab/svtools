@@ -4,6 +4,13 @@ import numpy as np
 import optparse
 from optparse import OptionParser
 
+# Output column schema
+#
+# 1=chr1; 2=pos1; 3=pos2; 4=chr2; 5=pos3; 6=pos4; 7=id; 8=support; 9=strand1; 10=strand2;
+# 11=type; 12=innerSpan; 13=outerSpan; 14=qual; 15=sampleList; 16=evidenceSampleList; # 17=STRANDS; 18=PE/SR; 19: numSamples
+# 20-22 SAMPLE_1: total, PE, SR
+# 23-25 SAMPLE_2: total, PE, SR
+# ...   SAMPLE_N: total, PE, SR
 
 parser = OptionParser()
 
@@ -90,7 +97,7 @@ for l in f:
                 sv_type,
                 str(i_span),
                 str(o_span),
-                A[7],
+                str(0),
                 ','.join(who), \
                 ','.join(name_type_amount),
                 A[12],
