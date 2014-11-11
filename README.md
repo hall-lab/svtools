@@ -4,10 +4,12 @@ Tools for processing and analyzing structural variants.
 
 ## Table of contents
 * [bedpeToVcf](#bedpetovcf)
+* [vcfToBedpe](#vcftobedpe)
+* [lumpyToBedpe](#lumpyToBedpe)
 
 ### bedpeToVcf
 
-Convert a LUMPY bedpe file to VCF
+Convert a LUMPY BEDPE file to VCF
 
 #### Usage
 ```
@@ -74,4 +76,27 @@ optional arguments:
 #### Example
 ```
 vcfToBedpe -v samples.sv.vcf > samples.sv.bedpe
+```
+
+### lumpyToBedpe
+
+Convert a LUMPY BEDPE file to an extended BEDPE for
+easier filtering
+
+#### Usage
+```
+usage: lumpyToBedpe [options]
+
+options:
+  -h, --help            show this help message and exit
+  -b BEDPE_FILE, --bedpe_file=BEDPE_FILE
+                        BEDPE file
+  -c CONFIG_FILE, --config_file=CONFIG_FILE
+                        Tab-delim sample config file of NAME id TYPE.
+                        Example:NA12878 10  PE
+```
+
+#### Example
+```
+lumpyToBedpe -b NA12878_S1.sv.bedpe -c NA12878_S1.sample.config > NA12878_S1.sv.ext.bedpe
 ```
