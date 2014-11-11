@@ -13,10 +13,10 @@ __date__ = "$Date: 2014-04-23 14:31 $"
 
 def get_args():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
-bedpeToVcf\n\
+vcfToBedpe\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
-description: Convert a LUMPY bedpe file to VCF")
+description: Convert a VCF file to a BEDPE file")
     parser.add_argument('-v', '--vcf', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
 
