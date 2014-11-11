@@ -61,11 +61,6 @@ Convert a VCF file to a BEDPE file
 ```
 usage: vcfToBedpe [-h] [-v VCF] [-o OUTPUT]
 
-vcfToBedpe
-author: Colby Chiang (cc2qe@virginia.edu)
-version: $Revision: 0.0.1 $
-description: Convert a VCF file to a BEDPE file
-
 optional arguments:
   -h, --help            show this help message and exit
   -v VCF, --vcf VCF     VCF input (default: stdin)
