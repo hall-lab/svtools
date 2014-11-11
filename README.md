@@ -5,7 +5,7 @@ Tools for processing and analyzing structural variants.
 ## Table of contents
 * [bedpeToVcf](#bedpetovcf)
 * [vcfToBedpe](#vcftobedpe)
-* [lumpyToBedpe](#lumpyToBedpe)
+* [lumpyToBedpe](#lumpytobedpe)
 
 ### bedpeToVcf
 
@@ -80,8 +80,7 @@ vcfToBedpe -v samples.sv.vcf > samples.sv.bedpe
 
 ### lumpyToBedpe
 
-Convert a LUMPY BEDPE file to an extended BEDPE for
-easier filtering
+Convert a LUMPY BEDPE file to an extended BEDPE for easier filtering
 
 #### Usage
 ```
@@ -94,6 +93,34 @@ options:
   -c CONFIG_FILE, --config_file=CONFIG_FILE
                         Tab-delim sample config file of NAME id TYPE.
                         Example:NA12878 10  PE
+```
+
+#### Output format
+
+Tab delimited
+```
+1: chr A
+2: start A
+3: end A
+4: chr B
+5: start B
+6: end B
+7: id
+8: support
+9: strand A
+10: strand B
+11: type
+12: inner span
+13: outer span
+14: qual
+15: sample list
+16: evidence sample list
+17: strands
+18: PE/SR
+19: number of non-reference samples
+20-22: SAMPLE_1: total, PE, SR
+23-25: SAMPLE_2: total, PE, SR
+...: SAMPLE_N: total, PE, SR
 ```
 
 #### Example
