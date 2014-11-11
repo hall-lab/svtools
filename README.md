@@ -127,3 +127,19 @@ Tab delimited
 ```
 lumpyToBedpe -b NA12878_S1.sv.bedpe -c NA12878_S1.sample.config > NA12878_S1.sv.ext.bedpe
 ```
+
+Example sample config file (tab delimited)
+```
+NA12877	10	PE
+NA12877	11	SR
+NA12877	12	RD
+NA12878	20	PE
+NA12878	21	SR
+NA12878	22	RD
+NA12879	30	PE
+NA12879	31	SR
+NA12879	32	RD
+NA12880	40	PE
+NA12880	41	SR
+NA12880	42	RD
+```
