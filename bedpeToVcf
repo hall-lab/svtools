@@ -601,7 +601,8 @@ def main():
 
     # close the files
     args.bedpe.close()
-    args.fasta.close()
+    if fasta:
+        fasta.close()
 
 # initialize the script
 if __name__ == '__main__':
