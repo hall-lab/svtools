@@ -94,28 +94,22 @@ options:
 
 Tab delimited
 ```
-1: chr A
-2: start A
-3: end A
-4: chr B
-5: start B
-6: end B
-7: id
-8: support
-9: strand A
-10: strand B
-11: type
-12: inner span
-13: outer span
-14: qual
-15: sample list
-16: evidence sample list
-17: strands
-18: PE/SR
-19: number of non-reference samples
-20-22: SAMPLE_1: total, PE, SR
-23-25: SAMPLE_2: total, PE, SR
-...: SAMPLE_N: total, PE, SR
+1: chromosome a;
+2: coordinate start a (leftmost position of the first breakpoint-containing genomic interval)
+3: coordinate end a (rightmost position of the first breakpoint-containing genomic interval)
+4: chromosome b;
+5: coordinate start b (leftmost position of the second breakpoint-containing genomic interval)
+6: coordinate end b (rightmost position of the second breakpoint-containing genomic interval)
+7: breakpoint ID;
+8: support (total number of read-pair + split-read measurements)
+9: strand a (direction of breakpoint relative to read mappings; "+" indicates to right, "-" to left)
+10: strand b (direction of breakpoint relative to read mappings; "+" indicates to right, "-" to left)
+11: variant type (DEL=deletion; DUP=duplication; INV=inversion; INT=inter-chromosomal)
+12: evidence types detected (PE/SR)
+13: strand combinations clustered (useful for inversions and reciprocal translocations)
+14: sampleList (list of samples that have the breakpoint)
+15: evidenceSampleList (detailed list of samples, evidence types, and evidence observations)
+16-N: sample_N total support
 ```
 
 #### Example
