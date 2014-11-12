@@ -4,13 +4,23 @@ import numpy as np
 import optparse
 from optparse import OptionParser
 
-# Output column schema
-#
-# 1=chr1; 2=pos1; 3=pos2; 4=chr2; 5=pos3; 6=pos4; 7=id; 8=support; 9=strand1; 10=strand2;
-# 11=type; 12=innerSpan; 13=outerSpan; 14=qual; 15=sampleList; 16=evidenceSampleList; # 17=STRANDS; 18=PE/SR; 19: numSamples
-# 20-22 SAMPLE_1: total, PE, SR
-# 23-25 SAMPLE_2: total, PE, SR
-# ...   SAMPLE_N: total, PE, SR
+# output file format:
+# 1 = chromosome a;
+# 2 = coordinate start a (leftmost position of the first breakpoint-containing genomic interval)
+# 3 = coordinate end a (rightmost position of the first breakpoint-containing genomic interval)
+# 4 = chromosome b;
+# 5 = coordinate start b (leftmost position of the second breakpoint-containing genomic interval)
+# 6 = coordinate end b (rightmost position of the second breakpoint-containing genomic interval)
+# 7 = breakpoint ID;
+# 8 = support (total number of read-pair + split-read measurements)
+# 9 = strand a (direction of breakpoint relative to read mappings; "+" indicates to right, "-" to left)
+# 10 = strand b (direction of breakpoint relative to read mappings; "+" indicates to right, "-" to left)
+# 11 = variant type (DEL=deletion; DUP=duplication; INV=inversion; INT=inter-chromosomal)
+# 12 = evidence types detected (PE/SR)
+# 13 = strand combinations clustered (useful for inversions and reciprocal translocations)
+# 14 = sampleList (list of samples that have the breakpoint)
+# 15 = evidenceSampleList (detailed list of samples, evidence types, and evidence observations)
+# 16-N: sample_N total support
 
 parser = OptionParser()
 
@@ -35,6 +45,7 @@ if not options.config_file:
 
 C_by_id = {}
 C_id_order = {}
+name_list = []
 
 f = open(options.config_file,'r')
 for l in f:
@@ -44,8 +55,10 @@ for l in f:
     data_type = A[2]
 
     C_by_id[sample_id] = [name,data_type]
-
     C_id_order[sample_id] = len(C_id_order)
+
+    if name not in name_list:
+        name_list.append(name)
 
 f.close()
 
@@ -58,23 +71,17 @@ for l in f:
     name_type_amount = []
     types=[]
     total_amount = 0
-    amount_of_each = [0]*len(C_id_order)
+    sample_amount = dict.fromkeys(name_list, 0)
 
     sv_type = A[10][5:8]
 
-    if (A[0] == A[3]) and (int(A[5]) - int(A[1])<1000000):
-        sv_type = 'LOCAL_' + sv_type
-    else:
-        sv_type = 'DISTANT_' + sv_type
-
-    i_span = int(A[4]) - int(A[2])
-    o_span = int(A[5]) - int(A[1])
+    strand_combos = A[12][8:].replace(',',':').replace(';',',')
 
     for sample_id_amount in A[11][4:].split(';'):
         sample_id,amount = sample_id_amount.split(',')
 
         total_amount += int(amount)
-        amount_of_each[C_id_order[sample_id]] = int(amount)
+        sample_amount[C_by_id[sample_id][0]] += int(amount)
 
         if not C_by_id[sample_id][0] in who:
              who.append(C_by_id[sample_id][0])
@@ -88,23 +95,18 @@ for l in f:
 
     type_string = ','.join(types)
 
-    print '\t'.join( \
-            A[0:7] + \
-            [\
-                str(total_amount), \
+    print '\t'.join(
+            A[0:7] +
+            [
+                str(total_amount),
                 A[8],
                 A[9],
                 sv_type,
-                str(i_span),
-                str(o_span),
-                str(0),
-                ','.join(who), \
+                type_string,
+                strand_combos,
+                ','.join(who),
                 ','.join(name_type_amount),
-                A[12],
-                type_string,\
-                str(len(who))\
-            ] + \
-            [str(x) for x in amount_of_each]\
-            )
+                '\t'.join(map(str, [sample_amount[x] for x in name_list]))
+            ])
 
 f.close()
