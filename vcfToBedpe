@@ -108,8 +108,6 @@ def vcfToBedpe(vcf_file, bedpe_out):
             o1 = strands[0]
             o2 = strands[1]
 
-            support = var.info['SUP']
-
             span = map(int, var.info['CIPOS'].split(','))
             s1 = b1 + span[0] - 1
             e1 = b1 + span[1]
@@ -121,21 +119,16 @@ def vcfToBedpe(vcf_file, bedpe_out):
             ispan = s2 - e1
             ospan = e2 - s1
 
-            if ospan > 1000000:
-                svtype = 'DISTANT_'
-            else:
-                svtype = 'LOCAL_'
-
             if o1 == '+':
                 if o2 == '-':
-                    svtype += 'DEL'
+                    svtype = 'DEL'
                 elif o2 == '+':
-                    svtype += 'INV'
+                    svtype = 'INV'
             elif o1 == '-':
                 if o2 == '+':
-                    svtype += 'DUP'
+                    svtype = 'DUP'
                 elif o2 == '-':
-                    svtype += 'INV'
+                    svtype = 'INV'
 
             evtype = var.info['EVTYPE']
 
@@ -153,11 +146,8 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     var_sample_list.append(sample_list[i])
                 sample_gt[s] = format_dict
 
-            gt_string = '\t'.join(['\t'.join(map(str,
-                                                 (sample_gt[s]['SUP'],
-                                                  sample_gt[s]['PE'],
-                                                  sample_gt[s]['SR'])
-                                             )) for s in sample_list])
+            gt_string = '\t'.join(map(str,[sample_gt[s]['SUP'] for s in sample_list]))
+            support = sum([sample_gt[s]['SUP'] for s in sample_list])
 
             bedpe_out.write('\t'.join(map(str,
                                           [var.chrom,
@@ -171,14 +161,10 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                            o1,
                                            o2,
                                            svtype,
-                                           ispan,
-                                           ospan,
-                                           score,
+                                           evtype,
+                                           strands,
                                            ','.join(var_sample_list),
                                            ','.join(filter(None, [','.join([s + '_' + ev + ':' + str(sample_gt[s][ev]) for ev in ('PE', 'SR') if sample_gt[s][ev] > 0]) for s in sample_list])),
-                                           strands,
-                                           evtype,
-                                           len(var_sample_list),
                                            gt_string
                                        ])) + '\n')
 
@@ -199,8 +185,6 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 o1 = strands[0]
                 o2 = strands[1]
 
-                support = prim.info['SUP']
-
                 span = map(int, prim.info['CIPOS'].split(','))
                 s1 = b1 + span[0] - 1
                 e1 = b1 + span[1]
@@ -213,23 +197,18 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 ospan = e2 - s1
 
                 if prim.chrom != sec.chrom:
-                    svtype = 'DISTANT_INTER'
+                    svtype = 'INT'
                 else:
-                    if ospan > 1000000:
-                        svtype = 'DISTANT_'
-                    else:
-                        svtype = 'LOCAL_'
-
                     if o1 == '+':
                         if o2 == '-':
-                            svtype += 'DEL'
+                            svtype = 'DEL'
                         elif o2 == '+':
-                            svtype += 'INV'
+                            svtype = 'INV'
                     elif o1 == '-':
                         if o2 == '+':
-                            svtype += 'DUP'
+                            svtype = 'DUP'
                         elif o2 == '-':
-                            svtype += 'INV'
+                            svtype = 'INV'
 
                 evtype = var.info['EVTYPE']
 
@@ -247,11 +226,8 @@ def vcfToBedpe(vcf_file, bedpe_out):
                         var_sample_list.append(sample_list[i])
                     sample_gt[s] = format_dict
 
-                gt_string = '\t'.join(['\t'.join(map(str,
-                                                     (sample_gt[s]['SUP'],
-                                                      sample_gt[s]['PE'],
-                                                      sample_gt[s]['SR'])
-                                                 )) for s in sample_list])
+                gt_string = '\t'.join(map(str,[sample_gt[s]['SUP'] for s in sample_list]))
+                support = sum([sample_gt[s]['SUP'] for s in sample_list])
 
                 bedpe_out.write('\t'.join(map(str,
                                               [prim.chrom,
@@ -265,14 +241,10 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                                o1,
                                                o2,
                                                svtype,
-                                               ispan,
-                                               ospan,
-                                               score,
+                                               evtype,
+                                               strands,
                                                ','.join(var_sample_list),
                                                ','.join(filter(None, [','.join([s + '_' + ev + ':' + str(sample_gt[s][ev]) for ev in ('PE', 'SR') if sample_gt[s][ev] > 0]) for s in sample_list])),
-                                               strands,
-                                               evtype,
-                                               len(var_sample_list),
                                                gt_string
                                            ])) + '\n')
 
