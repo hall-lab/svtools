@@ -18,7 +18,7 @@ class BEDPE (object):
 		self.score = bedList[7]
 		self.o1 = bedList[8]		
 		self.o2 = bedList[9]
-
+		self.type = bedList[10]
 
 def bedpeToBlockedBed(bedpe, dist):
 	
@@ -30,8 +30,8 @@ def bedpeToBlockedBed(bedpe, dist):
 
 	if (bedpe.c1 == bedpe.c2) and (abs(bedpe.e2-bedpe.s1) <= dist):
 
-		print bedpe.c1 + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e2) + "\t" + bedpe.name + \
-		  	"\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+		print bedpe.c1 + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e2) + "\t" + bedpe.type + "_" + bedpe.name + \
+		  	"\t" + str(bedpe.score) + "\t" + \
 		  	"+" + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e2) + "\t" + color + "\t" + "2" + "\t" + \
 		  	str(bedpe.e1 - bedpe.s1) + "," +  str(bedpe.e2 - bedpe.s2) + "\t" + \
 		  	"0," +  str(bedpe.s2- bedpe.s1)
@@ -39,29 +39,29 @@ def bedpeToBlockedBed(bedpe, dist):
 	# intrachromosomals that exceed dist
 	elif (bedpe.c1 == bedpe.c2) and (abs(bedpe.e2-bedpe.s1) > dist):
 		if bedpe.o1 == "+":
-			print bedpe.c1 + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e1+500) + "\t" + bedpe.name + \
-		    	"\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c1 + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e1+500) + "\t"  + bedpe.type + "_" + bedpe.name + \
+		    	"\t" + str(bedpe.score) + "\t" + \
 		  		"+" + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e1+500) + "\t" + color + "\t" + "2" + "\t" + \
 		  		str(bedpe.e1 - bedpe.s1) + "," +  "1" + "\t" + \
 		  		"0," +  str((bedpe.e1-bedpe.s1)+499)
 
 		if bedpe.o1 == "-":
-			print bedpe.c1 + "\t" + str(bedpe.s1-500) + "\t" + str(bedpe.e1) + "\t" + bedpe.name + \
-		    	 "\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c1 + "\t" + str(bedpe.s1-500) + "\t" + str(bedpe.e1) + "\t"  + bedpe.type + "_" + bedpe.name + \
+		    	 "\t" + str(bedpe.score) + "\t" + \
 		  		"-" + "\t" + str(bedpe.s1-500) + "\t" + str(bedpe.e1) + "\t" + color + "\t" + "2" + "\t" + \
 		  		"1" + "," + str(bedpe.e1 - bedpe.s1) + "\t" + \
 				"0," + str(500)
 	
 		if bedpe.o2 == "+":
-			print bedpe.c2 + "\t" + str(bedpe.s2) + "\t" + str(bedpe.e2+500) + "\t" + bedpe.name + \
-		    	"\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c2 + "\t" + str(bedpe.s2) + "\t" + str(bedpe.e2+500) + "\t"  + bedpe.type + "_" + bedpe.name + \
+		    	"\t" + str(bedpe.score) + "\t" + \
 		  		"+" + "\t" + str(bedpe.s2) + "\t" + str(bedpe.e2+500) + "\t" + color + "\t" + "2" + "\t" + \
 		  		str(bedpe.e2 - bedpe.s2) + "," +  "1" + "\t" + \
 		  		"0," +  str((bedpe.e2-bedpe.s2)+499)
 		
 		if bedpe.o2 == "-":
-			print bedpe.c2 + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t" + bedpe.name + \
-		    	"\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c2 + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t"  + bedpe.type + "_" + bedpe.name + \
+		    	"\t" + str(bedpe.score) + "\t" + \
 		  		"-" + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t" + color + "\t" + "2" + "\t" + \
 		  		"1" + "," + str(bedpe.e2 - bedpe.s2) + "\t" + \
 				"0," + str(500)
@@ -69,25 +69,25 @@ def bedpeToBlockedBed(bedpe, dist):
 	# interchromosomals:	
 	elif (bedpe.c1 != bedpe.c2):
 		if bedpe.o1 == "+":
-			print bedpe.c1 + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e1+500) + "\t" + bedpe.name + "\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c1 + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e1+500) + "\t"  + bedpe.type + "_" + bedpe.name + "\t" + str(bedpe.score) + "\t" + \
 		  		"+" + "\t" + str(bedpe.s1) + "\t" + str(bedpe.e1+500) + "\t" + color + "\t" + "2" + "\t" + \
 		  		str(bedpe.e1 - bedpe.s1) + "," +  "1" + "\t" + \
 		  		"0," +  str((bedpe.e1-bedpe.s1)+499)
 
 		if bedpe.o1 == "-":
-			print bedpe.c1 + "\t" + str(bedpe.s1-500) + "\t" + str(bedpe.e1) + "\t" + bedpe.name + "\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c1 + "\t" + str(bedpe.s1-500) + "\t" + str(bedpe.e1) + "\t"  + bedpe.type + "_" + bedpe.name + "\t" + str(bedpe.score) + "\t" + \
 		  		"-" + "\t" + str(bedpe.s1-500) + "\t" + str(bedpe.e1) + "\t" + color + "\t" + "2" + "\t" + \
 		  		"1" + "," + str(bedpe.e1 - bedpe.s1) + "\t" + \
 				"0," + str(500)
 	
 		if bedpe.o2 == "+":
-			print bedpe.c2 + "\t" + str(bedpe.s2) + "\t" + str(bedpe.e2+500) + "\t" + bedpe.name + "\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c2 + "\t" + str(bedpe.s2) + "\t" + str(bedpe.e2+500) + "\t"  + bedpe.type + "_" + bedpe.name + "\t" + str(bedpe.score) + "\t" + \
 		  		"+" + "\t" + str(bedpe.s2) + "\t" + str(bedpe.e2+500) + "\t" + color + "\t" + "2" + "\t" + \
 		  		str(bedpe.e2 - bedpe.s2) + "," +  "1" + "\t" + \
 		  		"0," +  str((bedpe.e2-bedpe.s2)+499)
 		
 		if bedpe.o2 == "-":
-			print bedpe.c2 + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t" + bedpe.name + "\t" + str(abs(bedpe.e2-bedpe.s1)) + "\t" + \
+			print bedpe.c2 + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t"  + bedpe.type + "_" + bedpe.name + "\t" + str(bedpe.score) + "\t" + \
 		  		"-" + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t" + color + "\t" + "2" + "\t" + \
 		  		"1" + "," + str(bedpe.e2 - bedpe.s2) + "\t" + \
 				"0," + str(500)
@@ -121,7 +121,7 @@ def main():
 bedpeToBed12 version 1.0
 Author: Aaron Quinlan & Ira Hall	
 Description: converts BEDPE to BED12 format for viewing in IGV or the UCSC browser.
-Last Modified: July 20, 2010 
+Last Modified: Nov. 13, 2014
 
 	"""
 	parser = OptionParser(usage)
