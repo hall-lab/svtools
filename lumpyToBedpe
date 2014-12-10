@@ -68,7 +68,7 @@ for l in f:
 
     who=[]
     name_type_amount = []
-    types=[]
+    evidence_types=[]
     total_amount = 0
     sample_amount = dict.fromkeys(name_list, 0)
 
@@ -89,10 +89,10 @@ for l in f:
                 C_by_id[sample_id][0] + '_' + C_by_id[sample_id][1] + ':' +\
                 amount)
 
-        if not C_by_id[sample_id][1] in types:
-            types.append(C_by_id[sample_id][1])
+        if not C_by_id[sample_id][1] in evidence_types:
+            evidence_types.append(C_by_id[sample_id][1])
 
-    type_string = ','.join(types)
+    evidence_type_string = ','.join(sorted(evidence_types))
 
     print '\t'.join(
             A[0:7] +
@@ -101,7 +101,7 @@ for l in f:
                 A[8],
                 A[9],
                 sv_type,
-                type_string,
+                evidence_type_string,
                 strand_combos,
                 ','.join(who),
                 ','.join(name_type_amount),
