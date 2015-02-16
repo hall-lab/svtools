@@ -143,10 +143,7 @@ class Variant(object):
         self.var_id = var_list[2]
         self.ref = var_list[3]
         self.alt = var_list[4]
-        if var_list[5] == '.':
-            self.qual = 0
-        else:
-            self.qual = float(var_list[5])
+        self.qual = var_list[5]
         self.filter = var_list[6]
         self.sample_list = vcf.sample_list
         self.info_list = vcf.info_list
