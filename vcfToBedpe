@@ -17,19 +17,19 @@ vcfToBedpe\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: Convert a VCF file to a BEDPE file")
-    parser.add_argument('-v', '--vcf', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
+    parser.add_argument('-i', '--input', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
 
     # parse the arguments
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
-    if args.vcf == None:
+    if args.input == None:
         if sys.stdin.isatty():
             parser.print_help()
             exit(1)
         else:
-            args.vcf = sys.stdin
+            args.input = sys.stdin
 
     # send back the user input
     return args
@@ -81,8 +81,9 @@ class Variant(object):
 def vcfToBedpe(vcf_file, bedpe_out):
     in_header = True
 
-    # list of BND variant lines that have not yet been matched.
-    unmatched = []
+    # dict of BND variant lines that have not yet been matched.
+    # variant id is the key
+    unmatched = dict()
 
     for line in vcf_file:
         if in_header:
@@ -93,7 +94,6 @@ def vcfToBedpe(vcf_file, bedpe_out):
             else:
                 in_header = False
 
-        # print line.rstrip()
         v = line.rstrip().split('\t')
 
         var = Variant(v, sample_list)
@@ -104,7 +104,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
             name = v[2]
             score = v[5]
 
-            strands = var.info['STR']
+            strands = var.info['STRANDS']
             o1 = strands[0]
             o2 = strands[1]
 
@@ -129,9 +129,13 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     svtype = 'DUP'
                 elif o2 == '-':
                     svtype = 'INV'
-
-            evtype = var.info['EVTYPE']
-
+            
+            ev_list = list()
+            for ev in ['PE', 'SR']:
+                if int(var.info[ev]) > 0:
+                    ev_list.append(ev)
+            evtype = ','.join(ev_list)
+                    
             format_list = v[8].split(':')
             sample_gt = dict()
             var_sample_list = []
@@ -141,13 +145,13 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 format_dict = dict(zip(format_list, gt.split(':')))
                 format_dict['PE'] = int(format_dict['PE'])
                 format_dict['SR'] = int(format_dict['SR'])
-                format_dict['SUP'] = int(format_dict['SUP'])
-                if format_dict['SUP'] > 0:
+                format_dict['SU'] = int(format_dict['SU'])
+                if format_dict['SU'] > 0:
                     var_sample_list.append(sample_list[i])
                 sample_gt[s] = format_dict
 
-            gt_string = '\t'.join(map(str,[sample_gt[s]['SUP'] for s in sample_list]))
-            support = sum([sample_gt[s]['SUP'] for s in sample_list])
+            gt_string = '\t'.join(map(str,[sample_gt[s]['SU'] for s in sample_list]))
+            support = sum([sample_gt[s]['SU'] for s in sample_list])
 
             bedpe_out.write('\t'.join(map(str,
                                           [var.chrom,
@@ -169,19 +173,16 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                        ])) + '\n')
 
         else:
-            if var.info['MATEID'] in [mate.var_id for mate in unmatched]:
-                if 'PRIN' in var.info.keys():
-                    prim = var
-                    sec = mate
-                elif 'PRIN' in mate.info.keys():
-                    prim = mate
-                    sec = var
+            mate_id = var.info['MATEID']
+            if mate_id in unmatched:
+                prim = unmatched[mate_id]
+                sec = var
 
                 b1 = prim.pos
                 b2 = sec.pos
                 score = v[5]
 
-                strands = prim.info['STR']
+                strands = prim.info['STRANDS']
                 o1 = strands[0]
                 o2 = strands[1]
 
@@ -210,8 +211,12 @@ def vcfToBedpe(vcf_file, bedpe_out):
                         elif o2 == '-':
                             svtype = 'INV'
 
-                evtype = var.info['EVTYPE']
-
+                ev_list = list()
+                for ev in ['PE', 'SR']:
+                    if int(var.info[ev]) > 0:
+                        ev_list.append(ev)
+                evtype = ','.join(ev_list)
+                            
                 format_list = v[8].split(':')
                 sample_gt = dict()
                 var_sample_list = []
@@ -221,13 +226,13 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     format_dict = dict(zip(format_list, gt.split(':')))
                     format_dict['PE'] = int(format_dict['PE'])
                     format_dict['SR'] = int(format_dict['SR'])
-                    format_dict['SUP'] = int(format_dict['SUP'])
-                    if format_dict['SUP'] > 0:
+                    format_dict['SU'] = int(format_dict['SU'])
+                    if format_dict['SU'] > 0:
                         var_sample_list.append(sample_list[i])
                     sample_gt[s] = format_dict
 
-                gt_string = '\t'.join(map(str,[sample_gt[s]['SUP'] for s in sample_list]))
-                support = sum([sample_gt[s]['SUP'] for s in sample_list])
+                gt_string = '\t'.join(map(str,[sample_gt[s]['SU'] for s in sample_list]))
+                support = sum([sample_gt[s]['SU'] for s in sample_list])
 
                 bedpe_out.write('\t'.join(map(str,
                                               [prim.chrom,
@@ -248,14 +253,19 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                                gt_string
                                            ])) + '\n')
 
-                unmatched.remove(mate)
-
-                
+                # delete the mate from the dictionary
+                del unmatched[mate_id]
             else:
-                unmatched.append(var)
+                # if the mate isn't already in the dict, add current variant to dictionary
+                unmatched[var.var_id] = var
 
+    if len(unmatched) > 0:
+        sys.stderr.write("Warning: %s unmatched variants\n"
+                         % len(unmatched))
+    # close the files
     bedpe_out.close()
-    
+    vcf_file.close()
+
     return
 
 # --------------------------------------
@@ -266,10 +276,7 @@ def main():
     args = get_args()
 
     # call primary function
-    vcfToBedpe(args.vcf, args.output)
-
-    # close the files
-    args.vcf.close()
+    vcfToBedpe(args.input, args.output)
 
 # initialize the script
 if __name__ == '__main__':
