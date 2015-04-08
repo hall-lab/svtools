@@ -366,11 +366,9 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                            o1,
                                            o2,
                                            var.info['SVTYPE'],
-                                           var.filter,
-                                           var.get_info_string(),
-                                           var.get_format_string()])
-                                           + [var.gts[sample].get_gt_string() for sample in var.sample_list]
-                                      ) + '\n')
+                                           var.filter] +
+                                           v[7:]
+                                          )) + '\n')
         else:
             mate_id = var.info['MATEID']
             if mate_id in unmatched:
@@ -435,11 +433,9 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                                o1,
                                                o2,
                                                prim.info['SVTYPE'],
-                                               prim.filter,
-                                               prim.get_info_string(),
-                                               prim.get_format_string(),
-                                               '\t'.join([prim.gts[sample].get_gt_string() for sample in prim.sample_list])
-                                           ])) + '\n')
+                                               prim.filter] +
+                                               v[7:]
+                                              )) + '\n')
 
                 # delete the mate from the dictionary
                 del unmatched[mate_id]
