@@ -99,12 +99,18 @@ def processBEDPE(bedpeFile, name, dist):
 	writeTrackName(name)
 	if bedpeFile == "stdin":		
 		for line in sys.stdin:
+			# ignore header
+			if line[0] == "#":
+				continue
 			lineList = line.strip().split()
 			if (len(lineList) > 0):
 				bedpe = BEDPE(lineList)
 				bedpeToBlockedBed(bedpe, dist)
 	else:
 		for line in open(bedpeFile, 'r'):
+			# ignore header
+			if line[0] == "#":
+				continue
 			lineList = line.strip().split()
 			if (len(lineList) > 0):
 				bedpe = BEDPE(lineList)
