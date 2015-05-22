@@ -254,9 +254,6 @@ def vcfToBedpe(vcf_file, bedpe_out):
     vcf = Vcf()
     in_header = True
     header = []
-    # dict of BND variant lines that have not yet been matched.
-    # variant id is the key
-    unmatched = dict()    
 
     for line in vcf_file:
         if in_header:
@@ -344,56 +341,50 @@ def vcfToBedpe(vcf_file, bedpe_out):
                                            v[7:]
                                           )) + '\n')
         else:
-            mate_id = var.info['MATEID']
-            if mate_id in unmatched:
-                prim = unmatched[mate_id]
-                sec = var
+            if 'SECONDARY' in var.info:
+                continue
 
-                b1 = prim.pos
-                b2 = sec.pos
-                score = v[5]
+            b1 = var.pos
+            sep = '['
+            if sep not in var.alt:
+                sep = ']'
+            r = re.compile(r'\%s(.+?)\%s' % (sep, sep))
+            chrom2, b2 = r.findall(var.alt)[0].split(':')
+            b2 = int(b2)
 
-                strands = prim.info['STRANDS']
-                o1 = strands[0]
-                o2 = strands[1]
+            score = v[5]
 
-                span = map(int, prim.info['CIPOS'].split(','))
-                s1 = b1 + span[0] - 1
-                e1 = b1 + span[1]
+            strands = var.info['STRANDS']
+            o1 = strands[0]
+            o2 = strands[1]
 
-                span = map(int, sec.info['CIPOS'].split(','))
-                s2 = b2 + span[0] - 1
-                e2 = b2 + span[1]
+            span = map(int, var.info['CIPOS'].split(','))
+            s1 = b1 + span[0] - 1
+            e1 = b1 + span[1]
 
-                ispan = s2 - e1
-                ospan = e2 - s1
+            span = map(int, var.info['CIPOS'].split(','))
+            s2 = b2 + span[0] - 1
+            e2 = b2 + span[1]
 
-                # write bedpe
-                bedpe_out.write('\t'.join(map(str,
-                                              [prim.chrom,
-                                               s1,
-                                               e1,
-                                               sec.chrom,
-                                               s2,
-                                               e2,
-                                               prim.info['EVENT'],
-                                               prim.qual,
-                                               o1,
-                                               o2,
-                                               prim.info['SVTYPE'],
-                                               prim.filter] +
-                                               v[7:]
-                                              )) + '\n')
+            ispan = s2 - e1
+            ospan = e2 - s1
 
-                # delete the mate from the dictionary
-                del unmatched[mate_id]
-            else:
-                # if the mate isn't already in the dict, add current variant to dictionary
-                unmatched[var.var_id] = var
-
-    if len(unmatched) > 0:
-        sys.stderr.write("Warning: %s unmatched variants\n"
-                         % len(unmatched))
+            # write bedpe
+            bedpe_out.write('\t'.join(map(str,
+                                          [var.chrom,
+                                           s1,
+                                           e1,
+                                           chrom2,
+                                           s2,
+                                           e2,
+                                           var.info['EVENT'],
+                                           var.qual,
+                                           o1,
+                                           o2,
+                                           var.info['SVTYPE'],
+                                           var.filter] +
+                                           v[7:]
+                                          )) + '\n')
     # close the files
     bedpe_out.close()
     vcf_file.close()
