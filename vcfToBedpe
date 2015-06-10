@@ -362,7 +362,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
             s1 = b1 + span[0] - 1
             e1 = b1 + span[1]
 
-            span = map(int, var.info['CIPOS'].split(','))
+            span = map(int, var.info['CIEND'].split(','))
             s2 = b2 + span[0] - 1
             e2 = b2 + span[1]
 
