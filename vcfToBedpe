@@ -254,6 +254,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
     vcf = Vcf()
     in_header = True
     header = []
+    sample_list = []
 
     for line in vcf_file:
         if in_header:
