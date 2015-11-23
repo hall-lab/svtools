@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+
+import argparse, sys, os
+from argparse import RawTextHelpFormatter
+
+__author__ = "Abhijit Badve"
+__version__ = "$Revision: 0.0.1 $"
+__date__ = "$Date: 2015-10-23 15:53 $"
+
+# --------------------------------------
+# define functions
+
+def get_args():
+    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
+create coordinates\n\
+author: " + __author__ + "\n\
+version: " + __version__ + "\n\
+description: Generate Bed file required for copynumber annotations program")
+    parser.add_argument('-i', '--input_vcf', type=argparse.FileType('r'), default=None, help='VCF input')
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='output coordinates to write (default: stdout)')
+    # parse the arguments
+    args = parser.parse_args()
+
+    # if no input, check if part of pipe and if so, read stdin.
+    if args.input_vcf == None:
+        if sys.stdin.isatty():
+            parser.print_help()
+            exit(1)
+        else:
+            args.input_vcf = sys.stdin
+    # send back the user input
+    return args
+def generate_bed(vcf_file,output):
+    for line in vcf_file:
+        if line[0] == '#':
+                continue
+        else:
+            v = line.rstrip().split('\t')
+            if 'SVTYPE=BND' not in v[7]:
+                end = filter(lambda x: x if x.startswith('END=') else None, v[7].split(";"))
+                if len(end) == 1:
+                    end = ''.join(end).replace('END=','')
+                else:
+                    exit(1)
+                # if the variant is negative size, swap it.
+                if int(end) < int(v[1]):
+                    output.write('%s:%s-%s\n' % (v[0], end, v[1]))
+                else:
+                    output.write('%s:%s-%s\n' % (v[0], v[1], end))        
+
+    output.write('exit\n')
+    output.close()
+# --------------------------------------
+# main function
+
+def main():
+    # parse the command line args
+    args = get_args()
+
+    # call primary function
+    generate_bed(args.input_vcf, args.output)
+
+    # close the files
+    args.input_vcf.close()
+
+# initialize the script
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except IOError, e:
+        if e.errno != 32:  # ignore SIGPIPE
+            raise     
