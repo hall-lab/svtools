@@ -20,7 +20,7 @@ description: Convert a VCF file to a BEDPE file")
     parser.add_argument('-i', '--input', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
     parser.add_argument('-ci', '--confidence', type=str, required=False, default=1, help='Confidence interval to be added in case absent in the input VCF.\nIf absent and value not provided by user, it adds 1 base')
-    
+
 
     # parse the arguments
     args = parser.parse_args()
@@ -53,22 +53,22 @@ class Reader(object):
             elif line.split('=')[0] == '##reference':
                 self.reference = line.rstrip().split('=')[1]
             elif line.split('=')[0] == '##INFO':
-                a = line[line.find('<')+1:line.find('>')]
+                a = line[line.find('<')+1:line.rfind('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_info(*[b.split('=')[1] for b in r.findall(a)])
                 if  self.info_list[len(self.info_list)-1].id == "SVTYPE":
                     self.add_info("POS",1,'Integer','Position of the variant described in this record')
             elif line.split('=')[0] == '##ALT':
-                a = line[line.find('<')+1:line.find('>')]
+                a = line[line.find('<')+1:line.rfind('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_alt(*[b.split('=')[1] for b in r.findall(a)])
             elif line.split('=')[0] == '##FORMAT':
-                a = line[line.find('<')+1:line.find('>')]
+                a = line[line.find('<')+1:line.rfind('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_format(*[b.split('=')[1] for b in r.findall(a)])
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
-                
+
     # return the VCF header
     def get_header(self):
         header = '\n'.join(['##fileformat=' + self.file_format,
@@ -95,7 +95,7 @@ class Reader(object):
         if id not in [i.id for i in self.info_list]:
             inf = Info(id, number, type, desc)
             self.info_list.append(inf)
-            
+
     def add_alt(self, id, desc):
         if id not in [a.id for a in self.alt_list]:
             alt = Alt(id, desc)
@@ -174,9 +174,9 @@ class Variant(object):
             self.info[i[0]] = i[1]
         #Adding info field pos in header
         self.info["POS"] = self.pos
-            
-        
-       
+
+
+
     def set_info(self, field, value):
         if field in [i.id for i in self.info_list]:
             self.info[field] = value
@@ -261,7 +261,7 @@ def writeBND(prim,sec,v,bedpe_out):
     primary = prim
     secondary = sec
     if prim is None:
-        primary  = sec 
+        primary  = sec
     b1 = primary.pos
     o1 = '+'
     o2 = '+'
@@ -290,8 +290,8 @@ def writeBND(prim,sec,v,bedpe_out):
         else:
             e1 = b1
             s1 = b1
-    
-    if 'CIEND' in primary.info:    
+
+    if 'CIEND' in primary.info:
         span = map(int, primary.info['CIEND'].split(','))
         if o2 == '-':
             span[0]-=1
@@ -309,7 +309,7 @@ def writeBND(prim,sec,v,bedpe_out):
     ospan = e2 - s1
     chrom_A = primary.chrom
     chrom_B = chrom2
-    
+
     # write bedpe
     #Swap fields for no primary present as we did calculation with secondary
     if prim is None:
@@ -320,11 +320,11 @@ def writeBND(prim,sec,v,bedpe_out):
         [e1,e2] = swapFields(e1,e2)
         [o1,o2] = swapFields(o1,o2)
     else:
-        info_A = primary.get_info_string()    
+        info_A = primary.get_info_string()
     if sec is None:
         info_B = "MISSING"
     else:
-        info_B = secondary.get_info_string()    
+        info_B = secondary.get_info_string()
     bedpe_out.write('\t'.join(map(str,
                                   [chrom_A,
                                    max(s1,0),
@@ -340,7 +340,7 @@ def writeBND(prim,sec,v,bedpe_out):
                                    primary.filter] + [info_A] + [info_B] + v[8:]
                                   )) + '\n')
 def swapFields(fieldA, fieldB):
-    temp = fieldA 
+    temp = fieldA
     fieldA = fieldB
     fieldB = temp
     return [fieldA,fieldB]
@@ -362,7 +362,7 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                     line = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
                 header.append(line)
                 continue
-            elif line[0] == '#' and line[1] != '#':    
+            elif line[0] == '#' and line[1] != '#':
                 sample_list = line.rstrip().split('\t')[9:]
                 continue
             else:
@@ -370,7 +370,7 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                 in_header = False
                 vcf.add_header(header)
                 header=vcf.get_header()
-                bedpe_out.write(header[:header.rfind('\n')] + '\n')                
+                bedpe_out.write(header[:header.rfind('\n')] + '\n')
                 if len(sample_list) > 0:
                     bedpe_out.write('\t'.join(['#CHROM_A',
                                                'START_A',
@@ -385,7 +385,7 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                                                'TYPE',
                                                'FILTER',
                                                'INFO_A','INFO_B',
-                                               'FORMAT','\t'.join(map(str,sample_list))] 
+                                               'FORMAT','\t'.join(map(str,sample_list))]
                                              ) + '\n')
                 else:
                     bedpe_out.write('\t'.join(['#CHROM_A',
@@ -402,9 +402,9 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                                                'FILTER',
                                                'INFO_A','INFO_B']
                                               ) + '\n')
-           
-            
-                    
+
+
+
 
 
         v = line.rstrip().split('\t')
@@ -428,13 +428,13 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
             else:
                 e1 = b1
                 s1 = b1
-            if 'CIEND' in var.info:    
+            if 'CIEND' in var.info:
                 span = map(int, var.info['CIEND'].split(','))
                 s2 = b2 + span[0]
                 e2 = b2 + span[1]
             else:
                 e2 = b2
-                s2 = b2    
+                s2 = b2
 
             ispan = s2 - e1
             ospan = e2 - s1
@@ -460,16 +460,16 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                     #primary
                     var1 = bnds[var.info['EVENT']]
                     writeBND(var1,var,v,bedpe_out)
-                    del bnds[var.info['EVENT']]                              
+                    del bnds[var.info['EVENT']]
                 else:
                     sec_bnds.update({var.info['EVENT']:var})
-            else: 
+            elif 'EVENT' in var.info.keys():
                 bnds.update({var.info['EVENT']:var})
                 continue
     intersected_keys = bnds.viewkeys() & sec_bnds.viewkeys()
     for key in intersected_keys:
        writeBND(bnds[key],sec_bnds[key],v,bedpe_out)
-       del bnds[key] 
+       del bnds[key]
        del sec_bnds[key]
     if bnds is not None:
         for bnd in bnds:
@@ -479,7 +479,7 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
         for bnd in sec_bnds:
             sys.stderr.write('Warning: missing primary multiline variant at ID:' + sec_bnds[bnd].info['EVENT'] + '\n')
             writeBND(None,sec_bnds[bnd],v,bedpe_out)
-            
+
     # close the files
     bedpe_out.close()
     vcf_file.close()
@@ -503,4 +503,4 @@ if __name__ == '__main__':
         sys.exit(main())
     except IOError, e:
         if e.errno != 32:  # ignore SIGPIPE
-            raise 
+            raise
