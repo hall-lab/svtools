@@ -473,17 +473,25 @@ zcat merged.pruned.cohort1.sv.gt.cn.bedpe | svtools varlookup -a stdin -b merged
 # ----------------------------------------
 # Classify 
 # ----------------------------------------
-# Program: classify
-# Author: Colby Chiang
-# Path: /gscmnt/gc2719/halllab/bin/classify
-# Version: 0.0.2 
-# Description:classify structural variants
-# Usage: classify [-h] [-i VCF] [-g FILE] [-e FILE] [-a BED] [-f FLOAT] [-s FLOAT] [-r FLOAT]
-
+# author: Abhijit Badve
+# version: $Revision: 0.0.1 $
+# description: classify structural variants
+#
+# optional arguments:
+#   -h, --help            show this help message and exit
+#   -t String, --tSet String
+#                         high quality deletions & duplications training dataset[vcf]/[stdin]
+#   -i VCF, --input VCF   test vcf input for applying a model
+#   -o VCF, --output VCF  vcf output [stdout]
+#   --debug               debugging verbosity
+#
+#Step 1:
+#Create a training VCF
+#fixed set of known, high-quality variants that then typed for each set of individuals to train the model
+#Step 2:
 #command
-zcat merged.pruned.cohort1.sv.gt.cn.vcf.gz | svtools classify \
-        -a repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz \
-        -g gender.txt 
+cat training.data.vcf | classify -t - -i test.vcf  -o out.vcf
+#Note: training vcf should have all the individual samples as in test vcf
 
 # ----------------------------------------------------
 # 9. Plot the SV counts in R before and after merging
