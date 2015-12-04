@@ -469,7 +469,6 @@ def calc_params(training_vcf):
     tSetAdj["logr_adj"] = tSetAdj["logr"]
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
-        #logsz = sm.add_constant(small_hom_dels["logsz"])
         re_hom = smf.ols('offset~logsz',small_hom_dels)
         re_hom_m = re_hom.fit()
         with open('re_hom_m','w') as f:
@@ -496,7 +495,6 @@ def calc_params(training_vcf):
     means = pd.pivot_table(training_agg_mean_logr.reset_index(), values = 'logr_adj', index = ['sample','svtype'], columns = ['gt']).reset_index()
     params = pd.concat([sds,means], axis=1)[sum([range(0,5),range(7,10)],[])]
     params.columns = ['sample','svtype','sd0','sd1','sd2','mean0','mean1','mean2']
-    params.to_csv("params.csv")
     return params
 # apply model to reclassify test set
 def classify(vcf_in,vcf_out,params,re_het_m,re_hom_m,debug):
@@ -507,25 +505,20 @@ def classify(vcf_in,vcf_out,params,re_het_m,re_hom_m,debug):
     test_logr = defaultdict(list)
     variants = defaultdict(list)
     parse_vcf(variants, vcf_in, vcf_out, test_logr, test_set)
-    # newout = pd.DataFrame()
     test_set = pd.DataFrame(data = test_set)
     test_set.columns = ['var_id','sample','svtype','svlen','af','gt','cn','logsz','logr']
     test_set["logr_adj"] = test_set["logr"]
     small_hom_dels = small_het_dels = pd.DataFrame()
     small_hom_dels = test_set[((test_set["svtype"] == 'DEL') & (test_set["gt"] == '1/1') & (test_set["svlen"] < 1000))].reset_index()
     small_het_dels = test_set[((test_set["svtype"] == 'DEL') & (test_set["gt"] == '0/1') & (test_set["svlen"] < 1000))].reset_index()
-    #hom_predict = re_hom_m.predict(small_hom_dels[["logr","logsz"]])
-    #het_predict = re_het_m.predict(small_het_dels[["logr","logsz"]])
-    # for i in range(len(small_hom_dels)):
     small_hom_dels["logr_adj"] = small_hom_dels["logr"] - re_hom_m.predict(small_hom_dels[["logr","logsz"]])
-    # for i in range(len(small_het_dels)):
     small_het_dels["logr_adj"] = small_het_dels["logr"] - re_het_m.predict(small_het_dels[["logr","logsz"]])
     # only consider the subset of individuals that are not wildtype
     test_set_merged = pd.DataFrame()
-    small_hom_dels.to_csv("small_hom.csv")
-    small_het_dels.to_csv("small_het.csv")
     test_set[((test_set["svlen"] > 1000) & (test_set["gt"] == '0/0'))].to_csv("larger_homs.csv")
-    test_set_merged = pd.concat([small_hom_dels,small_het_dels,test_set[((test_set["svlen"] > 1000) & (test_set["gt"]!= '0/0'))],test_set[((test_set["svlen"] < 1000) & (test_set["gt"]!= '0/0') & (test_set["svtype"] == 'DUP'))]],axis=0)
+    test_set_merged = pd.concat([small_hom_dels,small_het_dels,\
+                            test_set[((test_set["svlen"] > 1000) & (test_set["gt"]!= '0/0'))],\
+                            test_set[((test_set["svlen"] < 1000) & (test_set["gt"]!= '0/0') & (test_set["svtype"] == 'DUP'))]],axis=0)
     test_set_merged = pd.merge(test_set_merged,params, how='left',on=['sample','svtype'],indicator=False)
     test_set_merged['lld0'] = test_set_merged.apply(lambda row:lld(row["logr_adj"], row["mean0"],row["sd0"]), axis=1)
     test_set_merged['lld1'] = test_set_merged.apply(lambda row:lld(row["logr_adj"], row["mean1"],row["sd1"]), axis=1)
@@ -534,7 +527,6 @@ def classify(vcf_in,vcf_out,params,re_het_m,re_hom_m,debug):
         temp  = test_set_merged[test_set_merged.var_id == vid]
         nb_svtype =  reclass_nb_var(temp, p_cnv,frac_BND)
         write_output(variants[vid],vcf_out,nb_svtype)
-        #newout = newout.append(temp)
 # main function
 def main():
     # parse the command line args
@@ -544,8 +536,10 @@ def main():
     params = calc_params(args.tSet)
     with open('re_hom_m','r') as f:
       re_hom_m = pickle.load(f)
+    f.close()
     with open('re_het_m','r') as f:
       re_het_m = pickle.load(f)
+    f.close()
     # call primary function
     classify(args.vcf_in,
              args.vcf_out,
