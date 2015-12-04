@@ -47,6 +47,7 @@ class Vcf(object):
         self.file_format = 'VCFv4.2'
         # self.fasta = fasta
         self.reference = ''
+        self.filter = ''
         self.sample_list = []
         self.info_list = []
         self.format_list = []
@@ -59,6 +60,8 @@ class Vcf(object):
                 self.file_format = line.rstrip().split('=')[1]
             elif line.split('=')[0] == '##reference':
                 self.reference = line.rstrip().split('=')[1]
+            elif line.split('=')[0] == '##FILTER':
+                self.filter = line.rstrip().split('=')[1]    
             elif line.split('=')[0] == '##INFO':
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
@@ -75,24 +78,45 @@ class Vcf(object):
                 self.sample_list = line.rstrip().split('\t')[9:]
     # return the VCF header
     def get_header(self):
-        header = '\n'.join(['##fileformat=' + self.file_format,
-                            '##fileDate=' + time.strftime('%Y%m%d'),
-                            '##reference=' + self.reference] + \
-                           [i.hstring for i in self.info_list] + \
-                           [a.hstring for a in self.alt_list] + \
-                           [f.hstring for f in self.format_list] + \
-                           ['\t'.join([
-                               '#CHROM',
-                               'POS',
-                               'ID',
-                               'REF',
-                               'ALT',
-                               'QUAL',
-                               'FILTER',
-                               'INFO',
-                               'FORMAT'] + \
-                                      self.sample_list
-                                  )]) + '\n'
+        if self.filter != '':        
+            header = '\n'.join(['##fileformat=' + self.file_format,
+                                '##fileDate=' + time.strftime('%Y%m%d'),
+                                '##reference=' + self.reference,
+                                '##filter=' + self.filter] + \
+                               [i.hstring for i in self.info_list] + \
+                               [a.hstring for a in self.alt_list] + \
+                               [f.hstring for f in self.format_list] + \
+                               ['\t'.join([
+                                   '#CHROM',
+                                   'POS',
+                                   'ID',
+                                   'REF',
+                                   'ALT',
+                                   'QUAL',
+                                   'FILTER',
+                                   'INFO',
+                                   'FORMAT'] + \
+                                          self.sample_list
+                                      )]) + '\n'
+        else:
+            header = '\n'.join(['##fileformat=' + self.file_format,
+                                '##fileDate=' + time.strftime('%Y%m%d'),
+                                '##reference=' + self.reference] + \
+                               [i.hstring for i in self.info_list] + \
+                               [a.hstring for a in self.alt_list] + \
+                               [f.hstring for f in self.format_list] + \
+                               ['\t'.join([
+                                   '#CHROM',
+                                   'POS',
+                                   'ID',
+                                   'REF',
+                                   'ALT',
+                                   'QUAL',
+                                   'FILTER',
+                                   'INFO',
+                                   'FORMAT'] + \
+                                          self.sample_list
+                                      )]) + '\n'
         return header
 
     def add_info(self, id, number, type, desc):
@@ -483,13 +507,18 @@ def classify(vcf_in,vcf_out,params,re_het_m,re_hom_m,debug):
     test_logr = defaultdict(list)
     variants = defaultdict(list)
     parse_vcf(variants, vcf_in, vcf_out, test_logr, test_set)
+    # newout = pd.DataFrame()
     test_set = pd.DataFrame(data = test_set)
     test_set.columns = ['var_id','sample','svtype','svlen','af','gt','cn','logsz','logr']
     test_set["logr_adj"] = test_set["logr"]
     small_hom_dels = small_het_dels = pd.DataFrame()
     small_hom_dels = test_set[((test_set["svtype"] == 'DEL') & (test_set["gt"] == '1/1') & (test_set["svlen"] < 1000))].reset_index()
     small_het_dels = test_set[((test_set["svtype"] == 'DEL') & (test_set["gt"] == '0/1') & (test_set["svlen"] < 1000))].reset_index()
+    #hom_predict = re_hom_m.predict(small_hom_dels[["logr","logsz"]])
+    #het_predict = re_het_m.predict(small_het_dels[["logr","logsz"]])
+    # for i in range(len(small_hom_dels)):
     small_hom_dels["logr_adj"] = small_hom_dels["logr"] - re_hom_m.predict(small_hom_dels[["logr","logsz"]])
+    # for i in range(len(small_het_dels)):
     small_het_dels["logr_adj"] = small_het_dels["logr"] - re_het_m.predict(small_het_dels[["logr","logsz"]])
     # only consider the subset of individuals that are not wildtype
     test_set_merged = pd.DataFrame()
@@ -505,6 +534,7 @@ def classify(vcf_in,vcf_out,params,re_het_m,re_hom_m,debug):
         temp  = test_set_merged[test_set_merged.var_id == vid]
         nb_svtype =  reclass_nb_var(temp, p_cnv,frac_BND)
         write_output(variants[vid],vcf_out,nb_svtype)
+        #newout = newout.append(temp)
 # main function
 def main():
     # parse the command line args
