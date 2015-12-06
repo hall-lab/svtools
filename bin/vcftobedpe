@@ -2,7 +2,6 @@
 
 import argparse, sys
 import math, time, re
-import gzip
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang / Abhijit Badve"
@@ -54,17 +53,17 @@ class Reader(object):
             elif line.split('=')[0] == '##reference':
                 self.reference = line.rstrip().split('=')[1]
             elif line.split('=')[0] == '##INFO':
-                a = line[line.find('<')+1:line.rfind('>')]
+                a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_info(*[b.split('=')[1] for b in r.findall(a)])
                 if  self.info_list[len(self.info_list)-1].id == "SVTYPE":
                     self.add_info("POS",1,'Integer','Position of the variant described in this record')
             elif line.split('=')[0] == '##ALT':
-                a = line[line.find('<')+1:line.rfind('>')]
+                a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_alt(*[b.split('=')[1] for b in r.findall(a)])
             elif line.split('=')[0] == '##FORMAT':
-                a = line[line.find('<')+1:line.rfind('>')]
+                a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_format(*[b.split('=')[1] for b in r.findall(a)])
             elif line[0] == '#' and line[1] != '#':
@@ -422,6 +421,7 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
 
 
 
+
         v = line.rstrip().split('\t')
         var = Variant(v, vcf)
         if var.info['SVTYPE'] != 'BND':
@@ -478,7 +478,7 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                     del bnds[var.info['EVENT']]
                 else:
                     sec_bnds.update({var.info['EVENT']:var})
-            elif 'EVENT' in var.info.keys():
+            else:
                 bnds.update({var.info['EVENT']:var})
                 continue
     intersected_keys = bnds.viewkeys() & sec_bnds.viewkeys()
