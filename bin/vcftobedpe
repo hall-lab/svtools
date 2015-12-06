@@ -2,6 +2,7 @@
 
 import argparse, sys
 import math, time, re
+import gzip
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang / Abhijit Badve"
@@ -353,6 +354,21 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
     bnds = dict()
     sec_bnds = dict()
     v = []
+
+    # XXX: Poor mans Gzip decompression. All gets load into memory.
+    # Is it a gzip stream or file?
+    if vcf_file.read(2) == '\x1f\x8b':
+        vcf_file.seek(0)
+        # Feeding in a gzipped filename
+        if "gz" in vcf_file.name:
+            vcf_gz = gzip.GzipFile(fileobj=vcf_file)
+            vcf_file = vcf_gz
+        # Piping in a gzipped file (stdin)
+        else:
+            vcf_gz = gzip.GzipFile(fileobj=vcf_file)
+            vcf_file = vcf_gz
+            vcf_file.seek(0)
+
     for line in vcf_file:
         if in_header:
             if line[0:2] == '##':
@@ -402,7 +418,6 @@ def vcfToBedpe(vcf_file, bedpe_out,ci):
                                                'FILTER',
                                                'INFO_A','INFO_B']
                                               ) + '\n')
-
 
 
 
