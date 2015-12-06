@@ -2,6 +2,7 @@
 
 import argparse, sys
 import math, time, re
+import gzip
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang / Abhijit Badve"
