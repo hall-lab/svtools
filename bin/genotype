@@ -356,38 +356,38 @@ def count_pairedend(chrom,pos,ci,mate_chrom,mate_pos,mate_ci,o1,o2,svtype,sample
     fetch_flank = sample.get_fetch_flank(z)
 
     if o1 == '+' or svtype == 'INV':
-    # survey for concordant read pairs
-    for read in sample.bam.fetch(chrom, max(pos - (fetch_flank), 0), pos):
-        lib = sample.get_lib(read.opt('RG')) # get the read's library
-        if (read.is_reverse
-            or not read.mate_is_reverse
-            or read.is_secondary
-            or read.is_unmapped
-            or read.mate_is_unmapped
-            or read.is_duplicate
-            or read.pos + discflank > pos
-            or read.pnext + lib.read_length - discflank < pos
-            or read.tid != read.rnext):
-            continue
-        else:
-            mate_mapq = get_mate_mapq(sample.bam, read)
-            ospan = get_mate_5prime(sample.bam, read) - read.pos
-            ispan1 = read.pos + discflank
-            ispan2 = get_mate_5prime(sample.bam, read) - discflank - 1 # speed up here
-            ispan = ispan2 - ispan1
-            prob_conc = p_concordant(ospan, abs(mate_pos - pos), lib.dens)
+        # survey for concordant read pairs
+        for read in sample.bam.fetch(chrom, max(pos - (fetch_flank), 0), pos):
+            lib = sample.get_lib(read.opt('RG')) # get the read's library
+            if (read.is_reverse
+                or not read.mate_is_reverse
+                or read.is_secondary
+                or read.is_unmapped
+                or read.mate_is_unmapped
+                or read.is_duplicate
+                or read.pos + discflank > pos
+                or read.pnext + lib.read_length - discflank < pos
+                or read.tid != read.rnext):
+                continue
+            else:
+                mate_mapq = get_mate_mapq(sample.bam, read)
+                ospan = get_mate_5prime(sample.bam, read) - read.pos
+                ispan1 = read.pos + discflank
+                ispan2 = get_mate_5prime(sample.bam, read) - discflank - 1 # speed up here
+                ispan = ispan2 - ispan1
+                prob_conc = p_concordant(ospan, abs(mate_pos - pos), lib.dens)
 
-            if ispan2 > pos and prob_conc is not None: # bail if neither concordant or discordant
-                conc_counter += 1
-                conc_scaled_counter += prob_conc * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
-                # if a deletion, iterate the discordants for these too
-                if svtype == 'DEL' and ispan2 >= mate_ci[0]:
-                    # disc_p = (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
-                    # if disc_p > 0.5:
-                    #     print ispan2, mate_ci[0]
-                    #     print read
-                    disc_counter += 1
-                    disc_scaled_counter += (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
+                if ispan2 > pos and prob_conc is not None: # bail if neither concordant or discordant
+                    conc_counter += 1
+                    conc_scaled_counter += prob_conc * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
+                    # if a deletion, iterate the discordants for these too
+                    if svtype == 'DEL' and ispan2 >= mate_ci[0]:
+                        # disc_p = (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
+                        # if disc_p > 0.5:
+                        #     print ispan2, mate_ci[0]
+                        #     print read
+                        disc_counter += 1
+                        disc_scaled_counter += (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
 
     # now look at discordants for corresponding SV types
     if svtype != 'DEL':
@@ -442,37 +442,37 @@ def count_pairedend(chrom,pos,ci,mate_chrom,mate_pos,mate_ci,o1,o2,svtype,sample
                         disc_scaled_counter += (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
 
     if o1 == '-' or svtype == 'INV':
-    # survey for concordant read pairs
-    for read in sample.bam.fetch(chrom, max(pos, 0), pos + (fetch_flank)):
-        lib = sample.get_lib(read.opt('RG')) # get the read's library
-        if (not read.is_reverse
-            or read.mate_is_reverse
-            or read.is_secondary
-            or read.is_unmapped
-            or read.mate_is_unmapped
-            or read.is_duplicate
-            or read.aend - discflank < pos
-            or read.pnext + discflank > pos
-            or read.tid != read.rnext):
-            continue
-        else:
-            mate_mapq = get_mate_mapq(sample.bam, read)
-            ospan = read.aend - read.pnext
-            ispan1 = read.aend - discflank - 1
-            ispan2 = read.pnext + discflank
-            ispan = ispan1 - ispan2
-            prob_conc = p_concordant(ospan, abs(mate_pos - pos), lib.dens)
+        # survey for concordant read pairs
+        for read in sample.bam.fetch(chrom, max(pos, 0), pos + (fetch_flank)):
+            lib = sample.get_lib(read.opt('RG')) # get the read's library
+            if (not read.is_reverse
+                or read.mate_is_reverse
+                or read.is_secondary
+                or read.is_unmapped
+                or read.mate_is_unmapped
+                or read.is_duplicate
+                or read.aend - discflank < pos
+                or read.pnext + discflank > pos
+                or read.tid != read.rnext):
+                continue
+            else:
+                mate_mapq = get_mate_mapq(sample.bam, read)
+                ospan = read.aend - read.pnext
+                ispan1 = read.aend - discflank - 1
+                ispan2 = read.pnext + discflank
+                ispan = ispan1 - ispan2
+                prob_conc = p_concordant(ospan, abs(mate_pos - pos), lib.dens)
 
-            if ispan2 < pos and prob_conc is not None: # bail if neither concordant or discordant
-                conc_counter += 1
-                conc_scaled_counter += prob_conc * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
-                if svtype == 'DEL' and ispan2 <= mate_ci[1]:
-                    # disc_p = (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
-                    # if disc_p > 0.5:
-                    #     print ispan1, mate_ci[1]
-                    #     print read
-                    disc_counter += 1
-                    disc_scaled_counter += (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
+                if ispan2 < pos and prob_conc is not None: # bail if neither concordant or discordant
+                    conc_counter += 1
+                    conc_scaled_counter += prob_conc * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
+                    if svtype == 'DEL' and ispan2 <= mate_ci[1]:
+                        # disc_p = (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
+                        # if disc_p > 0.5:
+                        #     print ispan1, mate_ci[1]
+                        #     print read
+                        disc_counter += 1
+                        disc_scaled_counter += (1 - prob_conc) * (1-10**(-read.mapq/10.0)) * (1-10**(-mate_mapq/10.0))
 
     # now look at discordants for corresponding SV types
     if svtype != 'DEL':
