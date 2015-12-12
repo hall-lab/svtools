@@ -1,6 +1,7 @@
 ===========
 SVTOOls
 ===========
+Warning: This suite is under active development and not a stable version. We can't  provide the support for this version of svtools.
 
 svtools: comprehensive utilities to explore structural variations in genomes.
 
