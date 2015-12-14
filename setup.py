@@ -6,7 +6,7 @@ setup(
     version='0.1.1',
     author='Ira Hall lab',
     author_email='abadve@genome.wustl.edu',
-    data_files=[('data', ['data/repeatMasker.recent.lt200millidiv.b37.sorted.bed.gz']),('data', ['data/repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz'])],
+    #data_files=[('data', ['data/repeatMasker.recent.lt200millidiv.b37.sorted.bed.gz']),('data', ['data/repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz'])],
     scripts=["bin/vcftobedpe","bin/varlookup","bin/svtools","bin/vcfsort",\
              "bin/bedpesort","bin/prune","bin/copynumber","bin/bedpetovcf",\
              "bin/bedpetobed12","bin/afreq","bin/classify","bin/genotype",\
