@@ -4,10 +4,9 @@
 # =============================================
 
 #svtools source
-SVTOOLS_PATH=/gscuser/abadve/svtools/dist/svtools-0.1.1.tar.gz
+git clone https://github.com/hall-lab/svtools
+#enter username and password
 #Installation:
-tar -xvzf svtools-0.1.1.tar.gz
-cd svtools-0.1.1
 python setup.py build
 python setup.py install --user
 
