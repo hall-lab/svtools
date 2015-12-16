@@ -7,6 +7,7 @@ from argparse import RawTextHelpFormatter
 __author__ = "Colby Chiang / Abhijit Badve"
 __version__ = "$Revision: 0.0.2 $"
 __date__ = "$Date: 2015-09-02 15:00 $"
+__revision__ = "added support if in case cipos and ciend are absent"
 
 # --------------------------------------
 # define functions
@@ -43,7 +44,10 @@ class Bedpe(object):
             self.s2 = int(bedList[4])
             self.e2 = int(bedList[5])
             self.name = bedList[6]
-            self.score = float(bedList[7])
+            if bedList[7].isdigit():
+                self.score = float(bedList[7])
+            else:
+                self.score = bedList[7]
             self.o1 = bedList[8]
             self.o2 = bedList[9]
             self.filter = bedList[11]
@@ -57,7 +61,12 @@ class Bedpe(object):
             del self.misc[1]
             self.cipos = re.split("=|,",''.join(filter(lambda x: 'CIPOS=' in x, self.misc[0].split(";"))))
             self.ciend = re.split("=|,",''.join(filter(lambda x: 'CIEND=' in x, self.misc[0].split(";"))))
+            if self.cipos[0] == '':
+                self.cipos = [0,0]
+            if self.ciend[0] == '':
+                self.ciend = [0,0]
             # get variant samples
+            #svtype from strand info
             # if self.c1 == self.c2:
 #                             if self.o1 == '+' and self.o2 == '-':
 #                                 self.svtype = 'DEL'

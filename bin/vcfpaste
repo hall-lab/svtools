@@ -8,6 +8,7 @@ from argparse import RawTextHelpFormatter
 __author__ = "Colby Chiang / Abhijit Badve"
 __version__ = "$Revision: 0.0.2 $"
 __date__ = "$Date: 2015-10-02 14:31 $"
+__revision__ =" Added MSQ field and recalculation for read depth support"
 
 # --------------------------------------
 # define functions
@@ -285,6 +286,9 @@ class Genotype(object):
         return ':'.join(map(str,g_list))
 # primary function
 def svt_join(master, vcf_list):
+    # if master not provided, set as first VCF
+    if master is None:
+        master = open(vcf_list[0].name)
     in_header = True
     header = []
     vcf_out = sys.stdout
@@ -390,11 +394,12 @@ def svt_join(master, vcf_list):
             else:
                 msq = '.'
             master_v = master_v + [var.genotype(s).get_gt_string() for s in var.sample_list]
-            master_var = Variant(master_v,master_vcf)
-            master_var.set_info("PE",str(var_pe))
-            master_var.set_info("SR",str(var_sr))
-            master_var.set_info("SU",str(var_su))
-            master_var.set_info("MSQ",str(msq))
+        #write the pasted vcf
+        master_var = Variant(master_v,master_vcf)
+        master_var.set_info("PE",str(var_pe))
+        master_var.set_info("SR",str(var_sr))
+        master_var.set_info("SU",str(var_su))
+        master_var.set_info("MSQ",str(msq))
         vcf_out.write(master_var.get_var_string() + '\n')
         # close files
     master.close()
