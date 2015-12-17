@@ -265,7 +265,6 @@ class Genotype(object):
             if field not in self.variant.active_formats:
                 self.variant.active_formats.append(field)
                 # sort it to be in the same order as the format_list in header
-                self.variant.active_formats.sort(key=lambda x: [f.id for f in self.variant.format_list].index(x))
         else:
             sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
             exit(1)
@@ -275,6 +274,7 @@ class Genotype(object):
 
     def get_gt_string(self):
         g_list = list()
+        self.variant.active_formats.sort(key=lambda x: [f.id for f in self.variant.format_list].index(x))
         for f in self.variant.active_formats:
             if f in self.format:
                 if type(self.format[f]) == float:
