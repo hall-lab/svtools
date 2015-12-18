@@ -237,7 +237,8 @@ class Variant(object):
         return ':'.join(f_list)
 
     def genotype(self, sample_name):
-        if sample_name in self.sample_list:
+        # Hash lookup should be quicker than iterating over the list
+        if sample_name in self.sample_columns:
             return self.gts[sample_name]
         else:
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
