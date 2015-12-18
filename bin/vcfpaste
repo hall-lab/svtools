@@ -178,8 +178,7 @@ class Variant(object):
         self.info_list = vcf.info_list
         self.info = dict()
         self.format_list = vcf.format_list
-        # XXX Not sure if we really need this, but may help
-        #self.formats = set([i.id for i in self.format_list])
+        self.formats = set([i.id for i in self.format_list])
         self.active_formats = set()
         self.gts = dict()
         
@@ -262,7 +261,7 @@ class Genotype(object):
         self.set_format('GT', gt)
 
     def set_format(self, field, value):
-        if field in [i.id for i in self.variant.format_list]:
+        if field in self.variant.formats:
             self.format[field] = value
             if field not in self.variant.active_formats:
                 self.variant.active_formats.add(field)
