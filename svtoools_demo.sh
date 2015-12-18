@@ -358,7 +358,7 @@ do
              -s $SM \
              -w 100 \
              -r $ROOT \
-             -c coordinates
+             -c coordinates \
              -v $VCF \
           > cn/$SAMPLE.vcf"
 done < $DIR/notes/batch.txt
@@ -416,9 +416,9 @@ mkdir -p pre-merged_sv_count
 while read SAMPLE BAM 
 do 
     SM=`sambamba view -H $BAM | grep -m 1 "^@RG" | awk '{ for (i=1;i<=NF;++i) { if ($i~"^SM:") SM=$i; gsub("^SM:","",SM); } print SM }'`
-	 bomb  -m 2 -J $SAMPLE.svcount  -o log/%J.log -e log/%J.log\
+	 bomb  -m 2 -J $SAMPLE.svcount  -o log/%J.log -e log/%J.log \
         "svcounts.sh \
-            pre-merged_gt/$SAMPLE.sv.gt.vcf.gz $SM 0\
+            pre-merged_gt/$SAMPLE.sv.gt.vcf.gz $SM 0 \
             > pre-merged_sv_count/$SAMPLE.count.q0.txt"
 done < $DIR/notes/batch.txt
 
@@ -434,9 +434,9 @@ mkdir -p sv_count
 while read SAMPLE BAM PROJECT 
 do 
 	SM=`sambamba view -H $BAM | grep -m 1 "^@RG" | awk '{ for (i=1;i<=NF;++i) { if ($i~"^SM:") SM=$i; gsub("^SM:","",SM); } print SM }'`
-	bomb -m 2 -J $SAMPLE.svcount -o log/%J.log -e log/%J.log\
+	bomb -m 2 -J $SAMPLE.svcount -o log/%J.log -e log/%J.log \
 	    "sv_counts.sh \
-	        gt/$SAMPLE.vcf $SM 0\
+	        gt/$SAMPLE.vcf $SM 0 \
 	        > sv_count/$SAMPLE.count.q0.txt"
 done < $DIR/notes/batch.txt
 
