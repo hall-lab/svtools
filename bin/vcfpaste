@@ -36,6 +36,7 @@ class Vcf(object):
         # self.fasta = fasta
         self.reference = ''
         self.sample_list = []
+        self.sample_columns = dict()
         self.info_list = []
         self.format_list = []
         self.alt_list = []
@@ -124,12 +125,13 @@ class Vcf(object):
             self.format_list.append(fmt)
 
     def add_sample(self, name):
+        self.sample_columns[name] = len(self.sample_list) + 9
         self.sample_list.append(name)
 
     # get the VCF column index of a sample
     # NOTE: this is zero-based, like python arrays
     def sample_to_col(self, sample):
-        return self.sample_list.index(sample) + 9
+        return self.sample_columns[sample]
 
     class Info(object):
         def __init__(self, id, number, type, desc):
@@ -175,6 +177,7 @@ class Variant(object):
             self.qual = float(var_list[5])
         self.filter = var_list[6]
         self.sample_list = vcf.sample_list
+        self.sample_columns = vcf.sample_columns
         self.info_list = vcf.info_list
         self.info = dict()
         self.format_list = vcf.format_list
@@ -319,8 +322,8 @@ def svt_join(master, vcf_list):
                             line_v = line.rstrip().split('\t')
                             vcf_header.append(line)
                         for sample in line_v[9:]:
-                            master_vcf.sample_list.append(sample)
-                            vcf_obj.sample_list.append(sample)
+                            master_vcf.add_sample(sample)
+                            vcf_obj.add_sample(sample)
                         vcf_obj.add_header(vcf_header)
                         break
                 header.append('\t'.join(master_line.rstrip().split('\t')[:8] + ['FORMAT'] + master_vcf.sample_list))
