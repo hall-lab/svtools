@@ -6,9 +6,10 @@ from collections import Counter
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang / Abhijit Badve"
-__version__ = "$Revision: 0.0.2 $"
-__date__ = "$Date: 2015-10-02 14:31 $"
-__revision__ =" Added MSQ field and recalculation for read depth support"
+__version__ = "$Revision: 0.0.3 $"
+__date__ = "$Date: 2016-03-01 14:31 $"
+__revision__ ="Corrected MSQ field recalculation"
+
 
 # --------------------------------------
 # define functions
@@ -333,7 +334,7 @@ def svt_join(master, vcf_list):
                    
                 in_header = False
                 continue
-        master_v = master_line.rstrip().split('\t')
+        master_v = master_line.rstrip().split('\t')[0:8]
         master_chrom = master_v[0]
         master_pos = master_v[1]
        
@@ -383,18 +384,19 @@ def svt_join(master, vcf_list):
             var_sr += float(var.get_info("SR"))
             var_su = float(var_pe) + float(var_sr)
             gt = [var.genotype(s).get_format('GT') for s in var.sample_list]
-            positive_gt = filter(lambda x: '1/1' or '0/1' in x, gt)
+            positive_gt = filter(lambda x: x == '0/1' or x == '1/1', gt)
             num_pos += len(positive_gt)
             try:
-                sum_sq += sum([float(var.genotype(s).get_format('SQ')) for s in var.sample_list])
+                sum_sq += sum([float(var.genotype(s).get_format('SQ')) for s in var.sample_list \
+                if var.genotype(s).get_format('GT') == '1/1' or var.genotype(s).get_format('GT') == '0/1'])
             except ValueError:
                 sum_sq += 0
-            if num_pos > 0:
-                msq = '%0.2f' % (sum_sq / num_pos)
-            else:
-                msq = '.'
             master_v = master_v + [var.genotype(s).get_gt_string() for s in var.sample_list]
-        #write the pasted vcf
+        if num_pos > 0:
+            msq = '%0.2f' % (sum_sq / num_pos)
+        else:
+            msq = '.'
+        #write the pasted vcf    
         master_var = Variant(master_v,master_vcf)
         master_var.set_info("PE",str(var_pe))
         master_var.set_info("SR",str(var_sr))
