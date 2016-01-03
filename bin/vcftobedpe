@@ -45,6 +45,7 @@ class Reader(object):
         self.format_list = []
         self.alt_list = []
         self.add_format('GT', 1, 'String', 'Genotype')
+        self.misc = list()
 
     def add_header(self, header):
         for line in header:
@@ -66,6 +67,8 @@ class Reader(object):
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_format(*[b.split('=')[1] for b in r.findall(a)])
+            elif line.startswith('##') and not line.startswith('##fileDate'):
+                self.misc.append(line.rstrip())
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
                 
@@ -77,6 +80,7 @@ class Reader(object):
                            [i.hstring for i in self.info_list] + \
                            [a.hstring for a in self.alt_list] + \
                            [f.hstring for f in self.format_list] + \
+                           [l for l in self.misc] + \
                            ['\t'.join([
                                '#CHROM',
                                'POS',
@@ -153,7 +157,7 @@ class Variant(object):
         self.info_list = vcf.info_list
         self.info = dict()
         self.format_list = vcf.format_list
-        self.active_formats = list()
+        self.active_formats = set()
         self.gts = dict()
         # make a genotype for each sample at variant
         for i in xrange(len(self.sample_list)):
@@ -235,9 +239,7 @@ class Genotype(object):
         if field in [i.id for i in self.variant.format_list]:
             self.format[field] = value
             if field not in self.variant.active_formats:
-                self.variant.active_formats.append(field)
-                # sort it to be in the same order as the format_list in header
-                self.variant.active_formats.sort(key=lambda x: [f.id for f in self.variant.format_list].index(x))
+                self.variant.active_formats.add(field)
         # else:
         #     sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
         #     exit(1)
@@ -247,14 +249,15 @@ class Genotype(object):
 
     def get_gt_string(self):
         g_list = list()
-        for f in self.variant.active_formats:
-            if f in self.format:
-                if type(self.format[f]) == float:
-                    g_list.append('%0.2f' % self.format[f])
+        for f in self.variant.format_list:
+            if f.id in self.variant.active_formats:
+                if f.id in self.format:
+                    if type(self.format[f.id]) == float:
+                        g_list.append('%0.2f' % self.format[f.id])
+                    else:
+                        g_list.append(self.format[f.id])
                 else:
-                    g_list.append(self.format[f])
-            else:
-                g_list.append('.')
+                    g_list.append('.')
         return ':'.join(map(str,g_list))
 
 def writeBND(prim,sec,v,bedpe_out):
