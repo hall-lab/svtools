@@ -90,7 +90,7 @@ def main():
         out, err = p.communicate()
         if err is not None:
             sys.stderr.write(err)
-        return 1
+            return 1
     #unknown
     else:
         sys.stderr.write("\terror: unrecognized arguments:" + sys.argv[1] + '\n\n')
@@ -103,4 +103,4 @@ if __name__ == '__main__':
     except IOError, e:
         if e.errno != 32:  # ignore SIGPIPE
             raise
-    
+
