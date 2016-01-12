@@ -6,17 +6,16 @@ import math, time, re
 from collections import Counter
 from argparse import RawTextHelpFormatter
 
-__author__ = "Colby Chiang/Abhijit Badve"
-__version__ = "$Revision: 0.0.1 $"
-__date__ = "$Date: 2015-04-22 09:31 $"
-__revision__ = "optimized gt string building"
-
+__author__ = "Colby Chiang"
+__version__ = "$Revision: 0.0.2 $"
+__date__ = "$Date: 2016-01-12 14:30 $"
+__revision__ = "moving GT string building to"
 # --------------------------------------
 # define functions
 
 def get_args():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
-afreq\n\
+vcf_allele_freq.py\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: Add allele frequency information to a VCF file")
@@ -239,18 +238,30 @@ class Variant(object):
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
 
     def get_var_string(self):
-        s = '\t'.join(map(str,[
-            self.chrom,
-            self.pos,
-            self.var_id,
-            self.ref,
-            self.alt,
-            '%0.2f' % self.qual,
-            self.filter,
-            self.get_info_string(),
-            self.get_format_string(),
-            '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
-        ]))
+        if len(self.active_formats) == 0:
+            s = '\t'.join(map(str,[
+                self.chrom,
+                self.pos,
+                self.var_id,
+                self.ref,
+                self.alt,
+                '%0.2f' % self.qual,
+                self.filter,
+                self.get_info_string()
+            ]))
+        else:
+            s = '\t'.join(map(str,[
+                self.chrom,
+                self.pos,
+                self.var_id,
+                self.ref,
+                self.alt,
+                '%0.2f' % self.qual,
+                self.filter,
+                self.get_info_string(),
+                self.get_format_string(),
+                '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
+            ]))
         return s
 
 class Genotype(object):
@@ -286,6 +297,7 @@ class Genotype(object):
                    g_list.append('.')
        return ':'.join(map(str,g_list))
 
+
 # primary function
 def add_af(vcf_file):
     in_header = True
@@ -297,42 +309,52 @@ def add_af(vcf_file):
     # read input VCF
     for line in vcf_file:
         if in_header:
-            if line[0] == '#':
+            if line.startswith('##'):
                 header.append(line) 
-                if line[1] != '#':
-                    vcf_samples = line.rstrip().split('\t')[9:]
                 continue
-            else:
+            elif line.startswith('#CHROM'):
+                v = line.rstrip().split('\t')
+                header.append('\t'.join(v[:8]))
+
                 in_header = False
                 vcf.add_header(header)
                 
                 vcf.add_info('AF', 'A', 'Float', 'Allele Frequency, for each ALT allele, in the same order as listed')
+                vcf.add_info('NSAMP', '1', 'Integer', 'Number of samples with non-reference genotypes')
 
-                # write the output header
-                if len(vcf_samples) > 0:
-                    vcf_out.write(vcf.get_header(include_samples=True) + '\n')
-                else:
-                    vcf_out.write(vcf.get_header(include_samples=False) + '\n')
+                # write header
+                vcf_out.write(vcf.get_header(include_samples=False))
+                vcf_out.write('\t' + '\t'.join(v[8:]) + '\n')
+            continue
 
         v = line.rstrip().split('\t')
-        var = Variant(v, vcf)
+        var = Variant(v[:8], vcf)
 
         # extract genotypes from VCF
         num_alt = len(var.alt.split(','))
         alleles = [0] * (num_alt + 1)
-        for sample in vcf.sample_list:
-            gt_string = var.genotype(sample).get_format('GT')
+        num_samp = 0
+
+        for i in xrange(9,len(v)):
+            gt_string = v[i].split(':')[0]
+
             if '.' in  gt_string:
                 continue
             gt = gt_string.split('/')
             if len(gt) == 1:
                 gt = gt_string.split('|')
             gt = map(int, gt)
-            
+
             for i in xrange(len(gt)):
                 alleles[gt[i]] += 1
+
+            # iterate the number of non-reference samples
+            if sum(gt) > 0:
+                num_samp += 1
+
         allele_sum = float(sum(alleles))
         allele_freq = ['.'] * len(alleles)
+
         # populate AF
         if allele_sum > 0:
             for i in xrange(len(alleles)):
@@ -340,8 +362,15 @@ def add_af(vcf_file):
             var.info['AF'] = ','.join(map(str, ['%.4g' % a for a in allele_freq[1:]]))
         else:
             var.info['AF'] = ','.join(map(str, allele_freq[1:]))
+        
+        # populate NSAMP
+        var.info['NSAMP'] = num_samp
+
         # after all samples have been processed, write
-        vcf_out.write(var.get_var_string() + '\n')
+        vcf_out.write(var.get_var_string()
+                      + '\t'
+                      + '\t'.join(v[8:])
+                      + '\n')
     vcf_out.close()
     
     return
