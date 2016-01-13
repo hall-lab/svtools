@@ -37,6 +37,7 @@ class Vcf(object):
         # self.fasta = fasta
         self.reference = ''
         self.sample_list = []
+        self.sample_columns = dict()
         self.info_list = []
         self.format_list = []
         self.alt_list = []
@@ -125,12 +126,13 @@ class Vcf(object):
             self.format_list.append(fmt)
 
     def add_sample(self, name):
+        self.sample_columns[name] = len(self.sample_list) + 9
         self.sample_list.append(name)
 
     # get the VCF column index of a sample
     # NOTE: this is zero-based, like python arrays
     def sample_to_col(self, sample):
-        return self.sample_list.index(sample) + 9
+        return self.sample_columns[sample]
 
     class Info(object):
         def __init__(self, id, number, type, desc):
@@ -176,10 +178,12 @@ class Variant(object):
             self.qual = float(var_list[5])
         self.filter = var_list[6]
         self.sample_list = vcf.sample_list
+        self.sample_columns = vcf.sample_columns
         self.info_list = vcf.info_list
         self.info = dict()
         self.format_list = vcf.format_list
-        self.active_formats = list()
+        self.formats = set([i.id for i in self.format_list])
+        self.active_formats = set()
         self.gts = dict()
         
         # fill in empty sample genotypes
@@ -234,7 +238,8 @@ class Variant(object):
         return ':'.join(f_list)
 
     def genotype(self, sample_name):
-        if sample_name in self.sample_list:
+        # Hash lookup should be quicker than iterating over the list
+        if sample_name in self.sample_columns:
             return self.gts[sample_name]
         else:
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
@@ -261,12 +266,10 @@ class Genotype(object):
         self.set_format('GT', gt)
 
     def set_format(self, field, value):
-        if field in [i.id for i in self.variant.format_list]:
+        if field in self.variant.formats:
             self.format[field] = value
             if field not in self.variant.active_formats:
-                self.variant.active_formats.append(field)
-                # sort it to be in the same order as the format_list in header
-                self.variant.active_formats.sort(key=lambda x: [f.id for f in self.variant.format_list].index(x))
+                self.variant.active_formats.add(field)
         else:
             sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
             exit(1)
@@ -276,14 +279,15 @@ class Genotype(object):
 
     def get_gt_string(self):
         g_list = list()
-        for f in self.variant.active_formats:
-            if f in self.format:
-                if type(self.format[f]) == float:
-                    g_list.append('%0.2f' % self.format[f])
+        for f in self.variant.format_list:
+            if f.id in self.variant.active_formats:
+                if f.id in self.format:
+                    if type(self.format[f.id]) == float:
+                        g_list.append('%0.2f' % self.format[f.id])
+                    else:
+                        g_list.append(self.format[f.id])
                 else:
-                    g_list.append(self.format[f])
-            else:
-                g_list.append('.')
+                    g_list.append('.')
         return ':'.join(map(str,g_list))
 # primary function
 def svt_join(master, vcf_list):
@@ -320,8 +324,8 @@ def svt_join(master, vcf_list):
                             line_v = line.rstrip().split('\t')
                             vcf_header.append(line)
                         for sample in line_v[9:]:
-                            master_vcf.sample_list.append(sample)
-                            vcf_obj.sample_list.append(sample)
+                            master_vcf.add_sample(sample)
+                            vcf_obj.add_sample(sample)
                         vcf_obj.add_header(vcf_header)
                         break
                 header.append('\t'.join(master_line.rstrip().split('\t')[:8] + ['FORMAT'] + master_vcf.sample_list))
