@@ -9,6 +9,12 @@ class Test_l_bp(TestCase):
         result = [ x for x in find_all(test_string, sub_string) ]
         self.assertEqual(result, [0,3])
 
+    def test_to_map(self):
+        string = 'NS=3;AF=0.5;DB'
+        expected = { 'NS' : '3', 'AF' : '0.5', 'DB' : None }
+        result = to_map(string)
+        self.assertEqual(result, expected)
+
 if __name__ == "__main__":
     main()
 
