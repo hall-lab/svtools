@@ -7,4 +7,7 @@ install:
 # command to run tests
 script: 
 # FIXME If these were modules, this shouldn't be necessary
-    PYTHONPATH=scripts/:$PYTHONPATH nosetests --all-modules --traverse-namespace
+    PYTHONPATH=scripts/:$PYTHONPATH nosetests --all-modules --traverse-namespace --with-coverage --cover-inclusive
+after_success:
+    - pip install coveralls
+    - coveralls
