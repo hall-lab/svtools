@@ -15,6 +15,26 @@ class Test_l_bp(TestCase):
         result = to_map(string)
         self.assertEqual(result, expected)
 
+    def test_split_v(self):
+        info_bnd_map = {
+                'SVTYPE' : 'BND',
+                'STRANDS' : '-+',
+                'CIPOS' : '-100,10',
+                'CIEND' : '-10,400',
+                'END' : '1100'
+                }
+
+        var1 = '1	1000	2345	N	]2:1100]N	0	.	SVTYPE=BND;STRANDS=-+;CIPOS=-100,10;CIEND=-10,400'
+        self.assertEqual(split_v(var1), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
+
+        var2 = '1	1000	2345	N	[2:1100[N	0	.	SVTYPE=BND;STRANDS=-+;CIPOS=-100,10;CIEND=-10,400'
+        self.assertEqual(split_v(var1), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
+
+        var3 = '1	1000	2345	N	<DEL>	0	.	SVTYPE=DEL;STRANDS=+-;END=1100;CIPOS=-100,10;CIEND=-10,400'
+        self.assertEqual(split_v(var1), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
+
+        
+
 if __name__ == "__main__":
     main()
 
