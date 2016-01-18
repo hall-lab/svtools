@@ -28,12 +28,12 @@ class Test_l_bp(TestCase):
         self.assertEqual(split_v(var1), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
 
         var2 = '1	1000	2345	N	[2:1100[N	0	.	SVTYPE=BND;STRANDS=-+;CIPOS=-100,10;CIEND=-10,400'
-        self.assertEqual(split_v(var1), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
+        self.assertEqual(split_v(var2), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
 
         var3 = '1	1000	2345	N	<DEL>	0	.	SVTYPE=DEL;STRANDS=+-;END=1100;CIPOS=-100,10;CIEND=-10,400'
-        self.assertEqual(split_v(var1), ['BND', '1', '2', '-+', 900, 1010, 1090, 1500, info_bnd_map])
-
-        
+        info_bnd_map['SVTYPE'] = 'DEL'
+        info_bnd_map['STRANDS'] = '+-'
+        self.assertEqual(split_v(var3), ['DEL', '1', '1', '+-', 900, 1010, 1090, 1500, info_bnd_map])
 
 if __name__ == "__main__":
     main()
