@@ -191,8 +191,8 @@ class breakpoint:
         slop_prob = 1e-100
         if ((percent_slop > 0) or (fixed_slop > 0)):
 
-            l_slop = int(max(percent_slop*(self.end_l-self.start_l),fixed_slop))
-            r_slop = int(max(percent_slop*(self.end_r-self.start_r),fixed_slop))
+            l_slop = int(max(percent_slop*(self.end_l - self.start_l + 1),fixed_slop))
+            r_slop = int(max(percent_slop*(self.end_r - self.start_r + 1),fixed_slop))
 
             # pad each interval with slop_prob on each side.
             self.start_l = self.start_l-l_slop
