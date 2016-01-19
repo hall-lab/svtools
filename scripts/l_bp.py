@@ -107,6 +107,12 @@ def to_map(s):
 
     return m
 
+def vcf_line_key(l1):
+    v1 = split_v(l1)
+    v1[3] = v1[3][:2]
+    return v1
+
+
 def vcf_line_cmp(l1, l2):
     v1 = split_v(l1)
     v2 = split_v(l2)
