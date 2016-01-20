@@ -41,12 +41,13 @@ class Lsort(object):
         self.write_header()
 
         self.vcf_lines.sort(key=l_bp.vcf_line_key)
-        iterables = [self.vcf_lines] + self.temp_files
+        iterables = self.temp_files + [self.vcf_lines]
         sys.stdout.writelines(merge(*iterables))
 
     def close_tempfiles(self):
         for tmp in self.temp_files:
             tmp.close()
+            os.remove(tmp.name)
 
     def write_header(self):
         self.vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
