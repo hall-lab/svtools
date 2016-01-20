@@ -41,4 +41,4 @@ The svtools sub-commands include:
 ```
 URL <https://github.com/hall-lab/svtools>
 
-Note: For additional information and usage refer "svtools_demo.sh" file
+Note: For additional information and usage refer to the [svtools_demo.sh](https://github.com/hall-lab/svtools/blob/master/svtools_demo.sh) file.
