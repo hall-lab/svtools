@@ -3,6 +3,7 @@ import svtools.l_bp as l_bp
 import sys
 import os
 import heapq
+import argparse
 from tempfile import gettempdir
 from collections import namedtuple
 
@@ -69,6 +70,16 @@ class Lsort(object):
         #vcf_line array
         self.vcf_lines = []
 
+def command_parser():
+    parser = argparse.ArgumentParser(description='Sort N LUMPY VCF files into a single file')
+    parser.add_argument('vcf_files', metavar='<VCF file>', nargs='+', help='VCF files to combine and sort')
+    parser.add_argument('-t', '--tempdir', default=gettempdir(), help='temporary directory')
+    parser.add_argument('-b', '--batchsize', type=int, default=200, help='number of files to sort in batch')
+    return parser
+
+
 if __name__ == "__main__":
-    sorter = Lsort(sys.argv[1:])
+    parser = command_parser()
+    args = parser.parse_args()
+    sorter = Lsort(args.vcf_files, tempdir=args.tempdir, batchsize=args.batchsize)
     sys.exit(sorter.execute())
