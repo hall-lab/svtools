@@ -15,6 +15,20 @@ class Test_lsort(TestCase):
         self.assertEqual(args2.batchsize, 2)
         self.assertEqual(args2.tempdir, 'temp')
         self.assertEqual(args2.vcf_files, ['file1', 'file2'])
+    
+    def test_lsort_init_defaults(self):
+        file_list = ['file1', 'file2']
+        lsort_class = lsort.Lsort(file_list)
+        self.assertEqual(lsort_class.vcf_file_names, file_list)
+        self.assertEqual(lsort_class.batchsize, 200)
+        self.assertEqual(lsort_class.tempdir, gettempdir())
+
+    def test_lsort_init_full(self):
+        file_list = ['file1', 'file2']
+        lsort_class = lsort.Lsort(file_list, tempdir='tempydir', batchsize=5 )
+        self.assertEqual(lsort_class.vcf_file_names, file_list)
+        self.assertEqual(lsort_class.batchsize, 5)
+        self.assertEqual(lsort_class.tempdir, 'tempydir')
 
 if __name__ == "__main__":
     main()
