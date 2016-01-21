@@ -1,5 +1,5 @@
 from unittest import TestCase, main
-from l_bp import *
+from svtools.l_bp import *
 
 class Test_l_bp(TestCase):
     def test_find_all(self):
