@@ -113,7 +113,6 @@ def run_from_args(args):
     paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals)
     paster.execute()
 
-
 # initialize the script
 if __name__ == '__main__':
     parser = command_parser()
