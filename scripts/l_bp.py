@@ -11,33 +11,6 @@ def find_all(a_str, sub):
         start += len(sub) # use start += 1 to find overlapping matches
 
 
-
-
-def parse_vcf_header( file_ptr, vcf_headers):
-    header = ''
-    samples = ''
-
-    for l in file_ptr:        
-        print l
-        if l[0] == '#':
-            if l[1] != '#':
-                samples = l.rstrip().split('\t')[9:]
-            else:
-                # ignore fileDate
-                if l[:10] == '##fileDate':
-                    continue
-                if l not in vcf_headers:
-                    vcf_headers.append(l)
-            next_line=peek_line(file_ptr)
-            if next_line[0]!="#":
-                return 0
-                
-        else:
-            sys.exit("error parsing vcf header\n")
-            
-             
-
-
 def parse_vcf_record(vcf_line):
     header = ''
     samples = ''
