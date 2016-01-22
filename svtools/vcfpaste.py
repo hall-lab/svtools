@@ -94,17 +94,26 @@ class Vcfpaste(object):
     def close_files(self):
         for f in self.vcf_files:
             f.close()
-
-def command_parser():
-    parser = argparse.ArgumentParser(description='Paste VCFs from multiple samples')
+def description():
+    return 'Paste VCFs from multiple samples'
+def add_arguments_to_parser(parser):
     parser.add_argument('-m', '--master', type=argparse.FileType('r'), default=None, help='VCF file to set first 8 columns of variant info [first file in vcf_list]')
     parser.add_argument('-q', '--sum-quals', required=False, action='store_true', help='Sum QUAL scores of input VCFs as output QUAL score')
     parser.add_argument('-f', '--vcf-list', required=True, help='Line-delimited list of VCF files to paste')
+    parser.set_defaults(entry_point=run_from_args)
+
+def command_parser():
+    parser = argparse.ArgumentParser(description=description())
+    add_arguments_to_parser(parser)
     return parser
+
+def run_from_args(args):
+    paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals)
+    paster.execute()
+
 
 # initialize the script
 if __name__ == '__main__':
     parser = command_parser()
     args = parser.parse_args()
-    paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals)
-    sys.exit(paster.execute())
+    sys.exit(args.entry_point(args))
