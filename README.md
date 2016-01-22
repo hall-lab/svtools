@@ -1,8 +1,10 @@
-===========
-SVTOOls
-===========
-Warning: This suite is under active development and this is not a stable nor well tested version. We are not able to provide user support for this version of svtools.
+# svtools
+*Warning: This suite is under active development and this is not a stable nor well tested version. We are not able to provide user support for this version of svtools.*
 
+[![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools) 
+[![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
+
+```
 svtools: comprehensive utilities to explore structural variations in genomes.
 
 	Hall-lab
@@ -36,6 +38,7 @@ The svtools sub-commands include:
   --version       what version of svtools are you using?.
   --contact       feature requests, bugs, mailing lists, etc.
 
+```
+URL <https://github.com/hall-lab/svtools>
 
-Url <https://github.com/hall-lab/svtools>`.
-Note: For additional information and usage refer "svtools_demo.sh" file
+Note: For additional information and usage refer to the [svtools_demo.sh](https://github.com/hall-lab/svtools/blob/master/svtools_demo.sh) file.

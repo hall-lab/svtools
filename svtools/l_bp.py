@@ -10,70 +10,6 @@ def find_all(a_str, sub):
         yield start
         start += len(sub) # use start += 1 to find overlapping matches
 
-
-
-
-def parse_vcf_header( file_ptr, vcf_headers):
-    header = ''
-    samples = ''
-
-    for l in file_ptr:        
-        print l
-        if l[0] == '#':
-            if l[1] != '#':
-                samples = l.rstrip().split('\t')[9:]
-            else:
-                # ignore fileDate
-                if l[:10] == '##fileDate':
-                    continue
-                if l not in vcf_headers:
-                    vcf_headers.append(l)
-            next_line=peek_line(file_ptr)
-            if next_line[0]!="#":
-                return 0
-                
-        else:
-            sys.exit("error parsing vcf header\n")
-            
-             
-
-
-def parse_vcf_record(vcf_line):
-    header = ''
-    samples = ''
-
-    A = vcf_line.split('\t')
-    if not 'SECONDARY' in A[7]:
-      
-        if 'SVTYPE=BND' in A[7]:
-            m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
-            o_chr, o_pos=m.group(2).split(':')      
-
-            if (o_chr == A[0]) and (('--:' in A[7]) != ('++' in A[7])):
-                neg_s = A[7].find('--:')
-                pos_s = A[7].find('++:')
-
-                if neg_s > 0:
-                    neg_e = neg_s + A[7][neg_s:].find(';')
-                    pre=A[7][:neg_s]
-                    mid=A[7][neg_s:neg_e]
-                    post=A[7][neg_e:]
-                    A[7] = pre + '++:0,' + mid + post
-                else:
-                    pos_e = pos_s + A[7][pos_s:].find(';')
-                    pre=A[7][:pos_s]
-                    mid=A[7][pos_s:pos_e]
-                    post=A[7][pos_e:]
-                    A[7] = pre + mid + ',--:0' + post
-
-                A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
-                A[4] = '<INV>'
-                vcf_line='\t'.join(A)
-            
-    return vcf_line
-
-
-
 def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
     header = ''
     samples = ''
@@ -122,16 +58,13 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
 
                         A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
                         A[4] = '<INV>'
-                        vcf_lines.append('\t'.join(A))
-                    else:
-                        vcf_lines.append(l)
-                else:
-                    vcf_lines.append(l)
+                        l = '\t'.join(A)
+                vcf_lines.append(l)
 
     return samples
 
 def split_v(l):
-    A = l.split('\t')
+    A = l.split('\t', 8)
     m = to_map(A[7])
 
     chr_l = A[0]
@@ -172,7 +105,7 @@ def to_map(s):
     return m
 
 def vcf_line_key(l1):
-    v1 = split_v(l1)
+    v1 = split_v(l1)[:8]
     v1[3] = v1[3][:2]
     return v1
 
@@ -467,7 +400,3 @@ def bron_kerbosch(G, R, P, X):
 
         P = P - V
         X = X.union(V)
-
-
-
-
