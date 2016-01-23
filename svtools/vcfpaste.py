@@ -9,12 +9,12 @@ class Vcfpaste(object):
         self.master = master
         self.sum_quals = sum_quals
 
-    def execute(self):
+    def execute(self, output_handle=sys.stdout):
         try:
             self.read_filenames()
             self.open_files()
-            self.write_header()
-            self.write_variants()
+            self.write_header(output_handle)
+            self.write_variants(output_handle)
         finally:
             self.close_files()
 
@@ -37,7 +37,7 @@ class Vcfpaste(object):
             else:
                 self.vcf_files.append(open(path, 'r'))
     
-    def write_header(self):
+    def write_header(self, output_handle=sys.stdout):
         master = self.vcf_files[0]
         while 1:
             master_line = master.readline()
@@ -45,7 +45,7 @@ class Vcfpaste(object):
                 break
             if master_line[:2] != '##':
                 break
-            print master_line.rstrip()
+            output_handle.write(master_line)
         out_v = master_line.rstrip().split('\t', MAX_SPLIT)[:MAX_SPLIT]
 
         for vcf in self.vcf_files[1:]:
@@ -58,9 +58,9 @@ class Vcfpaste(object):
                 if l[0] == '#':
                     out_v = out_v + l.rstrip().split('\t', MAX_SPLIT)[MAX_SPLIT:]
                     break
-        sys.stdout.write('\t'.join(map(str, out_v)) + '\n')
+        output_handle.write('\t'.join(map(str, out_v)) + '\n')
 
-    def write_variants(self):
+    def write_variants(self, output_handle=sys.stdout):
         while 1:
             master_line = self.vcf_files[0].readline()
             if not master_line:
@@ -89,7 +89,7 @@ class Vcfpaste(object):
                 out_v = out_v + line_v[9:]
             if self.sum_quals:
                 out_v[5] = qual
-            sys.stdout.write( '\t'.join(map(str, out_v)) + '\n')
+            output_handle.write( '\t'.join(map(str, out_v)) + '\n')
 
     def close_files(self):
         for f in self.vcf_files:
