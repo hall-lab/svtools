@@ -16,9 +16,17 @@ class IntegrationTest_vcfpaste(TestCase):
         # write out list since we have the paths and have to get those right
         temp_descriptor, self.list_of_vcfs = tempfile.mkstemp()
         temp_handle = os.fdopen(temp_descriptor, 'w') 
+
+        temp_descriptor2, self.list_of_vcfs_with_truncated = tempfile.mkstemp()
+        temp_handle2 = os.fdopen(temp_descriptor2, 'w')
         for vcf_path in vcfs:
             temp_handle.write(vcf_path + '\n')
+            temp_handle2.write(vcf_path + '\n')
         temp_handle.close()
+
+        truncated_vcf = os.path.join(self.test_data_dir, 'truncated.vcf')
+        temp_handle2.write(truncated_vcf + '\n')
+        temp_handle2.close()
 
         self.master = glob.glob(os.path.join(self.test_data_dir, 'master.vcf'))
 
@@ -42,6 +50,35 @@ class IntegrationTest_vcfpaste(TestCase):
             for line in result:
                 sys.stdout.write(line)
             self.assertFalse(result)
+
+    def run_integration_test_with_master(self):
+        master_file = os.path.join(self.test_data_dir, 'master.vcf')
+        expected_result = os.path.join(self.test_data_dir, 'expected_master.vcf')
+        temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
+        output_handle = os.fdopen(temp_descriptor, 'w')
+        try:
+            paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs, master=master_file, sum_quals=True)
+            paster.execute(output_handle)
+        finally:
+            output_handle.close()
+        expected_lines = open(expected_result).readlines()
+        produced_lines = open(temp_output_path).readlines()
+        diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
+        result = '\n'.join(diff)
+        if result != '':
+            for line in result:
+                sys.stdout.write(line)
+            self.assertFalse(result)
+
+    def run_integration_test_with_truncated_vcf(self):
+        temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
+        output_handle = os.fdopen(temp_descriptor, 'w')
+        paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs_with_truncated, master=None, sum_quals=True)
+        with self.assertRaises(SystemExit) as cm:
+            paster.execute(output_handle)
+            exception = cm.exception
+            self.assertEqual(exception.error_code, 1)
+            output_handle.close()
 
 class Test_vcfpaste(TestCase):
 
