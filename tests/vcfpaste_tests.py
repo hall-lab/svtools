@@ -19,10 +19,15 @@ class IntegrationTest_vcfpaste(TestCase):
 
         temp_descriptor2, self.list_of_vcfs_with_truncated = tempfile.mkstemp()
         temp_handle2 = os.fdopen(temp_descriptor2, 'w')
+
+        temp_descriptor3, self.list_of_gz_vcfs = tempfile.mkstemp()
+        temp_handle3 = os.fdopen(temp_descriptor3, 'w')
         for vcf_path in vcfs:
             temp_handle.write(vcf_path + '\n')
             temp_handle2.write(vcf_path + '\n')
+            temp_handle3.write(vcf_path + '.gz\n')
         temp_handle.close()
+        temp_handle3.close()
 
         truncated_vcf = os.path.join(self.test_data_dir, 'truncated.vcf')
         temp_handle2.write(truncated_vcf + '\n')
@@ -39,6 +44,24 @@ class IntegrationTest_vcfpaste(TestCase):
         output_handle = os.fdopen(temp_descriptor, 'w')
         try:
             paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs, master=None, sum_quals=True)
+            paster.execute(output_handle)
+        finally:
+            output_handle.close()
+        expected_lines = open(expected_result).readlines()
+        produced_lines = open(temp_output_path).readlines()
+        diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
+        result = '\n'.join(diff)
+        if result != '':
+            for line in result:
+                sys.stdout.write(line)
+            self.assertFalse(result)
+
+    def run_integration_test_without_master_gzipped(self):
+        expected_result = os.path.join(self.test_data_dir, 'expected_no_master.vcf')
+        temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
+        output_handle = os.fdopen(temp_descriptor, 'w')
+        try:
+            paster = svtools.vcfpaste.Vcfpaste(self.list_of_gz_vcfs, master=None, sum_quals=True)
             paster.execute(output_handle)
         finally:
             output_handle.close()
