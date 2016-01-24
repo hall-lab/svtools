@@ -94,20 +94,20 @@ class Test_vcfpaste(TestCase):
         self.assertEqual(paster.master, 'master_blaster')
         self.assertTrue(paster.sum_quals)
 
-    def test_read_filenames(self):
-        pass
+class Test_vcfpaste_ui(TestCase):
 
-    def test_open_files(self):
-        pass
+    def test_add_arguments(self):
+        parser = svtools.vcfpaste.command_parser()
+        args1 = parser.parse_args(['--vcf-list', 'some_list'])
+        self.assertEqual(args1.vcf_list, 'some_list')
+        self.assertFalse(args1.sum_quals)
+        self.assertIsNone(args1.master)
 
-    def test_write_header(self):
-        pass
-
-    def test_write_variants(self):
-        pass
-
-    def test_close_files(self):
-        pass
+        args2 = parser.parse_args(['-f', 'some_list', '-m', 'some_master', '-q'])
+        self.assertEqual(args2.vcf_list, 'some_list')
+        self.assertTrue(args2.sum_quals)
+        self.assertEqual(args2.master, 'some_master')
+        
 
 if __name__ == "__main__":
     main()
