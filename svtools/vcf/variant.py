@@ -62,7 +62,8 @@ class Variant(object):
         for info_field in self.info_list:
             if info_field.id in self.info.keys():
                 if info_field.type == 'Flag':
-                    i_list.append(info_field.id)
+                    if self.info[info_field.id]:
+                        i_list.append(info_field.id)
                 else:
                     i_list.append('%s=%s' % (info_field.id, self.info[info_field.id]))
         return ';'.join(i_list)
