@@ -1,3 +1,6 @@
+import re
+import time
+
 class Vcf(object):
     def __init__(self):
         self.file_format = 'VCFv4.2'
