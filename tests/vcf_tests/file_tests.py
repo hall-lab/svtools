@@ -23,6 +23,10 @@ class TestInfo(TestCase):
         self.assertEqual(i.type, 'Integer')
         self.assertEqual(i.desc, 'Number of Samples With Data')
         self.assertEqual(i.hstring, '##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">')
+    def test_eq(self):
+        i = Vcf.Info('NS', 1, 'Integer', '"Number of Samples With Data"')
+        j = Vcf.Info('NS', 1, 'Integer', 'Number of Samples With Data')
+        self.assertEqual(i, j)
 
 class TestAlt(TestCase):
     def test_init(self):
@@ -30,6 +34,10 @@ class TestAlt(TestCase):
         self.assertEqual(a.id, 'DEL:ME:ALU')
         self.assertEqual(a.desc, 'Deletion of ALU element')
         self.assertEqual(a.hstring, '##ALT=<ID=DEL:ME:ALU,Description="Deletion of ALU element">')
+    def test_eq(self):
+        a = Vcf.Alt('DEL:ME:ALU', '"Deletion of ALU element"')
+        b = Vcf.Alt('DEL:ME:ALU', 'Deletion of ALU element')
+        self.assertEqual(a, b)
 
 class TestVcf(TestCase):
     def tests_init(self):
