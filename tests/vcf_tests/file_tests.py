@@ -47,7 +47,7 @@ class TestVcf(TestCase):
         self.assertEqual(vcf.file_format, 'VCFv4.2')
         self.assertEqual(vcf.format_list, [f])
 
-    def test_add_header(self):
+    def test_all(self):
         header_lines = [
                 '##fileformat=VCFv4.2',
                 '##fileDate=20090805',
@@ -75,6 +75,8 @@ class TestVcf(TestCase):
         expected_header_lines = header_lines[:2] + header_lines[3:4] + header_lines[6:12] + header_lines[14:]
         expected_header_lines[1] = '##fileDate=' + time.strftime('%Y%m%d')
         self.assertEqual(v.get_header(), '\n'.join(expected_header_lines))
+        v.add_sample('ScottPilgrim')
+        self.assertEqual(v.sample_to_col('ScottPilgrim'), 12)
 
 
 if __name__ == "__main__":
