@@ -67,8 +67,6 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
 
 
 def parse_vcf_record(vcf_line):
-    header = ''
-    samples = ''
 
     A = vcf_line.split('\t')
     if not 'SECONDARY' in A[7]:

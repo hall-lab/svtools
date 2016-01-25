@@ -1,4 +1,5 @@
-#!/usr/bin/env python -u
+import svtools.l_bp as l_bp
+
 from operator import add
 import time
 import sys
@@ -7,7 +8,6 @@ import glob
 from operator import add
 from optparse import OptionParser
 from sets import Set
-import l_bp
 
 def get_p(ls):
     return np.exp(ls)
@@ -586,20 +586,39 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     vcf_lines = []
     vcf_headers = list()
     infile=open(file_name, 'r')
+    in_header = True
 
     header = ''
     samples = ''
 
+
+   in_header = True
+    header = []
+    vcf = Vcf()
+    for line in vcf_file:
+        if in_header:
+            if line[0] == '#':
+                header.append(line)
+                if line[1] != '#':
+                    vcf_samples = line.rstrip().split('\t')[9:]
+                    in_header = False
+                    vcf.add_header(header)
+                    if vcf_out is not None:
+                        vcf_out.write(vcf.get_header())
+                continue
+
     for l in infile:
-      if l[0] == '#':
-        if l[1] != '#':
-          samples = l.rstrip().split('\t')[9:]
-        else:
-          # ignore fileDate
-          if l[:10] == '##fileDate':
-            continue
-          if l not in vcf_headers:
-            vcf_headers.append(l)
+      if in_header:
+        if l[0] == '#':
+          if l[1] != '#':
+            samples = l.rstrip().split('\t')[9:]
+            in_header = False
+          else:
+            # ignore fileDate
+            if l[:10] == '##fileDate':
+              continue
+            if l not in vcf_headers:
+              vcf_headers.append(l)
       if l[0] != '#':
         break
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python -u
+
 from operator import add
 import time
 import sys
