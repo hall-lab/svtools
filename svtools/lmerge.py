@@ -1,3 +1,4 @@
+import svtools.l_bp as l_bp
 
 from operator import add
 import time
@@ -7,7 +8,6 @@ import glob
 from operator import add
 from optparse import OptionParser
 from sets import Set
-import l_bp
 
 def get_p(ls):
     return np.exp(ls)
@@ -579,6 +579,70 @@ def r_cluster(BP_l, sample_order, v_id, use_product):
 
     return v_id
 
+
+
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False):
+    v_id = 0
+    vcf_lines = []
+    vcf_headers = list()
+    infile=open(file_name, 'r')
+
+    header = ''
+    samples = ''
+
+    for l in infile:
+      if l[0] == '#':
+        if l[1] != '#':
+          samples = l.rstrip().split('\t')[9:]
+        else:
+          # ignore fileDate
+          if l[:10] == '##fileDate':
+            continue
+          if l not in vcf_headers:
+            vcf_headers.append(l)
+      if l[0] != '#':
+        break
+
+    vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
+    
+    sample_order = []
+    for header in vcf_headers:
+      if header[:8] == '##SAMPLE':
+        sample_order.append(header.rstrip()[13:-1])
+      print header,
+
+    BP_l = []
+    BP_sv_type = ''
+    BP_max_end_l = -1
+    BP_chr_l = ''
+
+    b=l_bp.breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+    BP_l.append(b)
+    BP_max_end_l = max(BP_max_end_l, b.end_l)
+    BP_chr_l = b.chr_l
+    BP_sv_type = b.sv_type
+
+    for l in infile:
+      b=l_bp.breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+      if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
+        BP_l.append(b)
+        BP_max_end_l = max(BP_max_end_l, b.end_l)
+        BP_chr_l = b.chr_l
+        BP_sv_type = b.sv_type
+      else:
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
+        BP_l = [b]
+        BP_max_end_l = b.end_l
+        BP_sv_type = b.sv_type
+        BP_chr_l = b.chr_l
+
+    if len(BP_l) > 0:
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
+
+    infile.close()                
+
+
+
 def l_cluster(file_name, percent_slop=0, fixed_slop=0, use_product=False):
     v_id = 0
     vcf_lines = []
@@ -591,11 +655,6 @@ def l_cluster(file_name, percent_slop=0, fixed_slop=0, use_product=False):
     for header in vcf_headers:
         if header[:8] == '##SAMPLE':
             sample_order.append(header.rstrip()[13:-1])
-        #elif header[:8] == '##FORMAT':
-            #i,n,t=header[header.find('<')+1:header.find('>')].split(',')[0:3]
-            #print i,n,t
-
-    #exit(1)
 
     for h in vcf_headers:
         print h,
@@ -689,7 +748,7 @@ Version: ira_7
         print
     else:
         try:
-            l_cluster(opts.inFile,
+            l_cluster_by_line(opts.inFile,
                       percent_slop=opts.percent_slop,
                       fixed_slop=opts.fixed_slop,
                       use_product=opts.use_product)

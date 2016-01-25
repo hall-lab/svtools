@@ -10,6 +10,9 @@ def find_all(a_str, sub):
         yield start
         start += len(sub) # use start += 1 to find overlapping matches
 
+
+
+
 def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
     header = ''
     samples = ''
@@ -106,6 +109,7 @@ def to_map(s):
             m[A[0]] = None
 
     return m
+
 
 def vcf_line_cmp(l1, l2):
     v1 = split_v(l1)
