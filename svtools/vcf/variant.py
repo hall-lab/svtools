@@ -1,4 +1,5 @@
 from svtools.vcf.genotype import Genotype
+import sys
 
 class Variant(object):
     def __init__(self, var_list, vcf):

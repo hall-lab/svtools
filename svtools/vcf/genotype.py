@@ -1,3 +1,5 @@
+import sys
+
 class Genotype(object):
     def __init__(self, variant, sample_name, gt):
         self.format = dict()
