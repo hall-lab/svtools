@@ -102,6 +102,8 @@ class Vcf(object):
             if self.desc.startswith('"') and self.desc.endswith('"'):
                 self.desc = self.desc[1:-1]
             self.hstring = '##INFO=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
+        def __eq__(self, other):
+            return self.hstring == other.hstring
 
     class Alt(object):
         def __init__(self, id, desc):
@@ -111,6 +113,8 @@ class Vcf(object):
             if self.desc.startswith('"') and self.desc.endswith('"'):
                 self.desc = self.desc[1:-1]
             self.hstring = '##ALT=<ID=' + self.id + ',Description=\"' + self.desc + '\">'
+        def __eq__(self, other):
+            return self.hstring == other.hstring
 
     class Format(object):
         def __init__(self, id, number, type, desc):
