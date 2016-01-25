@@ -1,7 +1,6 @@
 class Vcf(object):
     def __init__(self):
         self.file_format = 'VCFv4.2'
-        # self.fasta = fasta
         self.reference = ''
         self.sample_list = []
         self.info_list = []
@@ -123,4 +122,6 @@ class Vcf(object):
             if self.desc.startswith('"') and self.desc.endswith('"'):
                 self.desc = self.desc[1:-1]
             self.hstring = '##FORMAT=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
+        def __eq__(self, other):
+            return self.hstring == other.hstring
 
