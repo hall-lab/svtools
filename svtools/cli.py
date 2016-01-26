@@ -1,5 +1,6 @@
 import argparse, sys
 import svtools.lsort
+import svtools.lmerge
 import svtools.vcfpaste
 import svtools.afreq
 
@@ -9,6 +10,9 @@ def svtools_cli_parser():
 
     lsort = subparsers.add_parser('lsort', help=svtools.lsort.description())
     svtools.lsort.add_arguments_to_parser(lsort)
+
+    lmerge = subparsers.add_parser('lmerge', help=svtools.lmerge.description())
+    svtools.lmerge.add_arguments_to_parser(lmerge)
     
     vcf_paste = subparsers.add_parser('vcfpaste', help=svtools.vcfpaste.description())
     svtools.vcfpaste.add_arguments_to_parser(vcf_paste)
