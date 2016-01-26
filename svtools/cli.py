@@ -5,7 +5,7 @@ import svtools.afreq
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
-    subparsers = parser.add_subparsers(title='subcommands')
+    subparsers = parser.add_subparsers(title=None, metavar='subcommand', help='description')
 
     lsort = subparsers.add_parser('lsort', help=svtools.lsort.description())
     svtools.lsort.add_arguments_to_parser(lsort)
