@@ -40,7 +40,7 @@ class UpdateInfo(object):
                     continue
                 elif line.startswith('#CHROM'):
                     v = line.rstrip().split('\t')
-                    header.append('\t'.join(v[:8]))
+                    header.append('\t'.join(v))
 
                     in_header = False
                     vcf.add_header(header)
@@ -50,12 +50,12 @@ class UpdateInfo(object):
                     vcf.add_info('MSQ', '1', 'Float', 'Mean sample quality of positively genotyped samples')
 
                     # write header
-                    vcf_out.write(vcf.get_header(include_samples=False))
-                    vcf_out.write('\t' + '\t'.join(v[8:]) + '\n')
+                    vcf_out.write(vcf.get_header() + '\n')
+                    #vcf_out.write('\t' + '\t'.join(v[8:]) + '\n')
                 continue
 
             v = line.rstrip().split('\t')
-            var = Variant(v[:8], vcf)
+            var = Variant(v, vcf)
 
             # extract genotypes from VCF
             num_alt = len(var.alt.split(','))
@@ -96,8 +96,8 @@ class UpdateInfo(object):
 
             # after all samples have been processed, write
             vcf_out.write(var.get_var_string()
-                          + '\t'
-                          + '\t'.join(v[8:])
+                    #      + '\t'
+                     #     + '\t'.join(v[8:])
                           + '\n')
         vcf_out.close()
 
