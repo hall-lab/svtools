@@ -6,10 +6,29 @@ class UpdateInfo(object):
     def __init__(self, vcf_stream):
         self.vcf_stream = vcf_stream
 
+    def calc_msq(self, var):
+            # Below is what was in vcfpaste, but what if multiple ALTs?
+            # Do we only expect 1 ALT per line?
+            # NOTE SQ is defined as: 'Phred-scaled probability that this site is variant (non-reference in this sample'
+            # Likely want average sample quality across all non-0/0 genotypes rather than just those containing 1
+            gt = [var.genotype(s).get_format('GT') for s in var.sample_list]
+            positive_gt = filter(lambda x: x == '0/1' or x == '1/1', gt)
+            num_pos = len(positive_gt)
+            sum_sq = 0.0
+            try:
+                sum_sq += sum([float(var.genotype(s).get_format('SQ')) for s in var.sample_list \
+                if var.genotype(s).get_format('GT') == '1/1' or var.genotype(s).get_format('GT') == '0/1'])
+            except ValueError:
+                sum_sq += 0
+            if num_pos > 0:
+                msq = '%0.2f' % (sum_sq / num_pos)
+            else:
+                msq = '.'
+            return msq
+
     def execute(self, output_handle=sys.stdout):
         in_header = True
         header = []
-        breakend_dict = {} # cache to hold unmatched generic breakends for genotyping
         vcf = Vcf()
         vcf_out = output_handle
 
@@ -28,6 +47,7 @@ class UpdateInfo(object):
                     
                     vcf.add_info('AF', 'A', 'Float', 'Allele Frequency, for each ALT allele, in the same order as listed')
                     vcf.add_info('NSAMP', '1', 'Integer', 'Number of samples with non-reference genotypes')
+                    vcf.add_info('MSQ', '1', 'Float', 'Mean sample quality of positively genotyped samples')
 
                     # write header
                     vcf_out.write(vcf.get_header(include_samples=False))
@@ -43,7 +63,7 @@ class UpdateInfo(object):
             num_samp = 0
 
             for i in xrange(9,len(v)):
-                gt_string = v[i].split(':')[0]
+                gt_string = v[i].split(':', 1)[0]
 
                 if '.' in  gt_string:
                     continue
@@ -72,6 +92,7 @@ class UpdateInfo(object):
             
             # populate NSAMP
             var.info['NSAMP'] = num_samp
+            var.info['MSQ'] = self.calc_msq(var)
 
             # after all samples have been processed, write
             vcf_out.write(var.get_var_string()
