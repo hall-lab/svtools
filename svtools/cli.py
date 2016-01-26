@@ -5,17 +5,15 @@ import svtools.afreq
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
-    subparsers = parser.add_subparsers(title='subcommands',
-                                       description='valid subcommands',
-                                       help='additional help')
+    subparsers = parser.add_subparsers(title='subcommands')
 
-    lsort = subparsers.add_parser('lsort', description=svtools.lsort.description())
+    lsort = subparsers.add_parser('lsort', help=svtools.lsort.description())
     svtools.lsort.add_arguments_to_parser(lsort)
     
-    vcf_paste = subparsers.add_parser('vcfpaste', description=svtools.vcfpaste.description())
+    vcf_paste = subparsers.add_parser('vcfpaste', help=svtools.vcfpaste.description())
     svtools.vcfpaste.add_arguments_to_parser(vcf_paste)
     
-    afreq = subparsers.add_parser('afreq', description=svtools.afreq.description())
+    afreq = subparsers.add_parser('afreq', help=svtools.afreq.description())
     svtools.afreq.add_arguments_to_parser(afreq)
 
     return parser
