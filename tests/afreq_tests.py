@@ -27,6 +27,14 @@ class IntegrationTest_afreq(TestCase):
                     sys.stdout.write(line)
                 self.assertFalse(result)
 
+class AfreqUiTest(TestCase):
+    def test_parser(self):
+        parser = svtools.afreq.command_parser()
+        args1 = parser.parse_args([])
+        self.assertIsNone(args1.input_vcf)
+        args2 = parser.parse_args(['somefile'])
+        self.assertEqual(args2.input_vcf, 'somefile')
+
 if __name__ == "__main__":
     main()
 
