@@ -95,10 +95,7 @@ class UpdateInfo(object):
             var.info['MSQ'] = self.calc_msq(var)
 
             # after all samples have been processed, write
-            vcf_out.write(var.get_var_string()
-                    #      + '\t'
-                     #     + '\t'.join(v[8:])
-                          + '\n')
+            vcf_out.write(var.get_var_string() + '\n')
         vcf_out.close()
 
 def description():
