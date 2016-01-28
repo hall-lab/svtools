@@ -2,6 +2,7 @@ import argparse, sys
 import svtools.lsort
 import svtools.lmerge
 import svtools.vcfpaste
+import svtools.copynumber
 import svtools.afreq
 
 def svtools_cli_parser():
@@ -16,6 +17,9 @@ def svtools_cli_parser():
     
     vcf_paste = subparsers.add_parser('vcfpaste', help=svtools.vcfpaste.description())
     svtools.vcfpaste.add_arguments_to_parser(vcf_paste)
+
+    copynumber = subparsers.add_parser('copynumber', help=svtools.copynumber.description())
+    svtools.copynumber.add_arguments_to_parser(copynumber)
     
     afreq = subparsers.add_parser('afreq', help=svtools.afreq.description())
     svtools.afreq.add_arguments_to_parser(afreq)
