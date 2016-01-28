@@ -9,11 +9,17 @@ def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_l
     p1 = Popen(['cat', coord_list.name], stdout=PIPE)
     cmd = map(str, [cnvnator_path, '-root', root, '-genotype', window])
     p2 = Popen(cmd, stdin=p1.stdout, stdout=PIPE)
+    # NOTE the below awk command selects only those lines which were genotyped
+    # The line beginning 'Assuming' looks to be the program reporting its assuming a male
+    # Each line looks like
+    # Genotype chr1:1-13000 5173T.root 0.377524 0.368896
+    # The first number is the copy number for the requested window
+    # The second seems to be the copy number for a fixed window size of 1000
+    # See http://wiki.biouml.org/index.php/CNVnator_genotype_output_(file_format)
     p3 = Popen(['awk', '{ if($1!="Assuming"){print $4} }'], stdin=p2.stdout, stdout=PIPE)
     cn_list = map(float, p3.communicate()[0].split('\n')[:-1])
 
     #go through the VCF and add the read depth annotations
-    #vcf_file.seek(0)
     in_header = True
     header = []
     vcf = Vcf()
@@ -37,7 +43,7 @@ def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_l
                 in_header = False
                 vcf.add_header(header)
                 vcf.add_format('CN', 1, 'Float', 'Copy number of structural variant segment.')
-                vcf_out.write('\t'.join(vcf.get_header(include_samples=False), sample) + '\n')
+                vcf_out.write('\t'.join([vcf.get_header(include_samples=False), 'FORMAT', sample]) + '\n')
         v = line.rstrip().split('\t')
         # XXX Is this second check necessary? Wouldn't this be handled above? Missing header would hit this?
         if s_index == -1:
