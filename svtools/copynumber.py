@@ -3,8 +3,7 @@ import sys
 from subprocess import Popen, PIPE, STDOUT
 from svtools.vcf.file import Vcf
 
-
-def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_list):
+def run_cnvnator(cnvnator_path, root, window, coord_list):
     # Read and run cnvnator
     p1 = Popen(['cat', coord_list.name], stdout=PIPE)
     cmd = map(str, [cnvnator_path, '-root', root, '-genotype', window])
@@ -18,7 +17,13 @@ def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_l
     # See http://wiki.biouml.org/index.php/CNVnator_genotype_output_(file_format)
     p3 = Popen(['awk', '{ if($1!="Assuming"){print $4} }'], stdin=p2.stdout, stdout=PIPE)
     cn_list = map(float, p3.communicate()[0].split('\n')[:-1])
+    return cn_list
 
+def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_list):
+    cn = run_cnvnator(cnvnator_path, root, window, coord_list)
+    write_copynumber(vcf_file, sample, vcf_out, cn)
+
+def write_copynumber(vcf_file, sample, vcf_out, cn_list):
     #go through the VCF and add the read depth annotations
     in_header = True
     header = []
@@ -36,20 +41,20 @@ def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_l
                   except ValueError:
                         stderr.write("Please input valid VCF, format field for " + sample + " not found in VCF")
                         sys.exit(1)
-                  line = '\t'.join(map(str,[line.rstrip().split('\t')[0:8],sample]))
+                  line = '\t'.join(map(str, line.rstrip().split('\t')[:9] + [sample]))
                   header.append(line)
                   continue
             else:
                 in_header = False
                 vcf.add_header(header)
                 vcf.add_format('CN', 1, 'Float', 'Copy number of structural variant segment.')
-                vcf_out.write('\t'.join([vcf.get_header(include_samples=False), 'FORMAT', sample]) + '\n')
+                vcf_out.write(vcf.get_header() + '\n')
         v = line.rstrip().split('\t')
         # XXX Is this second check necessary? Wouldn't this be handled above? Missing header would hit this?
         if s_index == -1:
             stderr.write("Input a valid sample name: " + sample + " not found in a provided VCF")
             sys.exit(1)
-        v = v[0:9] + [v[s_index]]
+        v = v[:9] + [v[s_index]]
         if not any("SVTYPE=BND" in s for s in v):
             if "CN" not in v[8]:
                 v[8] = v[8] + ":CN"
