@@ -1,13 +1,8 @@
 import svtools.l_bp as l_bp
 
-from operator import add
-import time
 import sys
 import numpy as np
-import glob
-from operator import add
 from optparse import OptionParser
-from sets import Set
 
 def get_p(ls):
     return np.exp(ls)
@@ -159,12 +154,9 @@ def print_var_line(l):
         print '\t'.join(A[:8])
 
 def merge(BP, sample_order, v_id, use_product):
-    #sys.stderr.write(str(len(BP)) + '\n')
-
     if len(BP) == 1:
         A = BP[0].l.rstrip().split('\t')
         #tack on id to SNAME
-        #A[7]+= ':' + A[2]
         s_start=A[7].find('SNAME=')
         s_end=A[7].find(';',s_start)
         if (s_end > -1):
@@ -207,30 +199,6 @@ def merge(BP, sample_order, v_id, use_product):
         print_var_line('\t'.join(A))
         return v_id
 
-    # this find the max clique 
-    #G = {}
-    #l_bp.connect(G, BP, 0)
-
-    #for g in G:
-    #    sys.stderr.write( str(g) + '\t' + str(len(G[g].edges)) + '\n')
-
-    #C = []
-    #_G = G.copy()
-    #while len(_G) != 0:
-    #    R = Set()
-    #    X = Set()
-    #    P = Set(_G.keys())
-    #    clique = [x for x in l_bp.bron_kerbosch(_G, R, P, X)]
-    #    max_clique = sorted(clique, key=len)[0]
-    #    sys.stderr.write(str(max_clique) +'\n')
-    #    C.append(list(max_clique))
-    #    # remove these from the graph
-    #    for g in _G:
-    #        E = [e for e in _G[g].edges if e[0] not in clique]
-    #        G[g].edges = E
-    #    for c in max_clique:
-    #        del _G[c]
-
     #Sweep the set.  Find the largest intersecting set.  Remove it.  Continue.
     import heapq
 
@@ -238,8 +206,6 @@ def merge(BP, sample_order, v_id, use_product):
 
     BP_i = range(len(BP))
     C = []
-
-    #print BP_i
 
     while len(BP_i) > 0:
         h_l = []
@@ -273,9 +239,7 @@ def merge(BP, sample_order, v_id, use_product):
     for c in C:
         L = []
         R = []
-        #for g_i in c:
         for b_i in c:
-            #b = G[g_i].b
             b = BP[b_i]
             L.append([b.start_l,b.end_l,b.p_l])
             R.append([b.start_r,b.end_r,b.p_r])
@@ -288,11 +252,9 @@ def merge(BP, sample_order, v_id, use_product):
 
         for c_i in range(len(c)):
             for i in range(len(a_L[c_i])):
-                #p_L[i] = p_L[i] * a_L[c_i][i]
                 p_L[i] += a_L[c_i][i]
 
             for i in range(len(a_R[c_i])):
-                #p_R[i] = p_R[i] * a_R[c_i][i]
                 p_R[i] += a_R[c_i][i]
 
         ALG = 'SUM'
@@ -304,7 +266,6 @@ def merge(BP, sample_order, v_id, use_product):
             for c_i in range(len(c)):
                 if (a_L[c_i][pmax_i_L] == 0) or (a_R[c_i][pmax_i_R] == 0):
                     miss += 1
-                    #exit(1)
             if miss == 0:
                 ALG = "PROD"
                 ls_p_L = [get_ls(1)] * len(a_L[0])
@@ -312,11 +273,9 @@ def merge(BP, sample_order, v_id, use_product):
                 for c_i in range(len(c)):
                     for i in range(len(a_L[c_i])):
                         ls_p_L[i] = ls_multiply(ls_p_L[i], get_ls(a_L[c_i][i]))
-                        #p_L[i] = p_L[i] * a_L[c_i][i]
 
                     for i in range(len(a_R[c_i])):
                         ls_p_R[i] = ls_multiply(ls_p_R[i], get_ls(a_R[c_i][i]))
-                        #p_R[i] = p_R[i] * a_R[c_i][i]
 
                 ls_sum_L = get_ls(0)
                 ls_sum_R = get_ls(0)
@@ -384,25 +343,11 @@ def merge(BP, sample_order, v_id, use_product):
             ninefive_i_R_start = max(0, ninefive_i_R_start - 1)
             ninefive_i_R_end = min(len(p_R)-1, ninefive_i_R_end +1)
             ninefive_i_R_total = sum(p_R[ninefive_i_R_start:ninefive_i_R_end+1])
-        #print '***',ninefive_i_R_start,ninefive_i_R_end,max_i_R,
         ninefive_i_R_end = ninefive_i_R_end - max_i_R
         ninefive_i_R_start = ninefive_i_R_start - max_i_R
-        #print ninefive_i_R_start,ninefive_i_R_end
-#                if ninefive_i_R_start > 0:
-#                    ninefive_i_R_start -= 1
-#                    ninefive_i_R_total += p_R[ninefive_i_R_start]
-#                    updated = 1
-#                if ninefive_i_R_end < len(p_R)-1:
-#                    ninefive_i_R_end += 1
-#                    ninefive_i_R_total += p_R[ninefive_i_R_end]
-#                    updated = 1
-#                if not updated:
-#                    break
- 
         CIPOS95=str(ninefive_i_L_start) + ',' + str(ninefive_i_L_end)
         CIEND95=str(ninefive_i_R_start) + ',' + str(ninefive_i_R_end)
 
-        #CHROM = G[c[0]].b.chr_l
         CHROM = BP[c[0]].chr_l
         POS = new_start_L + max_i_L
         v_id += 1
@@ -410,17 +355,7 @@ def merge(BP, sample_order, v_id, use_product):
         REF = 'N'
 
         ALT = ''
-        #if G[c[0]].b.sv_type == 'BND':
         if BP[c[0]].sv_type == 'BND':
-            #G[c[0]].b.chr_r + \
-            # this is very wrong: strand orientation
-            # is destroyed when merging breakend variants
-            #ALT = 'N]' + \
-                   #BP[c[0]].chr_r + \
-                   #':' + \
-                   #str(new_start_R + max_i_R) + \
-                   #']'
-
             if BP[c[0]].strands[:2] == '++':
                 ALT = 'N]' + \
                         BP[c[0]].chr_r + \
@@ -447,13 +382,10 @@ def merge(BP, sample_order, v_id, use_product):
                         '[N'
 
         else:
-            #ALT = '<' + G[c[0]].b.sv_type + '>'
             ALT = '<' + BP[c[0]].sv_type + '>'
         QUAL = 0.0
         FILTER = '.'
-        #FORMAT = G[c[0]].b.l.split('\t')[8]
         FORMAT = BP[c[0]].l.split('\t')[8]
-        #SVTYPE = G[c[0]].b.sv_type
         SVTYPE = BP[c[0]].sv_type
 
         STRANDS = ''
@@ -468,9 +400,7 @@ def merge(BP, sample_order, v_id, use_product):
 
         gt_list = [] 
 
-        #for g_i in c:
         for b_i in c:
-            #A = G[g_i].b.l.rstrip().split('\t')
             A = BP[b_i].l.rstrip().split('\t')
             if A[5].isdigit():
                 QUAL += float(A[5])
@@ -544,7 +474,6 @@ def merge(BP, sample_order, v_id, use_product):
 
         QUAL = str(QUAL)
 
-        #O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT,GTS]
         O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
 
         print_var_line('\t'.join([str(o) for o in O]))
@@ -567,19 +496,15 @@ def r_cluster(BP_l, sample_order, v_id, use_product):
             BP_max_end_r = max(BP_max_end_r, b.end_r)
             BP_chr_r = b.chr_r
         else:
-            #print len(BP_r)
             v_id = merge(BP_r, sample_order, v_id, use_product)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
  
     if len(BP_r) > 0:
-        #print len(BP_r)
         v_id = merge(BP_r, sample_order, v_id, use_product)
 
     return v_id
-
-
 
 def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False):
     v_id = 0
@@ -641,120 +566,28 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
 
     infile.close()                
 
+def description():
+    return 'Merge LUMPY calls inside a single file from svtools lsort'
 
+def add_arguments_to_parser(parser):
+    parser.add_argument('-i', '--inFile', metavar='FILE', help='A sorted LUMPY output file generated by lsort; or stdin (-i stdin). Column 7 must have the format sample:variantID')
+    parser.add_argument('-p', '--percent-slop', type=float, default=0.0, help='Increase the the breakpoint confidence interval both up and down stream by a given proportion of the original size. If both slop parameters are set, the max is used.')
+    parser.add_argument('-f', '--fixed-slop', type=int, default=0, help='Increase the the breakpoint confidence interval both up and down stream by a given fixed size. If both slop parameters are set, the max is used.')
+    parser.add_argument('--product', dest='use_product', action='store_true', default=False, help='Calculate breakpoint PDF and position using product.')
+    parser.set_defaults(entry_point=run_from_args)
 
-def l_cluster(file_name, percent_slop=0, fixed_slop=0, use_product=False):
-    v_id = 0
-    vcf_lines = []
-    vcf_headers = list()
-    r = l_bp.parse_vcf(file_name, vcf_lines, vcf_headers, add_sname=False)
+def command_parser():
+    parser = argparser.ArgumentParser(description=description())
+    add_arguments_to_parser(parser)
+    return parser
 
-    vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-
-    sample_order = []
-    for header in vcf_headers:
-        if header[:8] == '##SAMPLE':
-            sample_order.append(header.rstrip()[13:-1])
-
-    for h in vcf_headers:
-        print h,
-
-    BP_l = []
-    BP_sv_type = ''
-    BP_max_end_l = -1
-    BP_chr_l = ''
-
-    for l in vcf_lines:
-        b = l_bp.breakpoint(l,
-                            percent_slop=percent_slop,
-                            fixed_slop=fixed_slop)
-
-        if (len(BP_l) == 0) or \
-           ((b.start_l <= BP_max_end_l) and \
-            (b.chr_l == BP_chr_l) and \
-            (b.sv_type == BP_sv_type)):
-            BP_l.append(b)
-            BP_max_end_l = max(BP_max_end_l, b.end_l)
-            BP_chr_l = b.chr_l
-            BP_sv_type = b.sv_type
-        else:
-            #print len(BP_l)
-            v_id = r_cluster(BP_l, sample_order, v_id, use_product)
-            BP_l = [b]
-            BP_max_end_l = b.end_l
-            BP_sv_type = b.sv_type
-            BP_chr_l = b.chr_l
-
-    if len(BP_l) > 0:
-        #print len(BP_l)
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
- 
-
-class Usage(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-def main():
-
-    usage = """%prog -i <file>
-lmerge
-Author: Ryan Layer & Ira Hall
-Description: merge lumpy calls.
-Version: ira_7
-    """
-
-    parser = OptionParser(usage)
-    parser.add_option("-i", \
-                      "--inFile", \
-                      dest="inFile",
-                      help="A sorted lumpy output file generated by " + \
-                           "lsort; or stdin (-i stdin). Column 7 must " + \
-                           "have the format sample:variantID", \
-                           metavar="FILE")
-
-    parser.add_option("-p", \
-                      "--percent_slop", \
-                      dest="percent_slop",
-                      type="float",
-                      default=0.0,
-                      help="Increase the the breakpoint confidence " + \
-                           "interval both up and down stream by a given " + \
-                           "proportion of the original size. If both slop " + \
-                           "parameters are set, the max is used.")
-
-    parser.add_option("-f", \
-                      "--fixed_slop", \
-                      dest="fixed_slop",
-                      type="int",
-                      default=0,
-                      help="Increase the the breakpoint confidence " + \
-                           "interval both up and down stream by a given " + \
-                           "fixed size. If both slop " + \
-                           "parameters are set, the max is used.")
-
-    parser.add_option("--product", \
-                      dest="use_product",
-                      action="store_true",
-                      default=False,
-                      help="Calculate breakpoint PDF and position " + \
-                           "using product.")
-
-
-    (opts, args) = parser.parse_args()
-
-    #if opts.inFile is None or opts.configFile is None:
-    if opts.inFile is None:
-        parser.print_help()
-        print
-    else:
-        try:
-            l_cluster_by_line(opts.inFile,
-                      percent_slop=opts.percent_slop,
-                      fixed_slop=opts.fixed_slop,
-                      use_product=opts.use_product)
-        except IOError as err:
-            sys.stderr.write("IOError " + str(err) + "\n");
-            return
+def run_from_args(args):
+    l_cluster_by_line(args.inFile,
+            percent_slop=args.percent_slop,
+            fixed_slop=args.fixed_slop,
+            use_product=args.use_product)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = command_parser()
+    args = parser.parse_args()
+    sys.exit(args.entry_point(args))
