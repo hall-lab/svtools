@@ -10,12 +10,12 @@ class Genotype(object):
         for field, value in zip(fields, values):
             if field in self.variant.format_set:
                 self.format[field] = value
-            if field not in self.variant.active_formats:
-                self.variant.active_formats.add(field)
-        else:
-            # FIXME This should be an exception
-            sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
-            exit(1)
+                if field not in self.variant.active_formats:
+                    self.variant.active_formats.add(field)
+            else:
+                # FIXME This should be an exception
+                sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
+                sys.exit(1)
 
     def set_format(self, field, value):
         if field in self.variant.format_set:
@@ -25,7 +25,7 @@ class Genotype(object):
         else:
             # FIXME This should be an exception
             sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
-            exit(1)
+            sys.exit(1)
 
     def get_format(self, field):
         return self.format[field]
@@ -38,8 +38,8 @@ class Genotype(object):
                    if type(self.format[f.id]) == float:
                        g_list.append('%0.2f' % self.format[f.id])
                    else:
-                       g_list.append(self.format[f.id])
+                       g_list.append(str(self.format[f.id]))
                else:
                    g_list.append('.')
-       return ':'.join(map(str,g_list))
+       return ':'.join(g_list)
 
