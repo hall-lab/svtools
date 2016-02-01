@@ -6,6 +6,7 @@ class Vcf(object):
         self.file_format = 'VCFv4.2'
         self.reference = ''
         self.sample_list = []
+        self.sample_indices = dict()
         self.info_list = []
         self.format_list = []
         self.alt_list = []
@@ -31,6 +32,8 @@ class Vcf(object):
                 self.add_format(*[b.split('=')[1] for b in r.findall(a)])
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
+                for i in xrange(0, len(self.sample_list)):
+                    self.sample_indices[self.sample_list[i]] = i + 9
 
     # return the VCF header
     def get_header(self, include_samples=True):
@@ -89,11 +92,13 @@ class Vcf(object):
 
     def add_sample(self, name):
         self.sample_list.append(name)
+        # XXX Probably slow. Optimize if we start adding lots of samples ever
+        self.sample_indices[name] = self.sample_list.index(name) + 9
 
     # get the VCF column index of a sample
     # NOTE: this is zero-based, like python arrays
     def sample_to_col(self, sample):
-        return self.sample_list.index(sample) + 9
+        return self.sample_indices[sample]
 
     class Info(object):
         def __init__(self, id, number, type, desc):
