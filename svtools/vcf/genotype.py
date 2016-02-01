@@ -6,8 +6,19 @@ class Genotype(object):
         self.variant = variant
         self.set_format('GT', gt)
 
+    def set_formats(self, fields, values):
+        for field, value in zip(fields, values):
+            if field in self.variant.format_set:
+                self.format[field] = value
+            if field not in self.variant.active_formats:
+                self.variant.active_formats.add(field)
+        else:
+            # FIXME This should be an exception
+            sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
+            exit(1)
+
     def set_format(self, field, value):
-        if field in [i.id for i in self.variant.format_list]:
+        if field in self.variant.format_set:
             self.format[field] = value
             if field not in self.variant.active_formats:
                 self.variant.active_formats.add(field)
