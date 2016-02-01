@@ -22,6 +22,7 @@ class Genotype(object):
             self.format[field] = value
             if field not in self.variant.active_formats:
                 self.variant.active_formats.add(field)
+                self.variant.update_active_format_list()
         else:
             # FIXME This should be an exception
             sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
@@ -32,14 +33,13 @@ class Genotype(object):
 
     def get_gt_string(self):
        g_list = list()
-       for f in self.variant.format_list:
-           if f.id in self.variant.active_formats:
-               if f.id in self.format:
-                   if type(self.format[f.id]) == float:
-                       g_list.append('%0.2f' % self.format[f.id])
-                   else:
-                       g_list.append(str(self.format[f.id]))
+       for f in self.variant.active_format_list:
+           if f in self.format:
+               if type(self.format[f]) == float:
+                   g_list.append('%0.2f' % self.format[f])
                else:
-                   g_list.append('.')
+                   g_list.append(str(self.format[f]))
+           else:
+               g_list.append('.')
        return ':'.join(g_list)
 

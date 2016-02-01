@@ -19,6 +19,7 @@ class Variant(object):
         self.format_list = vcf.format_list
         self.format_set = set([i.id for i in vcf.format_list])
         self.active_formats = set()
+        self.active_format_list = list()
         self.gts = dict()
         
         # fill in empty sample genotypes
@@ -39,6 +40,7 @@ class Variant(object):
                 self.gts[s].set_formats(format_field_tags, sample_field)
             except IndexError:
                 self.gts[s] = Genotype(self, s, './.')
+        self.update_active_format_list()
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
@@ -46,6 +48,13 @@ class Variant(object):
             if len(i) == 1:
                 i.append(True)
             self.info[i[0]] = i[1]
+
+    def update_active_format_list(self):
+        new_list = list()
+        for format in self.format_list:
+            if format.id in self.active_formats:
+                new_list.append(format.id)
+        self.active_format_list = new_list
 
     def set_info(self, field, value):
         if field in [i.id for i in self.info_list]:
