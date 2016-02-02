@@ -177,7 +177,7 @@ def cluster_bedpe(in_file,max_distance,eval_param,bedpe_out,is_sorted):
     
     global min_cluster_size,cluster_counter
     #minimum cluster size to report feature
-    min_cluster_size = 2
+    min_cluster_size = 1
     # Inititalize the number of clusters
     cluster_counter = 0
     # line number
