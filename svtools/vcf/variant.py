@@ -8,6 +8,7 @@ class Variant(object):
         self.var_id = var_list[2]
         self.ref = var_list[3]
         self.alt = var_list[4]
+        self.original_qual = var_list[5]
         if var_list[5] == '.':
             self.qual = 0
         else:

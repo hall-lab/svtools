@@ -77,6 +77,13 @@ class Vcf(object):
             inf = self.Info(id, number, type, desc)
             self.info_list.append(inf)
 
+    def add_info_after(self, insert_id, id, number, type, desc):
+        for i in range(0, len(self.info_list)):
+            if insert_id == self.info_list[i].id and (id not in [j.id for j in self.info_list]):
+                inf = self.Info(id, number, type, desc)
+                self.info_list.insert(i + 1, inf)
+                return
+
     def add_alt(self, id, desc):
         if id not in [a.id for a in self.alt_list]:
             alt = self.Alt(id, desc)
