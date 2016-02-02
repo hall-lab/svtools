@@ -17,7 +17,9 @@ class Variant(object):
         self.info_list = vcf.info_list
         self.info = dict()
         self.format_list = vcf.format_list
+        self.format_set = set([i.id for i in vcf.format_list])
         self.active_formats = set()
+        self.active_format_list = list()
         self.gts = dict()
         
         # fill in empty sample genotypes
@@ -29,15 +31,16 @@ class Variant(object):
             var_list.append("GT")
 
         # make a genotype for each sample at variant
+        format_field_tags = var_list[8].split(':')
         for s in self.sample_list:
             try:
-                s_gt = var_list[vcf.sample_to_col(s)].split(':')[0]
-                self.gts[s] = Genotype(self, s, s_gt)
+                sample_field = var_list[vcf.sample_to_col(s)].split(':')
+                self.gts[s] = Genotype(self, s, sample_field[0])
                 # import the existing fmt fields
-                for j in zip(var_list[8].split(':'), var_list[vcf.sample_to_col(s)].split(':')):
-                    self.gts[s].set_format(j[0], j[1])
+                self.gts[s].set_formats(format_field_tags, sample_field)
             except IndexError:
                 self.gts[s] = Genotype(self, s, './.')
+        self.update_active_format_list()
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
@@ -45,6 +48,13 @@ class Variant(object):
             if len(i) == 1:
                 i.append(True)
             self.info[i[0]] = i[1]
+
+    def update_active_format_list(self):
+        new_list = list()
+        for format in self.format_list:
+            if format.id in self.active_formats:
+                new_list.append(format.id)
+        self.active_format_list = new_list
 
     def set_info(self, field, value):
         if field in [i.id for i in self.info_list]:
@@ -76,11 +86,11 @@ class Variant(object):
         return ':'.join(f_list)
 
     def genotype(self, sample_name):
-        if sample_name in self.sample_list:
+        try:
             return self.gts[sample_name]
-        else:
-            # TODO Should this be an exception? Why is this not a fatal error?
+        except KeyError as e:
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
+            sys.exit(1)
 
     def get_var_string(self):
         if len(self.active_formats) == 0:
