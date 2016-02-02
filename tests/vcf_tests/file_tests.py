@@ -78,6 +78,31 @@ class TestVcf(TestCase):
         v.add_sample('ScottPilgrim')
         self.assertEqual(v.sample_to_col('ScottPilgrim'), 12)
 
+    def test_add_info_after(self):
+        header_lines = [
+                '##fileformat=VCFv4.2',
+                '##fileDate=20090805',
+                '##reference=file:///seq/references/1000GenomesPilot-NCBI36.fasta',
+                '##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">',
+                '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">',
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003']
+        extra_line = '##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">'
+        v = Vcf()
+        v.add_header(header_lines)
+        v.add_info_after('DP', 'DB', 0, 'Flag', 'dbSNP membership, build 129')
+        expected_lines = header_lines[0:4] + [extra_line] + header_lines[4:]
+        expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d')
+        self.assertEqual(v.get_header(), '\n'.join(expected_lines))
+        v2 = Vcf()
+        v2.add_header(header_lines)
+        v2.add_info_after('AF', 'DB', 0, 'Flag', 'dbSNP membership, build 129')
+        expected_lines2 = header_lines[0:5] + [extra_line] + header_lines[5:]
+        expected_lines2[1] = '##fileDate=' + time.strftime('%Y%m%d')
+        self.assertEqual(v2.get_header(), '\n'.join(expected_lines2))
+
+
+
 
 if __name__ == "__main__":
     main()
