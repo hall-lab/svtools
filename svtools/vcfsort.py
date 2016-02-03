@@ -14,7 +14,7 @@ def path_to_shell_script():
     if os.path.isfile(path_to_script):
         return path_to_script
     else:
-        sys.write.stderr("Unable to locate vcf script")
+        sys.stderr.write("Unable to locate vcfsort script")
         sys.exit(1)
 
 def description():
