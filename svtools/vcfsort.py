@@ -46,7 +46,7 @@ def run_from_args(args):
     # or if that is even necessary
     if code:
         if code is not 141:
-            sys.stderr.write(bedpesort' bash script exited with code {0}\n'.format(code))
+            sys.stderr.write('vcfsort bash script exited with code {0}\n'.format(code))
         sys.exit(code)
 
 if __name__ == "__main__":
