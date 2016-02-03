@@ -6,6 +6,9 @@ import signal
 
 def path_to_shell_script():
     # FIXME This may not be the best way to find the location of these scripts. See pkg_resources as a possible alternative
+    # or possible try this
+    #path = os.path.dirname(sys.modules['svtools'].__file__)
+    #path_to_script = os.path.join(path, 'bin', 'vcfsort')
     path = os.path.dirname(os.path.abspath(__file__))
     path_to_script = os.path.join(path, 'bin', 'vcfsort')
     if os.path.isfile(path_to_script):
