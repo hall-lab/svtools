@@ -33,11 +33,20 @@ def run_from_args(args):
         cmd.append(args.input)
     if args.output:
         cmd.append(args.output)
+    # Here we re-set Python's treatment of SIGPIPE to the default
+    # as described here: http://www.chiark.greenend.org.uk/~cjwatson/blog/python-sigpipe.html
     p = subprocess.Popen(cmd, preexec_fn=lambda:
             signal.signal(signal.SIGPIPE, signal.SIG_DFL))
     code = p.wait()
+    # The check for code != 141 is here because 
+    # 141 indicates a SIGPIPE signal returned in the underlying bash pipelines
+    # We want to be silent there
+    # FIXME 141 is bash specific and while the underlying scripts are bash
+    # It is not clear that the shell this script is run in should be exiting with 141 
+    # or if that is even necessary
     if code:
-        sys.stderr.write('bedpesort bash script exited with code {0}\n'.format(code))
+        if code is not 141:
+            sys.stderr.write('vcfsort bash script exited with code {0}\n'.format(code))
         sys.exit(code)
 
 if __name__ == "__main__":
