@@ -20,6 +20,7 @@ class Bedpe(object):
             del self.misc[1]
             
             self.svtype = self.retrieve_svtype()
+            self.af = self.retrieve_af()
             if self.svtype != bed_list[10]:
                 sys.stderr.write("SVTYPE at Column 11({0})) and SVTYPE in INFO Column({1}) don't match at variant ID {3}\n".format(str(bed_list[10]), str(self.svtype), self.name))
             self.adjust_by_cipos()
@@ -45,6 +46,7 @@ class Bedpe(object):
 
         def retrieve_af(self):
             af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.misc[0].split(';'))))[1]
+            return af
 
         def adjust_by_cipos(self):
             if 'CIPOS=' in self.misc[0]:
