@@ -22,7 +22,7 @@ class Variant(object):
         self.active_formats = set()
         self.active_format_list = list()
         self.gts = dict()
-        self.gts_string = ''
+        self.gts_string = None
 
         
         # fill in empty sample genotypes
@@ -123,7 +123,7 @@ class Variant(object):
                 '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
             ]))
         else:
-            if len(self.gts_string) == 0:
+            if self.gts_string is not None :
                 sys.stderr.write("Error no gt_string\n")
                 sys.exit(1);
             else:
