@@ -123,7 +123,7 @@ class Variant(object):
                 '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
             ]))
         else:
-            if self.gts_string is not None :
+            if self.gts_string == None :
                 sys.stderr.write("Error no gt_string\n")
                 sys.exit(1);
             else:
