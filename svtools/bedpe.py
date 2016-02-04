@@ -49,6 +49,8 @@ class Bedpe(object):
             return af
 
         def adjust_by_cipos(self):
+            # CIPOS is adjusted to leftmost before conversion to BEDPE? This removes this adjustment
+            # XXX Do we really want to do this for every single BEDPE line? Or just when converting back to VCF?
             if 'CIPOS=' in self.misc[0]:
                 self.cipos = re.split('=|,', ''.join(filter(lambda x: 'CIPOS=' in x, self.misc[0].split(';'))))
                 if self.o1 == '-' and self.svtype == 'BND':
