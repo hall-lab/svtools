@@ -25,7 +25,8 @@ class Bedpe(object):
             self.adjust_by_cipos()
             self.adjust_by_ciend()
 
-        def parse_score(self, score):
+        @staticmethod
+        def parse_score(score):
             if score.isdigit():
                 return float(score)
             else:
