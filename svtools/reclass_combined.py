@@ -204,48 +204,51 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
     else:
         return False
 
-def to_bnd(var):
-    var1 = copy.deepcopy(var)
-    var2 = copy.deepcopy(var)
+def to_bnd_strings(var):
 
-    # update svtype
-    var1.info['SVTYPE'] = 'BND'
-    var2.info['SVTYPE'] = 'BND'
+    old_type = var.info['SVTYPE']
+    old_id = var.var_id
+    old_pos = var.pos
+    old_end = var.info['END']
+    old_ciend = var.info['CIEND']
+    old_cipos = var.info['CIPOS']
+    old_cipos95 = var.info['CIPOS95']
+    old_ciend95 = var.info['CIEND95']
 
-    # update variant id
-    var1.info['EVENT'] = var.var_id
-    var2.info['EVENT'] = var.var_id
-    var1.var_id = var.var_id + "_1"
-    var2.var_id = var.var_id + "_2"
-    var1.info['MATEID'] = var2.var_id
-    var2.info['MATEID'] = var1.var_id
-    
-    # update position
-    var2.pos = var.info['END']
 
-    # update CIPOS and CIEND
-    var2.info['CIPOS'] = var.info['CIEND']
-    var2.info['CIEND'] = var.info['CIPOS']
-    var2.info['CIPOS95'] = var.info['CIEND95']
-    var2.info['CIEND95'] = var.info['CIPOS95']
+    #for both ends
+    var.info['SVTYPE'] = 'BND'
+    var.info['EVENT'] = old_id
+    del var.info['SVLEN']
+    del var.info['END']
 
-    # delete svlen and END
-    del var1.info['SVLEN']
-    del var2.info['SVLEN']
-    del var1.info['END']
-    del var2.info['END']
+    #var1
+    var.var_id = old_id + "_1"
+    var.info['MATEID'] = old_id + "_2"
+    if old_type == 'DEL':
+        var.alt = 'N[%s:%s[' % (var.chrom, old_end)
+    else:
+        var.alt = ']%s:%s]N' % (var.chrom, var.info['END'])
+    #outfile.write(var.get_var_string(True) + '\n')
+    var1=var.get_var_string(True)
 
-    # add SECONDARY to var2
-    var2.info['SECONDARY'] = True
-
-    if var.info['SVTYPE'] == 'DEL':
-        var1.alt = 'N[%s:%s[' % (var.chrom, var.info['END'])
-        var2.alt = ']%s:%s]N' % (var.chrom, var.pos)
-
-    elif var.info['SVTYPE'] == 'DUP':
-        var1.alt = ']%s:%s]N' % (var.chrom, var.info['END'])
-        var2.alt = 'N[%s:%s[' % (var.chrom, var.pos)
+    #var2
+    var.var_id = old_id + "_2"
+    var.info['MATEID'] = old_id + "_1"
+    var.info['CIPOS'] = old_ciend
+    var.info['CIEND'] = old_cipos
+    var.info['CIPOS95'] = old_ciend95
+    var.info['CIEND95'] = old_cipos95
+    var.pos = old_end
+    var.info['SECONDARY'] = True
+    if old_type == 'DEL':
+        var.alt = ']%s:%s]N' % (var.chrom, old_pos)
+    else:
+        var.alt = 'N[%s:%s[' % (var.chrom, old_pos)
+    #outfile.write(var.get_var_string(True) + '\n')
+    var2=var.get_var_string(True)
     return var1, var2
+
 
 def reciprocal_overlap(a, b_list):
     overlap = 0
@@ -567,17 +570,17 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             if num_pos_samps < min_pos_samps_for_regression:
                 if has_low_freq_depth_support(var, gender, exclude):
                     low_freq_support = True
-                    vcf_out.write(var.get_var_string() + '\n')
+                    vcf_out.write(line)
                 else:
-                    for m_var in to_bnd(var):
-                        vcf_out.write(m_var.get_var_string() + '\n')
+                    for m_var in to_bnd_strings(var):
+                        vcf_out.write(m_var + '\n')
             else:
                 if has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold):
                     high_freq_support = True
-                    vcf_out.write(var.get_var_string() + '\n')
+                    vcf_out.write(line)
                 else:
-                    for m_var in to_bnd(var):
-                        vcf_out.write(m_var.get_var_string() + '\n')
+                    for m_var in to_bnd_strings(var):
+                        vcf_out.write(m_var + '\n')
             
         if diag_outfile is not None:
             outf.write(var.var_id+"\t"+svtype+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(high_freq_support)+"\t"+str(low_freq_support)+"\n")

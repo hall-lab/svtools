@@ -2,7 +2,8 @@ from svtools.vcf.genotype import Genotype
 import sys
 
 class Variant(object):
-    def __init__(self, var_list, vcf, fixed_genotypes=False):
+
+    def __init__(self, var_list, vcf, keep_sample_string=False):
         self.chrom = var_list[0]
         self.pos = int(var_list[1])
         self.var_id = var_list[2]
@@ -21,9 +22,8 @@ class Variant(object):
         self.format_set = set([i.id for i in vcf.format_list])
         self.active_formats = set()
         self.active_format_list = list()
-        self.gts = dict()
         self.gts_string = ''
-
+        self.gts = dict()
         
         # fill in empty sample genotypes
         if len(var_list) < 8:
@@ -44,7 +44,8 @@ class Variant(object):
             except IndexError:
                 self.gts[s] = Genotype(self, s, './.')
         self.update_active_format_list()
-        if keep_sample_string == True:          
+
+        if keep_sample_string == True:
             self.gts_string='\t'.join(var_list[9:])
 
         self.info = dict()
@@ -97,7 +98,7 @@ class Variant(object):
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
             sys.exit(1)
 
-    def get_var_string(self, use_cached_gt_string=False):
+    def get_var_string(self, gts_as_is = False):
         if len(self.active_formats) == 0:
             s = '\t'.join(map(str,[
                 self.chrom,
@@ -109,7 +110,7 @@ class Variant(object):
                 self.filter,
                 self.get_info_string()
             ]))
-        elif use_cached_gt_string == False:
+        elif gts_as_is == False:
             s = '\t'.join(map(str,[
                 self.chrom,
                 self.pos,
@@ -140,3 +141,4 @@ class Variant(object):
                     self.gts_string
             ]))
         return s
+

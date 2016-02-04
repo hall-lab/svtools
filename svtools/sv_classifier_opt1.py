@@ -9,7 +9,7 @@ from argparse import RawTextHelpFormatter
 from operator import itemgetter
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
-from svtools.vcf.variant import Variant
+from svtools.vcf.variant_mod import Variant
 
 
 __author__ = "Colby Chiang (cc2qe@virginia.edu)"
@@ -197,7 +197,7 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
     else:
         return False
 
-def to_bnd_write(var, outfile):
+def to_bnd_strings(var):
 
     old_type = var.info['SVTYPE']
     old_id = var.var_id
@@ -222,7 +222,8 @@ def to_bnd_write(var, outfile):
         var.alt = 'N[%s:%s[' % (var.chrom, old_end)
     else:
         var.alt = ']%s:%s]N' % (var.chrom, var.info['END'])
-    outfile.write(var.get_var_string() + '\n')
+    #outfile.write(var.get_var_string(True) + '\n')
+    var1=var.get_var_string(True)
 
     #var2
     var.var_id = old_id + "_2"
@@ -237,7 +238,9 @@ def to_bnd_write(var, outfile):
         var.alt = ']%s:%s]N' % (var.chrom, old_pos)
     else:
         var.alt = 'N[%s:%s[' % (var.chrom, old_pos)
-    outfile.write(var.get_var_string() + '\n')
+    #outfile.write(var.get_var_string(True) + '\n')
+    var2=var.get_var_string(True)
+    return var1, var2
 
         
 
@@ -423,7 +426,7 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             continue
 
         # parse the VCF line
-        var = Variant(v, vcf)
+        var = Variant(v, vcf, True)
 
         # check intersection with mobile elements
         if ae_dict is not None and var.info['SVTYPE'] in ['DEL']:
@@ -433,7 +436,7 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                     ae = 'ME:' + ae
                 var.alt = '<DEL:%s>' % ae
                 var.info['SVTYPE'] = 'MEI'
-                vcf_out.write(var.get_var_string() + '\n')
+                vcf_out.write(var.get_var_string(True) + '\n')
                 continue
 
         # # write to directory
@@ -454,25 +457,27 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                     # has_low_freq_depth_support(var, gender, exclude, writedir + '/low_freq_rd')
                     # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/low_freq_rd')
                     # write variant
-                    vcf_out.write(var.get_var_string() + '\n')
+                    #vcf_out.write(var.get_var_string(True) + '\n')
+                    vcf_out.write(line)
                 else:
                     # has_low_freq_depth_support(var, gender, exclude, writedir + '/low_freq_no_rd')
                     # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/low_freq_no_rd')
-                    to_bnd_write(var, vcf_out)
-                    #for m_var in to_bnd(var):
-                    #    vcf_out.write(m_var.get_var_string() + '\n')
+                    #to_bnd_write(var, vcf_out)
+                    for m_var in to_bnd_strings(var):
+                        vcf_out.write(m_var + '\n')
             else:
                 if has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold):
                     # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/high_freq_rd')
                     # has_low_freq_depth_support(var, gender, exclude, writedir + '/high_freq_rd')
                     # write variant
-                    vcf_out.write(var.get_var_string() + '\n')
+                    #vcf_out.write(var.get_var_string(True) + '\n')
+                    vcf_out.write(line)
                 else:
                     # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/high_freq_no_rd')
                     # has_low_freq_depth_support(var, gender, exclude, writedir + '/high_freq_no_rd')
-                    to_bnd_write(var, vcf_out)
-                    #for m_var in to_bnd(var):
-                    #    vcf_out.write(m_var.get_var_string() + '\n')
+                    #to_bnd_write(var, vcf_out)
+                    for m_var in to_bnd_strings(var):
+                        vcf_out.write(m_var + '\n')
     vcf_out.close()
     return
 
