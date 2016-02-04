@@ -1,7 +1,6 @@
 nose
 coverage
-statsmodels.api
+statsmodels
 numpy
 pandas
-statsmodels.formula.api
 scipy
