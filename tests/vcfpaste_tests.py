@@ -1,7 +1,6 @@
 from unittest import TestCase, main
 import os
 import svtools.vcfpaste
-import glob 
 import sys
 import tempfile
 import difflib
@@ -12,7 +11,9 @@ class IntegrationTest_vcfpaste(TestCase):
         test_directory = os.path.dirname(os.path.abspath(__file__))
         self.test_data_dir = os.path.join(test_directory, 'test_data', 'vcfpaste')
         # glob vcfs
-        vcfs = glob.glob(os.path.join(self.test_data_dir, 'NA*vcf'))
+        vcfs = list()
+        for sample in ('NA12878', 'NA12891', 'NA12892'):
+            vcfs.append(os.path.join(self.test_data_dir, '{0}.vcf'.format(sample)))
         # write out list since we have the paths and have to get those right
         temp_descriptor, self.list_of_vcfs = tempfile.mkstemp()
         temp_handle = os.fdopen(temp_descriptor, 'w') 
@@ -33,7 +34,7 @@ class IntegrationTest_vcfpaste(TestCase):
         temp_handle2.write(truncated_vcf + '\n')
         temp_handle2.close()
 
-        self.master = glob.glob(os.path.join(self.test_data_dir, 'master.vcf'))
+        self.master = os.path.join(self.test_data_dir, 'master.vcf')
 
     def tearDown(self):
         os.remove(self.list_of_vcfs)
