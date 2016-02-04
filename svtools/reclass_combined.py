@@ -204,7 +204,7 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
     else:
         return False
 
-def to_bnd_strings(var):
+def to_bnd_strings(var, fixed_gts):
 
     old_type = var.info['SVTYPE']
     old_id = var.var_id
@@ -229,8 +229,7 @@ def to_bnd_strings(var):
         var.alt = 'N[%s:%s[' % (var.chrom, old_end)
     else:
         var.alt = ']%s:%s]N' % (var.chrom, var.info['END'])
-    #outfile.write(var.get_var_string(True) + '\n')
-    var1=var.get_var_string(True)
+    var1=var.get_var_string(fixed_gts)
 
     #var2
     var.var_id = old_id + "_2"
@@ -245,8 +244,7 @@ def to_bnd_strings(var):
         var.alt = ']%s:%s]N' % (var.chrom, old_pos)
     else:
         var.alt = 'N[%s:%s[' % (var.chrom, old_pos)
-    #outfile.write(var.get_var_string(True) + '\n')
-    var2=var.get_var_string(True)
+    var2=var.get_var_string(fixed_gts)
     return var1, var2
 
 
@@ -531,7 +529,7 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             continue
         
         # parse the VCF line
-        var = Variant(v, vcf)
+        var = Variant(v, vcf, True)
 
         # check intersection with mobile elements
         if ae_dict is not None and var.info['SVTYPE'] in ['DEL']:
@@ -541,13 +539,13 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                     ae = 'ME:' + ae
                 var.alt = '<DEL:%s>' % ae
                 var.info['SVTYPE'] = 'MEI'
-                vcf_out.write(var.get_var_string() + '\n')
+                vcf_out.write(var.get_var_string(True) + '\n')
                 continue
 
 
         # for now, don't worry about sex chromosomes
         if (var.chrom == 'X' or var.chrom == 'Y'):
-            vcf_out.write(var.get_var_string()+'\n')
+            vcf_out.write(line)
             continue
 
         #count positively genotyped samples
@@ -563,7 +561,7 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
         nb_support = False
 
         if num_pos_samps == 0:
-            vcf_out.write(var.get_var_string() + '\n')
+            vcf_out.write(line)
         else:
             if has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params):
                 nb_support = True
@@ -572,14 +570,14 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                     low_freq_support = True
                     vcf_out.write(line)
                 else:
-                    for m_var in to_bnd_strings(var):
+                    for m_var in to_bnd_strings(var, True ):
                         vcf_out.write(m_var + '\n')
             else:
                 if has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold):
                     high_freq_support = True
                     vcf_out.write(line)
                 else:
-                    for m_var in to_bnd_strings(var):
+                    for m_var in to_bnd_strings(var, True):
                         vcf_out.write(m_var + '\n')
             
         if diag_outfile is not None:

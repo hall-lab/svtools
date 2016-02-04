@@ -44,7 +44,7 @@ class Variant(object):
             except IndexError:
                 self.gts[s] = Genotype(self, s, './.')
         self.update_active_format_list()
-        if keep_sample_string == True:          
+        if fixed_genotypes == True:          
             self.gts_string='\t'.join(var_list[9:])
 
         self.info = dict()

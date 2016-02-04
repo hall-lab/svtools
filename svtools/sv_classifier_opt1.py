@@ -9,7 +9,7 @@ from argparse import RawTextHelpFormatter
 from operator import itemgetter
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
-from svtools.vcf.variant_mod import Variant
+from svtools.vcf.variant import Variant
 
 
 __author__ = "Colby Chiang (cc2qe@virginia.edu)"
