@@ -19,7 +19,11 @@ class Bedpe(object):
             self.check_malformed()
             del self.misc[1]
             
-            self.svtype = self.retrieve_svtype()
+            try:
+                self.svtype = self.retrieve_svtype()
+            except ValueError:
+                sys.stderr.write('No SVTYPE parseable for {0}'.format('\t'.join(bed_list)))
+                sys.exit(1)
             self.af = self.retrieve_af()
             if self.svtype != bed_list[10]:
                 sys.stderr.write("SVTYPE at Column 11({0})) and SVTYPE in INFO Column({1}) don't match at variant ID {3}\n".format(str(bed_list[10]), str(self.svtype), self.name))
@@ -41,11 +45,17 @@ class Bedpe(object):
                 self.malformedFlag = 2      
 
         def retrieve_svtype(self):
-            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.misc[0].split(';'))))[1]
+            try:
+                svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.misc[0].split(';'))))[1]
+            except IndexError as e:
+                raise ValueError
             return svtype
 
         def retrieve_af(self):
-            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.misc[0].split(';'))))[1]
+            try:
+                af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.misc[0].split(';'))))[1]
+            except IndexError:
+                af = None
             return af
 
         def adjust_by_cipos(self):
