@@ -2,6 +2,7 @@
 
 import argparse, sys, re
 import math, time
+import copy
 from argparse import RawTextHelpFormatter
 from svtools.bedpe import Bedpe
 from svtools.vcf.file import Vcf
@@ -42,17 +43,31 @@ description: Convert a bedpe file to VCF")
 def bedpeToVcf(bedpe_file, vcf_out):
     myvcf = Vcf()
     in_header = True
-    sample_list = []
     # parse the bedpe data
     header = list()
     for line in bedpe_file:
         if in_header:
-            if line.startswith('#'):
+            if line[0:2] == '##':
                 header.append(line)
+                continue
+            elif line[0] == '#' and line[1] != '#':    
+                sample_list_str = line.rstrip().split('\t', 14)[-1]
+                header.append('\t'.join([
+                                    '#CHROM',
+                                    'POS',
+                                    'ID',
+                                    'REF',
+                                    'ALT',
+                                    'QUAL',
+                                    'FILTER',
+                                    'INFO',
+                                    sample_list_str
+                                    ] ))
                 continue
             else:
                 in_header = False
                 myvcf.add_header(header)
+                myvcf.file_format='VCFv4.2'
                 vcf_out.write(myvcf.get_header() + '\n')
         # 
         bedpe = Bedpe(line.rstrip().split('\t'))
@@ -60,13 +75,13 @@ def bedpeToVcf(bedpe_file, vcf_out):
             bedpe1_list = [
                     bedpe.c1, 
                     bedpe.b1,
-                    'N',
                     bedpe.name + '_1', #ID
+                    'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
                     bedpe.score,
                     bedpe.filter
                     ]
-            bedpe1_list.extend(bedpe.misc[0].split('\t'))
+            bedpe1_list.extend(bedpe.misc)
             var1 = Variant(bedpe1_list, myvcf)
             if bedpe.o1 == '+':
                 if bedpe.o2 == '-':
@@ -78,30 +93,30 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     var1.alt = ']%s:%s]%s' % (bedpe.c2, bedpe.b2, var1.ref)
                 elif bedpe.o2 == '-':
                     var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2, var1.ref)
-            misc=bedpe.misc[0]
+            misc = copy.deepcopy(bedpe.misc)
             strands = re.split('=|:',''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))))
             strands_str = str(strands[0]) + '=' + str(strands[1][::-1]) + ':' + str(strands[2])
-            misc=misc.replace(''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))), strands_str)
+            misc[0]=misc[0].replace(''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))), strands_str)
             #add the cipos ciend,cipos95 and ciend95 variables
-            misc=misc.replace(''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))),'CIPOS='+ re.split('=',''.join(filter(lambda x: 'CIEND=' in x, bedpe.misc[0].split(";"))))[1])            
-            misc=misc.replace(''.join(filter(lambda x: 'CIEND='  in x, bedpe.misc[0].split(";"))),'CIEND='+ re.split('=',''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))))[1])
-            misc=misc.replace(''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))),'CIPOS95='+ re.split('=',''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))))[1])
-            misc=misc.replace(''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))),'CIEND95='+ re.split('=',''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))))[1])
+            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))),'CIPOS='+ re.split('=',''.join(filter(lambda x: 'CIEND=' in x, bedpe.misc[0].split(";"))))[1])            
+            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIEND='  in x, bedpe.misc[0].split(";"))),'CIEND='+ re.split('=',''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))))[1])
+            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))),'CIPOS95='+ re.split('=',''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))))[1])
+            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))),'CIEND95='+ re.split('=',''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))))[1])
             #Change MATEID
-            misc= misc.replace(''.join(filter(lambda x: 'MATEID=' in x, bedpe.misc[0].split(";"))),'MATEID=' + bedpe.name + '_2')
+            misc[0]= misc[0].replace(''.join(filter(lambda x: 'MATEID=' in x, bedpe.misc[0].split(";"))),'MATEID=' + bedpe.name + '_2')
             #ADD IDENTIFIER FOR SECONDARY BREAKEND MATE
-            misc=misc.replace(''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))),''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))) + ';SECONDARY;')
+            misc[0]=misc[0].replace(''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))),''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))) + ';SECONDARY;')
 
             bedpe2_list = [
                     bedpe.c2,  #chrom1
                     bedpe.b2,
-                    'N',
                     bedpe.name + '_2', #ID
+                    'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
                     bedpe.score,
                     bedpe.filter
                     ]
-            bedpe2_list.extend(misc.split('\t'))
+            bedpe2_list.extend(misc)
 
             var2 = Variant(bedpe2_list, myvcf)
             # add the strands field. For variant 2 must switch the order
@@ -133,7 +148,7 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     bedpe.score,
                     bedpe.filter
                     ]
-            bedpe_list.extend(bedpe.misc[0].split('\t'))
+            bedpe_list.extend(bedpe.misc)
 
             var = Variant(bedpe_list, myvcf)
             # write the record to the VCF output file
