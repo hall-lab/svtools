@@ -398,6 +398,9 @@ def calc_params(vcf_file):
                         var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), math.log(abs(float(var.info['SVLEN']))), log2r))
 
     df=pd.DataFrame(tSet, columns=CN_rec._fields)
+
+    #df.to_csv('training_set.csv')
+    #sys.exit(1)
     df['q_low']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(lowQuantile)
     df['q_high']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(highQuantile)
     df=df[(df.log2r>=df.q_low) & (df.log2r<=df.q_high)]
@@ -455,7 +458,7 @@ def has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params,
 
 
     test_set = pd.DataFrame(data = test_set, columns=CN_rec._fields)
-
+    
     shomd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="1/1") & (test_set.svlen<1000)]
     shetd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="0/1") & (test_set.svlen<1000)]
     shomd['log2r_adj']=shomd['log2r']-hom_del_fit.predict(shomd)
