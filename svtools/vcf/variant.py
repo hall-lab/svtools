@@ -2,7 +2,7 @@ from svtools.vcf.genotype import Genotype
 import sys
 
 class Variant(object):
-    def __init__(self, var_list, vcf):
+    def __init__(self, var_list, vcf, fixed_genotypes=False):
         self.chrom = var_list[0]
         self.pos = int(var_list[1])
         self.var_id = var_list[2]
@@ -22,6 +22,8 @@ class Variant(object):
         self.active_formats = set()
         self.active_format_list = list()
         self.gts = dict()
+        self.gts_string = None
+
         
         # fill in empty sample genotypes
         if len(var_list) < 8:
@@ -42,6 +44,8 @@ class Variant(object):
             except IndexError:
                 self.gts[s] = Genotype(self, s, './.')
         self.update_active_format_list()
+        if fixed_genotypes == True:          
+            self.gts_string='\t'.join(var_list[9:])
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
@@ -93,7 +97,7 @@ class Variant(object):
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
             sys.exit(1)
 
-    def get_var_string(self):
+    def get_var_string(self, use_cached_gt_string=False):
         if len(self.active_formats) == 0:
             s = '\t'.join(map(str,[
                 self.chrom,
@@ -105,7 +109,7 @@ class Variant(object):
                 self.filter,
                 self.get_info_string()
             ]))
-        else:
+        elif use_cached_gt_string == False:
             s = '\t'.join(map(str,[
                 self.chrom,
                 self.pos,
@@ -118,5 +122,21 @@ class Variant(object):
                 self.get_format_string(),
                 '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
             ]))
+        else:
+            if self.gts_string == None :
+                sys.stderr.write("Error no gt_string\n")
+                sys.exit(1);
+            else:
+                s = '\t'.join(map(str,[
+                    self.chrom,
+                    self.pos,
+                    self.var_id,
+                    self.ref,
+                    self.alt,
+                    '%0.2f' % self.qual,
+                    self.filter,
+                    self.get_info_string(),
+                    self.get_format_string(),
+                    self.gts_string
+            ]))
         return s
-

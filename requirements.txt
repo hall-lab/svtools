@@ -1,2 +1,7 @@
 nose
 coverage
+statsmodels
+numpy
+pandas
+scipy
+
