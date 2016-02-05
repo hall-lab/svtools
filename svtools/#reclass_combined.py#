@@ -508,6 +508,8 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
         len(hom_het_alt_cn) == 0):
         return False
 
+
+
     # tally up the pos. genotyped samples meeting the mad_threshold
     q = 0
     for cn in het_cn + hom_alt_cn:
