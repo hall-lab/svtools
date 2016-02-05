@@ -1,40 +1,8 @@
-#!/usr/bin/env python
-
 import argparse, sys , re
 from argparse import RawTextHelpFormatter
 from collections import Counter
+from svtools.bedpe import Bedpe
 
-class Bedpe(object):
-    def __init__(self, line):
-        v = line.rstrip().split("\t")
-        self.chrom_a = v[0]
-        self.start_a = int(v[1])
-        self.end_a = int(v[2])
-        self.chrom_b = v[3]
-        self.start_b = int(v[4])
-        self.end_b = int(v[5])
-        self.id = v[6]
-        self.af=filter(lambda x: x if x.startswith('AF=') else None, v[12].split(";"))
-        if self.af is not None and len(self.af) == 1:
-           self.af=''.join(self.af).replace('AF=','')
-        else: 
-           print "No allele frequency for variants found. Input a valid file"
-           sys.exit(0)
-        
-        self.sv_event=filter(lambda x: 'SVTYPE=' in x, v[12].split(";"))
-        if len(self.sv_event) == 1:
-            self.sv_event=''.join(self.sv_event).replace('SVTYPE=','')
-        else:
-            print "No SVTYPE Field found. Input a valid file"
-            sys.exit(0)
-        # self.sv_event=re.search('SVTYPE=(.+?);',v[12]).group(1);
-        self.vec = '\t'.join(v)
-        try:
-            self.strand_a = v[8]
-            self.strand_b = v[9]
-        except IndexError:
-            self.strand_a = ''
-            self.strand_b = ''
 class Cluster(object):
     def __init__(self):
         self.id = None
@@ -56,19 +24,19 @@ class Cluster(object):
     def can_add(self, bedpe, max_distance):
         if self.size == 0:
            return True
-        if self.sv_event ==  bedpe.sv_event:
-            if (self.strand_a != bedpe.strand_a
-                or self.strand_b != bedpe.strand_b):
+        if self.sv_event ==  bedpe.svtype:
+            if (self.strand_a != bedpe.o1
+                or self.strand_b != bedpe.o2):
                 return False
 
-            if (self.chrom_a != bedpe.chrom_a
-                or self.min_a - max_distance > bedpe.end_a
-                or self.max_a + max_distance < bedpe.start_a):
+            if (self.chrom_a != bedpe.c1
+                or self.min_a - max_distance > bedpe.e1
+                or self.max_a + max_distance < bedpe.s1):
                 return False
 
-            if (self.chrom_b != bedpe.chrom_b
-                or self.min_b - max_distance > bedpe.end_b
-                or self.max_b + max_distance < bedpe.start_b):
+            if (self.chrom_b != bedpe.c2
+                or self.min_b - max_distance > bedpe.e2
+                or self.max_b + max_distance < bedpe.s2):
                 return False
             else:
                 return True
@@ -81,19 +49,36 @@ class Cluster(object):
                 #First node represents best variant
                 self.elements[0] = bedpe  
         self.size += 1
-        self.sv_event=bedpe.sv_event 
+        self.sv_event=bedpe.svtype
         self.filter = max(self.filter,bedpe.af) 
-        self.chrom_a = bedpe.chrom_a
-        self.min_a = min(self.min_a, bedpe.start_a)
-        self.max_a = max(self.max_a, bedpe.end_a)
-        self.chrom_b = bedpe.chrom_b
-        self.min_b = min(self.min_b, bedpe.start_b)
-        self.max_b = max(self.max_b, bedpe.end_b)
-        self.strand_a = bedpe.strand_a
-        self.strand_b = bedpe.strand_b
+        self.chrom_a = bedpe.c1
+        self.min_a = min(self.min_a, bedpe.s1)
+        self.max_a = max(self.max_a, bedpe.e1)
+        self.chrom_b = bedpe.c2
+        self.min_b = min(self.min_b, bedpe.s2)
+        self.max_b = max(self.max_b, bedpe.e2)
+        self.strand_a = bedpe.o1
+        self.strand_b = bedpe.o2
                  
     def get_cluster_string(self):
-           return self.elements[0].vec
+        # FIXME Should move BEDPE -> string stuff to bedpe class
+        b = self.elements[0]
+        return '\t'.join([
+            b.c1,
+            str(b.s1),
+            str(b.e1),
+            b.c2,
+            str(b.s2),
+            str(b.e2),
+            b.name,
+            str(b.score),
+            b.o1,
+            b.o2,
+            b.svtype,
+            b.filter,
+            b.misc[0],
+            b.info2
+            ] + b.misc[1:])
 
 
 # prints and removes clusters from cluster_list that are beyond
@@ -104,9 +89,9 @@ def prune(cluster_list, bedpe, max_distance, min_cluster_size,print_ineligible,b
     for cluster in cluster_list:
         # cluster is beyond updatable window:
         if (bedpe is None   
-            or cluster.chrom_a != bedpe.chrom_a
-            or cluster.min_a - max_distance > bedpe.end_a
-            or cluster.max_a + max_distance < bedpe.start_a):
+            or cluster.chrom_a != bedpe.c1
+            or cluster.min_a - max_distance > bedpe.e1
+            or cluster.max_a + max_distance < bedpe.s1):
             
             # print the cluster if eligible
             if (cluster.size >= min_cluster_size or print_ineligible):
@@ -145,7 +130,11 @@ def cluster_bedpe(in_file,max_distance,eval_param,bedpe_out,is_sorted):
             continue
         in_header=False
         line_counter += 1
-        bedpe = Bedpe(line)
+        bedpe = Bedpe(line.rstrip().split('\t'))
+        if bedpe.af is None:
+            sys.stderr.write('No allele frequency for variant found. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
+            sys.exit(1)
+
         matched_clusters=[]
         for cluster in cluster_list:
             if cluster.can_add(bedpe, max_distance):
