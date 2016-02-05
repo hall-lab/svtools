@@ -221,7 +221,7 @@ def to_bnd_strings(var):
     if old_type == 'DEL':
         var.alt = 'N[%s:%s[' % (var.chrom, old_end)
     else:
-        var.alt = ']%s:%s]N' % (var.chrom, var.info['END'])
+        var.alt = ']%s:%s]N' % (var.chrom, old_end)
     var1=var.get_var_string(True)
 
     #var2
