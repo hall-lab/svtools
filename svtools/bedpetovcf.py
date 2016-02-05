@@ -3,6 +3,7 @@
 import argparse, sys, re
 import math, time
 from argparse import RawTextHelpFormatter
+from svtools.bedpe import Bedpe
 
 __author__ = "Colby Chiang / Abhijit Badve"
 __version__ = "$Revision: 0.0.2 $"
@@ -35,59 +36,6 @@ description: Convert a bedpe file to VCF")
     # send back the user input
     return args
 
-class Bedpe(object):
-        def __init__(self, bedList):
-            self.c1 = bedList[0]
-            self.s1 = int(bedList[1])
-            self.e1 = int(bedList[2])
-            self.c2 = bedList[3]
-            self.s2 = int(bedList[4])
-            self.e2 = int(bedList[5])
-            self.name = bedList[6]
-            if bedList[7].isdigit():
-                self.score = float(bedList[7])
-            else:
-                self.score = bedList[7]
-            self.o1 = bedList[8]
-            self.o2 = bedList[9]
-            self.filter = bedList[11]
-            self.malformedFlag = 0
-            self.misc = bedList[12:]
-            if self.misc[0] == 'MISSING':
-                  self.malformedFlag = 1
-                  self.misc[0] = self.misc[1]
-            if self.misc[1] == 'MISSING':
-                self.malformedFlag = 2      
-            del self.misc[1]
-            
-            self.svtype = re.split("=",''.join(filter(lambda x: 'SVTYPE=' in x, self.misc[0].split(";"))))[1]
-            if self.svtype != bedList[10]:
-                sys.stderr.write("SVTYPE at Column 11("+ str(bedList[10]) + ") and SVTYPE in INFO Column(" + str(self.svtype) +  ") don't match at variant ID " + str(self.name) + '\n')
-            if 'CIPOS=' in self.misc[0]:
-                self.cipos = re.split("=|,",''.join(filter(lambda x: 'CIPOS=' in x, self.misc[0].split(";"))))
-                if self.o1 == '-' and self.svtype == 'BND':
-                    self.b1 = self.s1 - int(self.cipos[1]) + 1 
-                else:
-                    self.b1 = self.s1 - int(self.cipos[1])
-            else:
-                if self.o1 == '-' and self.svtype == 'BND':
-                    self.b1 = self.s1 + 1 
-                else:
-                    self.b1 = self.s1
-            if 'CIEND=' in self.misc[0]:     
-                self.ciend = re.split("=|,",''.join(filter(lambda x: 'CIEND=' in x, self.misc[0].split(";"))))
-                if self.o2 == '-' and self.svtype == 'BND':
-                    self.b2 = self.s2 - int(self.ciend[1]) + 1
-                else:
-                    self.b2 = self.s2 - int(self.ciend[1])
-                
-            else: 
-                self.ciend = None
-                if self.o2 == '-' and self.svtype == 'BND':
-                    self.b2 = self.s2 + 1
-                else:
-                    self.b2 = self.s2
-  
 class Vcf(object):
     def __init__(self):
             self.sample_list = []
