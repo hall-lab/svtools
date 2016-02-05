@@ -4,6 +4,7 @@ python:
 # command to install dependencies
 install:
     - sudo pip install conda
+    - sudo conda update conda --no-deps
     - sudo conda init
     - conda install anaconda-client
     - sudo conda update conda --yes 
