@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sys
 import string
 import gzip
@@ -7,56 +5,7 @@ import time
 from operator import itemgetter
 from optparse import OptionParser
 import argparse, sys , re
-from argparse import RawTextHelpFormatter
 
-__author__ = "Abhijit Badve (abadve@genome.wustl.edu)"
-__version__ = "$Revision: 0.0.1 $"
-___date__ = "$Date: 2015-09-02 12:00 $"
-
-def get_args():
-    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
-varLookup\n\
-author: " + __author__ + "\n\
-version: " + __version__ + "\n\
-description: Look for variants common between two bedpe files")
-    parser.add_argument('-d', '--distance',
-                        metavar='INT', type=int,
-                        dest='max_distance',
-                        required=False,
-                        default=50,
-                        help='max separation distance (bp) of adjacent loci between bedpe files [50]')
-    parser.add_argument("-a", "--aFile", 
-                        dest="aFile",
-                        metavar="FILE",
-                        required=False,
-                        help="Pruned merged bedpe (A file) or standard input (-a stdin). ")
-    parser.add_argument("-b", "--bFile", 
-                        dest="bFile", 
-                        metavar="FILE",
-                        required=False,
-                        help="Pruned merged bedpe (B file) (-b stdin). For prunning use -- ClusterBedpe.py")
-    parser.add_argument("-c", "--cohort", 
-                        metavar='string', type=str,
-                        dest='cohort_name',
-                        required=False,
-                        default=None,
-                        help="Cohort name to add information of matching variants (default:bFile)")                    
-    parser.add_argument('-o', '--output', 
-                        type=argparse.FileType('w'), 
-                        default=sys.stdout, help='Output BEDPE to write (default: stdout)')
-                        
-    
-    args = parser.parse_args()
-    # if no input, check if part of pipe and if so, read stdin.
-    if args.aFile == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            args.aFile = sys.stdin
-
-    # send back the user input
-    return args
 class Bedpe(object):
     def __init__(self, line):
         v = line.strip().split("\t")
@@ -289,23 +238,37 @@ def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
                 add(a,b,max_distance)
             bedpe_out.write(a.get_var_string(cohort_name))
 
-def main():
-    pass_prefix = "#"
-    # parse the command line args
-    args = get_args()
-    if args.aFile is None:
-       parser.print_help()
-       print
-    else:
-        try:
-        	varLookup(args.aFile, args.bFile,args.output, args.max_distance,pass_prefix,args.cohort_name)
-        except IOError as err:
-        	sys.stderr.write("IOError " + str(err) + "\n");
-    	return
+def description():
+    return 'Look for variants common between two bedpe files'
 
-if __name__ == "__main__":
-	try:
-		main()
-        except IOError, e:
-		if e.errno != 32:  # ignore SIGPIPE
-			raise 
+def add_arguments_to_parser(parser):
+    parser.add_argument('-d', '--distance', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci between bedpe files [50]')
+    parser.add_argument("-a", "--aFile", dest="aFile", help="Pruned merged bedpe (A file) or standard input (-a stdin).")
+    parser.add_argument("-b", "--bFile", dest="bFile", help="Pruned merged bedpe (B file) (-b stdin). For pruning use svtools prune")
+    parser.add_argument("-c", "--cohort", dest='cohort_name', default=None, help="Cohort name to add information of matching variants (default:bFile)")                    
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
+    parser.set_defaults(entry_point=run_from_args)
+
+def command_parser():
+    parser = argparse.ArgumentParser(description=description())
+    add_arguments_to_parser(parser)
+    return parser
+
+def run_from_args(args):
+    pass_prefix = "#"
+    if args.aFile == None:
+        if sys.stdin.isatty():
+            sys.stderr.write('Please stream in input to this command or specify the file to read\n')
+            sys.exit(1)
+        else:
+            args.aFile = sys.stdin
+
+    try:
+    	varLookup(args.aFile, args.bFile,args.output, args.max_distance,pass_prefix,args.cohort_name)
+    except IOError as err:
+    	sys.stderr.write("IOError " + str(err) + "\n");
+
+if __name__ == '__main__':
+    parser = command_parser()
+    args = parser.parse_args()
+    sys.exit(args.entry_point(args))
