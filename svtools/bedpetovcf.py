@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse, sys, re
 import math, time
 import copy
@@ -7,37 +5,6 @@ from argparse import RawTextHelpFormatter
 from svtools.bedpe import Bedpe
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
-
-__author__ = "Colby Chiang / Abhijit Badve"
-__version__ = "$Revision: 0.0.2 $"
-__date__ = "$Date: 2015-09-02 15:00 $"
-__revision__ = "added support if in case cipos and ciend are absent"
-
-# --------------------------------------
-# define functions
-
-def get_args():
-    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
-bedpeToVcf\n\
-author: " + __author__ + "\n\
-version: " + __version__ + "\n\
-description: Convert a bedpe file to VCF")
-    parser.add_argument('-b', '--bedpe', type=argparse.FileType('r'), default=None, help='BEDPE input (default: stdin)')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
-
-    # parse the arguments
-    args = parser.parse_args()
-
-    # if no input, check if part of pipe and if so, read stdin.
-    if args.bedpe == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            args.bedpe = sys.stdin
-
-    # send back the user input
-    return args
 
 # primary function
 def bedpeToVcf(bedpe_file, vcf_out):
@@ -159,20 +126,29 @@ def bedpeToVcf(bedpe_file, vcf_out):
     
     return
 
-# --------------------------------------
-# main function
+def description():
+    return 'convert a BEDPE file to VCF'
 
-def main():
-    # parse the command line args
-    args = get_args()
-   # call primary function
+def add_arguments_to_parser(parser):
+    parser.add_argument('-b', '--bedpe', type=argparse.FileType('r'), default=None, help='BEDPE input (default: stdin)')
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
+    parser.set_defaults(entry_point=run_from_args)
+
+def command_parser():
+    parser = argparse.ArgumentParser(description=description())
+    add_arguments_to_parser(parser)
+    return parser
+
+def run_from_args(args):
+    if args.bedpe == None:
+        if sys.stdin.isatty():
+            parser.print_help()
+            sys.exit(1)
+        else:
+            args.bedpe = sys.stdin
     bedpeToVcf(args.bedpe, args.output)
-    # close the files
-    args.bedpe.close()
-# initialize the script
+
 if __name__ == '__main__':
-    try:
-        sys.exit(main())
-    except IOError, e:
-        if e.errno != 32: # ignore SIGPIPE
-            raise 
+    parser = command_parser()
+    args = parser.parse_args()
+    sys.exit(args.entry_point(args))
