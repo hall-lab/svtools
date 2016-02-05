@@ -9,6 +9,7 @@ import svtools.bedpetovcf
 import svtools.vcftobedpe
 import svtools.vcfsort
 import svtools.bedpesort
+import svtools.genotype
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
@@ -25,6 +26,9 @@ def svtools_cli_parser():
 
     copynumber = subparsers.add_parser('copynumber', help=svtools.copynumber.description())
     svtools.copynumber.add_arguments_to_parser(copynumber)
+
+    genotype = subparsers.add_parser('genotype', help=svtools.genotype.description())
+    svtools.genotype.add_arguments_to_parser(genotype)
     
     afreq = subparsers.add_parser('afreq', help=svtools.afreq.description())
     svtools.afreq.add_arguments_to_parser(afreq)
