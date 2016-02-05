@@ -2,14 +2,8 @@ language: python
 python:
     - "2.7"
 # command to install dependencies
-install:
-    - sudo pip install conda
-    - sudo conda init
-    - sudo conda update conda --yes 
-    - deps='pip nose coverage statsmodel numpy pandas scipy'
-    - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
-    - export PATH=$HOME/py/bin:$PATH
-
+install: 
+    - "pip install -r requirements.txt"
 # command to run tests
 script: 
 # FIXME If these were modules, this shouldn't be necessary
