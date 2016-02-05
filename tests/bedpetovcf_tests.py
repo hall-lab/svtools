@@ -16,6 +16,7 @@ class IntegrationTest_bedpetovcf(TestCase):
         with open(input) as input_handle, os.fdopen(temp_descriptor, 'w') as output_handle:
             svtools.bedpetovcf.bedpeToVcf(input_handle, output_handle)
         expected_lines = open(expected_result).readlines()
+        expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
         produced_lines = open(temp_output_path).readlines()
         diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
         result = ''.join(diff)
