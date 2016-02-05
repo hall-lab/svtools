@@ -4,6 +4,7 @@ import argparse, sys, re
 import math, time
 from argparse import RawTextHelpFormatter
 from svtools.bedpe import Bedpe
+from svtools.vcf.file import Vcf
 
 __author__ = "Colby Chiang / Abhijit Badve"
 __version__ = "$Revision: 0.0.2 $"
@@ -36,78 +37,6 @@ description: Convert a bedpe file to VCF")
     # send back the user input
     return args
 
-class Vcf(object):
-    def __init__(self):
-            self.sample_list = []
-            self.header=[]
-    def add_sample_list(self, sample_list):
-        self.sample_list.extend(sample_list)
-        
-    def add_header(self,line):
-        if line.split('=')[0] == '##fileformat':
-            line = '##fileformat=' + "VCFv4.2" + '\n'
-        if line.split('=')[0] == '##fileDate':
-            line = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
-        self.header.append(line)
-     # return the VCF header
-    def get_header(self):
-        if len(self.header)!= 0:
-            if len(self.sample_list)!= 0:
-                    return  ''.join(self.header + \
-                               ['\t'.join([
-                                   '#CHROM',
-                                   'POS',
-                                   'ID',
-                                   'REF',
-                                   'ALT',
-                                   'QUAL',
-                                   'FILTER',
-                                   'INFO',
-                                   'FORMAT'] + \
-                                          self.sample_list
-                                      )])
-   
-            else:
-                return     ''.join(self.header + \
-                               ['\t'.join([
-                                   '#CHROM',
-                                   'POS',
-                                   'ID',
-                                   'REF',
-                                   'ALT',
-                                   'QUAL',
-                                   'FILTER',
-                                   'INFO',
-                                   'FORMAT'] )])                 
-        else:
-             if len(self.sample_list)!= 0:
-                     return  ''.join(
-                                ['\t'.join([
-                                    '#CHROM',
-                                    'POS',
-                                    'ID',
-                                    'REF',
-                                    'ALT',
-                                    'QUAL',
-                                    'FILTER',
-                                    'INFO',
-                                    'FORMAT'] + \
-                                           self.sample_list
-                                       )])
-   
-             else:
-                 return     ''.join(
-                                ['\t'.join([
-                                    '#CHROM',
-                                    'POS',
-                                    'ID',
-                                    'REF',
-                                    'ALT',
-                                    'QUAL',
-                                    'FILTER',
-                                    'INFO',
-                                    'FORMAT'] )])
-
 class Variant(object):
     def __init__(self):
         self.chrom = ''
@@ -136,17 +65,15 @@ def bedpeToVcf(bedpe_file, vcf_out):
     in_header = True
     sample_list = []
     # parse the bedpe data
+    header = list()
     for line in bedpe_file:
         if in_header:
-            if line[0:2] == '##':
-                myvcf.add_header(line) 
-                continue
-            elif line[0] == '#' and line[1] != '#':    
-                sample_list = line.rstrip().split('\t')[15:]
+            if line.startswith('#'):
+                header.append(line)
                 continue
             else:
                 in_header = False
-                myvcf.add_sample_list(sample_list)
+                myvcf.add_header(header)
                 vcf_out.write(myvcf.get_header() + '\n')
         # 
         bedpe = Bedpe(line.rstrip().split('\t'))
