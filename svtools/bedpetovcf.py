@@ -5,6 +5,7 @@ import math, time
 from argparse import RawTextHelpFormatter
 from svtools.bedpe import Bedpe
 from svtools.vcf.file import Vcf
+from svtools.vcf.variant import Variant
 
 __author__ = "Colby Chiang / Abhijit Badve"
 __version__ = "$Revision: 0.0.2 $"
@@ -37,28 +38,6 @@ description: Convert a bedpe file to VCF")
     # send back the user input
     return args
 
-class Variant(object):
-    def __init__(self):
-        self.chrom = ''
-        self.pos = ''
-        self.id = ''
-        self.ref = 'N'
-        self.alt = ''
-        self.qual = ''
-        self.filter = ''
-        self.misc = list()
-    def add_info(self,chromNo,position,name,altStr,qualScore,filterVal,info):
-        self.chrom = chromNo
-        self.pos = position
-        self.id = name
-        self.alt = altStr
-        self.qual = qualScore
-        self.filter = filterVal
-        self.misc = list(info)
-    def get_var_string(self):
-            return '\t'.join([self.chrom,str(self.pos),str(self.id),self.ref,self.alt,str(self.qual),self.filter,'\t'.join(self.misc)])  + '\n'
-            
- 
 # primary function
 def bedpeToVcf(bedpe_file, vcf_out):
     myvcf = Vcf()
@@ -78,15 +57,17 @@ def bedpeToVcf(bedpe_file, vcf_out):
         # 
         bedpe = Bedpe(line.rstrip().split('\t'))
         if bedpe.svtype == 'BND':
-            var1=Variant()
-            var1.add_info(bedpe.c1,  #chrom1
-                 bedpe.b1,
-                 bedpe.name + '_1', #ID
-                 '<' + str(bedpe.svtype) + '>', #ALT
-                 bedpe.score,
-                 bedpe.filter,
-                 bedpe.misc #Info
-                 )
+            bedpe1_list = [
+                    bedpe.c1, 
+                    bedpe.b1,
+                    'N',
+                    bedpe.name + '_1', #ID
+                    '<' + str(bedpe.svtype) + '>', #ALT
+                    bedpe.score,
+                    bedpe.filter
+                    ]
+            bedpe1_list.extend(bedpe.misc[0].split('\t'))
+            var1 = Variant(bedpe1_list, myvcf)
             if bedpe.o1 == '+':
                 if bedpe.o2 == '-':
                     var1.alt = '%s[%s:%s[' % (var1.ref, bedpe.c2, bedpe.b2)
@@ -97,28 +78,33 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     var1.alt = ']%s:%s]%s' % (bedpe.c2, bedpe.b2, var1.ref)
                 elif bedpe.o2 == '-':
                     var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2, var1.ref)
-            var2 = Variant()        
-            var2.add_info(bedpe.c2,  #chrom1
-                bedpe.b2,
-                bedpe.name + '_2', #ID
-                '<' + str(bedpe.svtype) + '>', #ALT
-                bedpe.score,
-                bedpe.filter,
-                bedpe.misc #Info
-            )
-            # add the strands field. For variant 2 must switch the order
+            misc=bedpe.misc[0]
             strands = re.split('=|:',''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))))
             strands_str = str(strands[0]) + '=' + str(strands[1][::-1]) + ':' + str(strands[2])
-            var2.misc[0]=var2.misc[0].replace(''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))), strands_str)
+            misc=misc.replace(''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))), strands_str)
             #add the cipos ciend,cipos95 and ciend95 variables
-            var2.misc[0]=var2.misc[0].replace(''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))),'CIPOS='+ re.split('=',''.join(filter(lambda x: 'CIEND=' in x, bedpe.misc[0].split(";"))))[1])            
-            var2.misc[0]=var2.misc[0].replace(''.join(filter(lambda x: 'CIEND='  in x, bedpe.misc[0].split(";"))),'CIEND='+ re.split('=',''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))))[1])
-            var2.misc[0]=var2.misc[0].replace(''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))),'CIPOS95='+ re.split('=',''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))))[1])
-            var2.misc[0]=var2.misc[0].replace(''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))),'CIEND95='+ re.split('=',''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))))[1])
+            misc=misc.replace(''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))),'CIPOS='+ re.split('=',''.join(filter(lambda x: 'CIEND=' in x, bedpe.misc[0].split(";"))))[1])            
+            misc=misc.replace(''.join(filter(lambda x: 'CIEND='  in x, bedpe.misc[0].split(";"))),'CIEND='+ re.split('=',''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))))[1])
+            misc=misc.replace(''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))),'CIPOS95='+ re.split('=',''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))))[1])
+            misc=misc.replace(''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))),'CIEND95='+ re.split('=',''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))))[1])
             #Change MATEID
-            var2.misc[0]= var2.misc[0].replace(''.join(filter(lambda x: 'MATEID=' in x, bedpe.misc[0].split(";"))),'MATEID=' + bedpe.name + '_2')
+            misc= misc.replace(''.join(filter(lambda x: 'MATEID=' in x, bedpe.misc[0].split(";"))),'MATEID=' + bedpe.name + '_2')
             #ADD IDENTIFIER FOR SECONDARY BREAKEND MATE
-            var2.misc[0]=var2.misc[0].replace(''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))),''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))) + ';SECONDARY;')
+            misc=misc.replace(''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))),''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))) + ';SECONDARY;')
+
+            bedpe2_list = [
+                    bedpe.c2,  #chrom1
+                    bedpe.b2,
+                    'N',
+                    bedpe.name + '_2', #ID
+                    '<' + str(bedpe.svtype) + '>', #ALT
+                    bedpe.score,
+                    bedpe.filter
+                    ]
+            bedpe2_list.extend(misc.split('\t'))
+
+            var2 = Variant(bedpe2_list, myvcf)
+            # add the strands field. For variant 2 must switch the order
             if bedpe.o2 == '+':
                 if bedpe.o1 == '-':
                     var2.alt = '%s[%s:%s[' % (var2.ref, bedpe.c1, bedpe.b1)
@@ -130,29 +116,28 @@ def bedpeToVcf(bedpe_file, vcf_out):
                 elif bedpe.o1 == '-':
                     var2.alt = '[%s:%s[%s' % (bedpe.c1, bedpe.b1, var2.ref)
             if bedpe.malformedFlag == 0:
-                vcf_out.write(var1.get_var_string())
-                vcf_out.write(var2.get_var_string())
+                vcf_out.write(var1.get_var_string() + '\n')
+                vcf_out.write(var2.get_var_string() + '\n')
             elif bedpe.malformedFlag == 1:
-                vcf_out.write(var2.get_var_string())
+                vcf_out.write(var2.get_var_string() + '\n')
             elif bedpe.malformedFlag == 2:
-                vcf_out.write(var1.get_var_string())    
+                vcf_out.write(var1.get_var_string() + '\n')
         else:
             # set VCF info elements for simple events
-            refbase = 'N'
-            var=Variant()
-            #self,chromNo,position,name,alt,qualScore,filterVal,info
-            var.add_info(bedpe.c1,  #chrom1
-                 bedpe.b1,
-                 bedpe.name, #ID
-                 '<' + str(bedpe.svtype) + '>', #ALT
-                 bedpe.score,
-                 bedpe.filter,
-                 bedpe.misc #Info
-                 )
-            
+            bedpe_list = [
+                    bedpe.c1,  #chrom1
+                    bedpe.b1,
+                    bedpe.name, #ID
+                    'N',
+                    '<' + str(bedpe.svtype) + '>', #ALT
+                    bedpe.score,
+                    bedpe.filter
+                    ]
+            bedpe_list.extend(bedpe.misc[0].split('\t'))
 
+            var = Variant(bedpe_list, myvcf)
             # write the record to the VCF output file
-            vcf_out.write(var.get_var_string())
+            vcf_out.write(var.get_var_string() + '\n')
 
     # close the VCF output file
     vcf_out.close()
