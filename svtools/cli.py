@@ -10,6 +10,7 @@ import svtools.vcftobedpe
 import svtools.vcfsort
 import svtools.bedpesort
 import svtools.genotype
+import svtools.prune
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
@@ -48,6 +49,9 @@ def svtools_cli_parser():
     bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description())
     svtools.bedpesort.add_arguments_to_parser(bedpesort)
     
+    prune = subparsers.add_parser('prune', help=svtools.prune.description())
+    svtools.prune.add_arguments_to_parser(prune)
+
     return parser
 
 if __name__ == '__main__':

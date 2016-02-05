@@ -4,56 +4,6 @@ import argparse, sys , re
 from argparse import RawTextHelpFormatter
 from collections import Counter
 
-__author__ = "Abhijit Badve"
-__version__ = "$Revision: 0.0.1 $"
-___date__ = "$Date: 2015-08-25 12:54 $"
-
-# --------------------------------------
-# define functions
-def get_args():
-    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter, description="\
-clusterBedpe.py\n\
-author: " + __author__ + "\n\
-version: " + __version__ + "\n\
-description: cluster a BEDPE file by position based on their allele frequency")
-    parser.add_argument('-d', '--distance',
-                        metavar='INT', type=int,
-                        dest='max_distance',
-                        required=False,
-                        default=50,
-                        help='max separation distance (bp) of adjacent loci in cluster [50]')
-    parser.add_argument('-e', '--eval_param',
-                        metavar='string', type=str,
-                        required=False,
-                        dest='eval_param',
-                        help='evaluating parameter for choosing best bedpe in a cluster(e.g. af=AlleleFrequency default:af)')
-    parser.add_argument('-s', '--is_sorted',
-                        required=False,
-                        action='store_true',
-                        help='specifying if an input file is sorted (default=False)\n(use following command to sort: \'cat FILE | sort -k1,1V -k2,2n -k3,3n -k4,4V -k5,5n -k6,6\')') 
-                                            
-    parser.add_argument('input', nargs='?',
-                        type=argparse.FileType('r'),
-                        default=None,
-                        help='BEDPE file to read. If \'-\' or absent then defaults to stdin.')
-    parser.add_argument('-o', '--output', 
-                        type=argparse.FileType('w'),
-                        default=sys.stdout, 
-                        help='Output bedpe to write (default: stdout)')
-    # parse the arguments
-    args = parser.parse_args()
-
-    # if no input, check if part of pipe and if so, read stdin.
-    if args.input == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            args.input = sys.stdin
-
-    # send back the user input
-    return args
-
 class Bedpe(object):
     def __init__(self, line):
         v = line.rstrip().split("\t")
@@ -244,22 +194,38 @@ def cluster_bedpe(in_file,max_distance,eval_param,bedpe_out,is_sorted):
     in_file.close()
     return
 
-# --------------------------------------
-# main function
-def main():
-    # parse the command line args
-    args = get_args()
-    # call primary function
+def description():
+    return 'Cluster and prune a BEDPE file by position based on allele frequency'
+
+def add_arguments_to_parser(parser):
+    parser.add_argument('-d', '--distance', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci in cluster [50]')
+    parser.add_argument('-e', '--eval-param', help='evaluating parameter for choosing best bedpe in a cluster(e.g. af=AlleleFrequency default:af)')
+    parser.add_argument('-s', '--is-sorted', action='store_true', help='specify if an input file is sorted. Sort with svtools bedpesort. (default=False)')
+    parser.add_argument('input', nargs='?', type=argparse.FileType('r'), default=None, help='BEDPE file to read. If \'-\' or absent then defaults to stdin.')
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output bedpe to write (default: stdout)')
+    parser.set_defaults(entry_point=run_from_args)
+
+def command_parser():
+    parser = argparse.ArgumentParser(description=description())
+    add_arguments_to_parser(parser)
+    return parser
+
+def run_from_args(args):
+    # if no input, check if part of pipe and if so, read stdin.
+    if args.input == None:
+        if sys.stdin.isatty():
+            sys.stderr.write('Please stream in input to this command or specify the file to read\n')
+            sys.exit(1)
+        else:
+            args.input = sys.stdin
+
     cluster_bedpe(args.input,
                   args.max_distance,
                   args.eval_param,
                   args.output,
                   args.is_sorted)
 
-# initialize the script
 if __name__ == '__main__':
-    try:
-        sys.exit(main())
-    except IOError, e:
-        if e.errno != 32:  # ignore SIGPIPE
-            raise
+    parser = command_parser()
+    args = parser.parse_args()
+    sys.exit(args.entry_point(args))
