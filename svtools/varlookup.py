@@ -5,6 +5,7 @@ import time
 from operator import itemgetter
 from optparse import OptionParser
 import argparse, sys , re
+from svtools.vcf.file import Vcf
 
 class Bedpe(object):
     def __init__(self, line):
@@ -52,132 +53,6 @@ class Bedpe(object):
                         self.chrom_b,str(self.start_b),str(self.end_b),\
                         self.id,self.qual,self.strand_a,self.strand_b,\
                         self.sv_event,self.filter,self.info,self.vec]) + '\n'
-class Header(object):
-    def __init__(self):
-        self.file_format="BEDPE"
-        self.reference=''
-        self.sample_list=[]
-        self.info_list = []
-        self.format_list = []
-        self.alt_list = []
-        self.add_format('GT', 1, 'String', 'Genotype')
-    def add_header(self,line):
-        if line.split('=')[0] == '##fileformat':
-                self.file_format = line.rstrip().split('=')[1]
-        elif line.split('=')[0] == '##reference':
-            self.reference = line.rstrip().split('=')[1]
-        elif line.split('=')[0] == '##INFO':
-            a = line[line.find('<')+1:line.find('>')]
-            r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-            self.add_info(*[b.split('=')[1] for b in r.findall(a)])
-        elif line.split('=')[0] == '##ALT':
-            a = line[line.find('<')+1:line.find('>')]
-            r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-            self.add_alt(*[b.split('=')[1] for b in r.findall(a)])
-        elif line.split('=')[0] == '##FORMAT':
-            a = line[line.find('<')+1:line.find('>')]
-            r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-            self.add_format(*[b.split('=')[1] for b in r.findall(a)])
-        elif line[0] == '#' and line[1] != '#':
-            self.sample_list = line.rstrip().split('\t')[15:]
-    # return the BEDPE header
-    def get_header(self):
-        if len(self.sample_list) > 0:
-            header_string = '\n'.join(['##fileformat=' + self.file_format,
-                                '##fileDate=' + time.strftime('%Y%m%d'),
-                                '##reference=' + self.reference] + \
-                                 [i.hstring for i in self.info_list] + \
-                                 [a.hstring for a in self.alt_list] + \
-                                 [f.hstring for f in self.format_list] + \
-                                 ['\t'.join(['#CHROM_A',
-                                               'START_A',
-                                               'END_A',
-                                               'CHROM_B',
-                                               'START_B',
-                                               'END_B',
-                                               'ID',
-                                               'QUAL',
-                                               'STRAND_A',
-                                               'STRAND_B',
-                                               'TYPE',
-                                               'FILTER',
-                                               'INFO_A',
-                                               'INFO_B',
-                                               'FORMAT'] +
-                                               self.sample_list
-                                              )]) + '\n'
-        else:
-            header_string = '\n'.join(['##fileformat=' + self.file_format,
-                                '##fileDate=' + time.strftime('%Y%m%d'),
-                                '##reference=' + self.reference] + \
-                                 [i.hstring for i in self.info_list] + \
-                                 [a.hstring for a in self.alt_list] + \
-                                 [f.hstring for f in self.format_list] + \
-                                 ['\t'.join(['#CHROM_A',
-                                               'START_A',
-                                               'END_A',
-                                               'CHROM_B',
-                                               'START_B',
-                                               'END_B',
-                                               'ID',
-                                               'QUAL',
-                                               'STRAND_A',
-                                               'STRAND_B',
-                                               'TYPE',
-                                               'FILTER',
-                                               'INFO_A',
-                                               'INFO_B',
-                                               'FORMAT']
-                                              )]) + '\n'              
-        return header_string
-    def add_info(self, id, number, type, desc):
-        if id not in [i.id for i in self.info_list]:
-            inf = Info(id, number, type, desc)
-            self.info_list.append(inf)
-
-    def add_alt(self, id, desc):
-        if id not in [a.id for a in self.alt_list]:
-            alt = Alt(id, desc)
-            self.alt_list.append(alt)
-
-    def add_format(self, id, number, type, desc):
-        if id not in [f.id for f in self.format_list]:
-            fmt = Format(id, number, type, desc)
-            self.format_list.append(fmt)
-
-    def add_sample(self, name):
-        self.sample_list.append(name)
-        
-class Info(object):
-    def __init__(self, id, number, type, desc):
-        self.id = str(id)
-        self.number = str(number)
-        self.type = str(type)
-        self.desc = str(desc)
-        # strip the double quotes around the string if present
-        if self.desc.startswith('"') and self.desc.endswith('"'):
-            self.desc = self.desc[1:-1]
-        self.hstring = '##INFO=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
-
-class Alt(object):
-    def __init__(self, id, desc):
-        self.id = str(id)
-        self.desc = str(desc)
-        # strip the double quotes around the string if present
-        if self.desc.startswith('"') and self.desc.endswith('"'):
-            self.desc = self.desc[1:-1]
-        self.hstring = '##ALT=<ID=' + self.id + ',Description=\"' + self.desc + '\">'
-
-class Format(object):
-    def __init__(self, id, number, type, desc):
-        self.id = str(id)
-        self.number = str(number)
-        self.type = str(type)
-        self.desc = str(desc)
-        # strip the double quotes around the string if present
-        if self.desc.startswith('"') and self.desc.endswith('"'):
-            self.desc = self.desc[1:-1]
-        self.hstring = '##FORMAT=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
 
 def add(a_bedpe,b_bedpe,max_distance):
     if a_bedpe.sv_event ==  b_bedpe.sv_event:
@@ -200,8 +75,9 @@ def add(a_bedpe,b_bedpe,max_distance):
     else:
         return False
 def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
+    # FIXME The following code is heavily duplicated with vcftobedpe and bedpetovcf. Harmonize!!!
     bList = list()
-    headerObj=Header()
+    headerObj=Vcf() #co-opt the VCF header object
     if cohort_name is None:
         cohort_name=str(str(bFile).split('/')[-1])
         
@@ -223,15 +99,54 @@ def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
     else:
         aData = open(aFile, 'r')
     in_header=True    
+    header_lines = []
+    sample_list = None
     for aLine in aData:
         if pass_prefix is not None and aLine.startswith(pass_prefix):
-            headerObj.add_header(aLine)
+            if aLine[0] == '#' and aLine[1] != '#':
+                sample_list = aLine.rstrip().split('\t', 14)[-1]
+            else:
+                header_lines.append(aLine)
             continue
         else:
             if in_header == True:
+                headerObj.add_header(header_lines)
                 headerObj.add_info(cohort_name + '_AF', '.', 'Float', 'Allele frequency(ies) for matching variants found in the ' + cohort_name + ' vcf' + ' (' + str(str(bFile).split('/')[-1]) + ')' )
                 headerObj.add_info(cohort_name + '_VarID', '.', 'Integer', 'List of Variant ID(s) for matching variants found in the ' + cohort_name + ' vcf' + ' (' + str(str(bFile).split('/')[-1]) + ')' )
-                bedpe_out.write(str(headerObj.get_header()))
+
+                header = headerObj.get_header()
+                bedpe_out.write(header[:header.rfind('\n')] + '\n')                
+                if len(sample_list) > 0:
+                    bedpe_out.write('\t'.join(['#CHROM_A',
+                                               'START_A',
+                                               'END_A',
+                                               'CHROM_B',
+                                               'START_B',
+                                               'END_B',
+                                               'ID',
+                                               'QUAL',
+                                               'STRAND_A',
+                                               'STRAND_B',
+                                               'TYPE',
+                                               'FILTER',
+                                               'INFO_A','INFO_B',
+                                               sample_list]
+                                             ) + '\n')
+                else:
+                    bedpe_out.write('\t'.join(['#CHROM_A',
+                                               'START_A',
+                                               'END_A',
+                                               'CHROM_B',
+                                               'START_B',
+                                               'END_B',
+                                               'ID',
+                                               'QUAL',
+                                               'STRAND_A',
+                                               'STRAND_B',
+                                               'TYPE',
+                                               'FILTER',
+                                               'INFO_A','INFO_B']
+                                              ) + '\n')
                 in_header=False
             a = Bedpe(aLine)
             for b in bList:
