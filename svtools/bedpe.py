@@ -17,6 +17,11 @@ class Bedpe(object):
             self.malformedFlag = 0
             self.misc = bed_list[12:]
             self.check_malformed()
+            # FIXME Cache second info field so lines can be reconstructued
+            # This is needed for prune
+            # The logic handling the two info fields is rather confusing in implementation
+            # and practice. Go back and harmonize across all Bedpe class users
+            self.info2 = self.misc[1]
             del self.misc[1]
             
             try:
