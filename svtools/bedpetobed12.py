@@ -71,9 +71,9 @@ def bedpeToBlockedBed(bedpe, dist, output_handle=sys.stdout):
 def processBEDPE(bedpeFile, name, dist, output_handle=sys.stdout):
     #Process the BEDPE file and convert each entry to SAM.
     if name is not None or bedpeFile == "stdin":
-        writeTrackName(name)
+        writeTrackName(name, output_handle)
     elif bedpeFile != "stdin":
-        writeTrackName(bedpeFile.name)    
+        writeTrackName(bedpeFile.name, output_handle)    
     if bedpeFile == "stdin":		
         for line in sys.stdin:
             # ignore header
@@ -82,7 +82,7 @@ def processBEDPE(bedpeFile, name, dist, output_handle=sys.stdout):
             lineList = line.strip().split()
             if (len(lineList) > 0):
                 bedpe = Bedpe(lineList)
-                bedpeToBlockedBed(bedpe, dist)
+                bedpeToBlockedBed(bedpe, dist, output_handle)
     else:
          for line in open(bedpeFile, 'r'):
              # ignore header
@@ -91,7 +91,7 @@ def processBEDPE(bedpeFile, name, dist, output_handle=sys.stdout):
             lineList = line.strip().split()
             if (len(lineList) > 0):
                 bedpe = Bedpe(lineList)
-                bedpeToBlockedBed(bedpe, dist)
+                bedpeToBlockedBed(bedpe, dist, output_handle)
 
 def writeTrackName(name, output_handle=sys.stdout):
     output_handle.write("track name=" + name + " itemRgb=On\n")
