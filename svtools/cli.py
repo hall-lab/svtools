@@ -4,6 +4,11 @@ import svtools.lmerge
 import svtools.vcfpaste
 import svtools.copynumber
 import svtools.afreq
+import svtools.bedpetobed12
+import svtools.bedpetovcf
+import svtools.vcftobedpe
+import svtools.vcfsort
+import svtools.bedpesort
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
@@ -24,6 +29,21 @@ def svtools_cli_parser():
     afreq = subparsers.add_parser('afreq', help=svtools.afreq.description())
     svtools.afreq.add_arguments_to_parser(afreq)
 
+    bedpetobed12 = subparsers.add_parser('bedpetobed12', help=svtools.bedpetobed12.description())
+    svtools.bedpetobed12.add_arguments_to_parser(bedpetobed12)
+
+    bedpetovcf = subparsers.add_parser('bedpetovcf', help=svtools.bedpetovcf.description())
+    svtools.bedpetovcf.add_arguments_to_parser(bedpetovcf)
+
+    vcftobedpe = subparsers.add_parser('vcftobedpe', help=svtools.vcftobedpe.description())
+    svtools.vcftobedpe.add_arguments_to_parser(vcftobedpe)
+
+    vcfsort = subparsers.add_parser('vcfsort', help=svtools.vcfsort.description())
+    svtools.vcfsort.add_arguments_to_parser(vcfsort)
+
+    bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description())
+    svtools.bedpesort.add_arguments_to_parser(bedpesort)
+    
     return parser
 
 if __name__ == '__main__':
