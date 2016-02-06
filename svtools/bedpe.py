@@ -15,6 +15,7 @@ class Bedpe(object):
             self.o2 = bed_list[9]
             self.filter = bed_list[11]
             self.malformedFlag = 0
+            # FIXME The first two fields of misc are actually info fields. These are used in other modules and should probably be separated out.
             self.misc = bed_list[12:]
             self.check_malformed()
             # FIXME Cache second info field so lines can be reconstructued
@@ -23,6 +24,9 @@ class Bedpe(object):
             # and practice. Go back and harmonize across all Bedpe class users
             self.info2 = self.misc[1]
             del self.misc[1]
+
+            # FIXME This is only really needed for varlookup. Something more general would be helpful
+            self.cohort_vars = dict()
             
             try:
                 self.svtype = self.retrieve_svtype()
