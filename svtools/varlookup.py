@@ -1,10 +1,7 @@
 import sys
-import string
 import gzip
-import time
 from operator import itemgetter
-from optparse import OptionParser
-import argparse, sys , re
+import argparse
 from svtools.vcf.file import Vcf
 from svtools.bedpe import Bedpe
 
