@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# adapted from erik garrion's vcfsort (in vcflib)
-# https://github.com/ekg/vcflib/blob/master/bin/vcfsort
 if [ ! -z "$1" ]
 then
 	if [ ! -z "$2" ]
