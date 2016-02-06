@@ -8,74 +8,40 @@ import argparse, sys , re
 from svtools.vcf.file import Vcf
 from svtools.bedpe import Bedpe
 
-class Bedpe(object):
-    def __init__(self, line):
-        v = line.strip().split("\t")
-        self.chrom_a = v[0]
-        self.start_a = int(v[1])
-        self.end_a = int(v[2])
-        self.chrom_b = v[3]
-        self.start_b = int(v[4])
-        self.end_b = int(v[5])
-        self.id = v[6]
-        self.qual = v[7]
-        self.info = v[12]
-        self.af=filter(lambda x: x if x.startswith('AF=') else None, self.info.split(";"))
-        #print self.af
-        self.cohort_vars = dict()
-        if self.af is not None and len(self.af) == 1:
-            self.af=''.join(self.af).replace('AF=','')
-        else: 
-            print "No allele frequency for variants found. Input a valid file"
-            sys.exit(0)
-        
-        self.sv_event=filter(lambda x: x if x.startswith('SVTYPE=') else None, self.info.split(";"))
-        if self.sv_event is not None and len(self.sv_event) == 1:
-            self.sv_event=''.join(self.sv_event).replace('SVTYPE=','')
-        else:
-            print "No svtype field found. Input a valid file"
-            sys.exit(0)
-        self.filter = v[11]
-        try:
-            self.strand_a = v[8]
-            self.strand_b = v[9]
-        except IndexError:
-            self.strand_a = ''
-            self.strand_b = ''
-        self.vec = '\t'.join(v[13:])
-    def get_var_string(self,cohort_name):
-        if len(self.cohort_vars)>0:
-            self.info = self.info + ';' + cohort_name + '_AF=' + ','.join([value for (key, value) in sorted(self.cohort_vars.items(), key=itemgetter(1),reverse=True)])
-            self.info = self.info + ';' + cohort_name + '_VarID=' + ','.join([key for (key, value) in sorted(self.cohort_vars.items(), key=itemgetter(1),reverse=True)])
-        else:
-            self.info = self.info + ';' + cohort_name + '_AF=' + str(0)
-            self.info = self.info + ';' + cohort_name + '_VarID=' + 'NONE'
-        return '\t'.join([self.chrom_a,str(self.start_a),str(self.end_a),\
-                        self.chrom_b,str(self.start_b),str(self.end_b),\
-                        self.id,self.qual,self.strand_a,self.strand_b,\
-                        self.sv_event,self.filter,self.info,self.vec]) + '\n'
+def get_var_string(bedpe, cohort_name):
+    if len(bedpe.cohort_vars) > 0:
+        bedpe.misc[0]= bedpe.misc[0] + ';' + cohort_name + '_AF=' + ','.join([value for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
+        bedpe.misc[0] = bedpe.misc[0] + ';' + cohort_name + '_VarID=' + ','.join([key for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
+    else:
+        bedpe.misc[0] = bedpe.misc[0] + ';' + cohort_name + '_AF=' + str(0)
+        bedpe.misc[0] = bedpe.misc[0] + ';' + cohort_name + '_VarID=' + 'NONE'
+    return '\t'.join([bedpe.c1, str(bedpe.s1), str(bedpe.e1),
+        bedpe.c2, str(bedpe.s2), str(bedpe.e2),
+        bedpe.name, str(bedpe.score), bedpe.o1, bedpe.o2,
+        bedpe.svtype, bedpe.filter, bedpe.misc[0], bedpe.info2, '\t'.join(bedpe.misc[1:])]) + '\n'
 
-def add(a_bedpe,b_bedpe,max_distance):
-    if a_bedpe.sv_event ==  b_bedpe.sv_event:
-        if (a_bedpe.strand_a != b_bedpe.strand_a
-            or a_bedpe.strand_b != b_bedpe.strand_b):
+def add(a_bedpe, b_bedpe, max_distance):
+    if a_bedpe.svtype ==  b_bedpe.svtype:
+        if (a_bedpe.o1 != b_bedpe.o1
+            or a_bedpe.o2 != b_bedpe.o2):
             return False
 
-        if (a_bedpe.chrom_a != b_bedpe.chrom_a
-            or a_bedpe.start_a - max_distance > b_bedpe.end_a
-            or a_bedpe.end_a + max_distance < b_bedpe.start_a):
+        if (a_bedpe.c1 != b_bedpe.c1
+            or a_bedpe.s1 - max_distance > b_bedpe.e1
+            or a_bedpe.e1 + max_distance < b_bedpe.s1):
             return False
 
-        if (a_bedpe.chrom_b != b_bedpe.chrom_b
-            or a_bedpe.start_b - max_distance > b_bedpe.end_b
-            or a_bedpe.end_b + max_distance < b_bedpe.start_b):
+        if (a_bedpe.c2 != b_bedpe.c2
+            or a_bedpe.s2 - max_distance > b_bedpe.e2
+            or a_bedpe.e2 + max_distance < b_bedpe.s2):
             return False
         else:
-            a_bedpe.cohort_vars[b_bedpe.id]=b_bedpe.af
+            a_bedpe.cohort_vars[b_bedpe.name] = b_bedpe.af
             return True
     else:
         return False
-def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
+
+def varLookup(aFile, bFile, bedpe_out, max_distance, pass_prefix, cohort_name):
     # FIXME The following code is heavily duplicated with vcftobedpe and bedpetovcf. Harmonize!!!
     bList = list()
     headerObj=Vcf() #co-opt the VCF header object
@@ -91,7 +57,7 @@ def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
     for bLine in bData:
         if bLine.startswith(pass_prefix):
             continue
-        bentry = Bedpe(bLine)
+        bentry = Bedpe(bLine.rstrip().split('\t'))
         if bentry.af is None:
             sys.stderr.write('No allele frequency for variant found in -b file. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
             sys.exit(1)
@@ -153,13 +119,13 @@ def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
                                                'INFO_A','INFO_B']
                                               ) + '\n')
                 in_header=False
-            a = Bedpe(aLine)
+            a = Bedpe(aLine.rstrip().split('\t'))
             if a.af is None:
                 sys.stderr.write('No allele frequency for variant found in -a file. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
                 sys.exit(1)
             for b in bList:
                 add(a,b,max_distance)
-            bedpe_out.write(a.get_var_string(cohort_name))
+            bedpe_out.write(get_var_string(a, cohort_name))
 
 def description():
     return 'Look for variants common between two bedpe files'
