@@ -6,6 +6,7 @@ from operator import itemgetter
 from optparse import OptionParser
 import argparse, sys , re
 from svtools.vcf.file import Vcf
+from svtools.bedpe import Bedpe
 
 class Bedpe(object):
     def __init__(self, line):
@@ -90,7 +91,11 @@ def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
     for bLine in bData:
         if bLine.startswith(pass_prefix):
             continue
-        bList.append(Bedpe(bLine))
+        bentry = Bedpe(bLine)
+        if bentry.af is None:
+            sys.stderr.write('No allele frequency for variant found in -b file. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
+            sys.exit(1)
+        bList.append(bentry)
     
     if aFile == "stdin":
         aData = sys.stdin
@@ -149,6 +154,9 @@ def varLookup(aFile, bFile,bedpe_out, max_distance,pass_prefix,cohort_name):
                                               ) + '\n')
                 in_header=False
             a = Bedpe(aLine)
+            if a.af is None:
+                sys.stderr.write('No allele frequency for variant found in -a file. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
+                sys.exit(1)
             for b in bList:
                 add(a,b,max_distance)
             bedpe_out.write(a.get_var_string(cohort_name))
