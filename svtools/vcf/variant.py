@@ -18,7 +18,7 @@ class Variant(object):
         self.info_list = vcf.info_list
         self.info = dict()
         self.format_list = vcf.format_list
-        self.format_set = set([i.id for i in vcf.format_list])
+        self.format_set = {i.id for i in vcf.format_list}
         self.active_formats = set()
         self.active_format_list = list()
         self.gts = dict()
