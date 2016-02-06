@@ -11,6 +11,7 @@ import svtools.vcfsort
 import svtools.bedpesort
 import svtools.genotype
 import svtools.prune
+import svtools.varlookup
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
@@ -51,6 +52,9 @@ def svtools_cli_parser():
     
     prune = subparsers.add_parser('prune', help=svtools.prune.description())
     svtools.prune.add_arguments_to_parser(prune)
+
+    varlookup = subparsers.add_parser('varlookup', help=svtools.varlookup.description())
+    svtools.varlookup.add_arguments_to_parser(varlookup)
 
     return parser
 
