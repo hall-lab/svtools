@@ -39,7 +39,7 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
                   try:
                         s_index = line.rstrip().split('\t').index(sample)
                   except ValueError:
-                        stderr.write("Please input valid VCF, format field for " + sample + " not found in VCF")
+                        sys.stderr.write("Please input valid VCF, format field for " + sample + " not found in VCF")
                         sys.exit(1)
                   line = '\t'.join(map(str, line.rstrip().split('\t')[:9] + [sample]))
                   header.append(line)
@@ -52,7 +52,7 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
         v = line.rstrip().split('\t')
         # XXX Is this second check necessary? Wouldn't this be handled above? Missing header would hit this?
         if s_index == -1:
-            stderr.write("Input a valid sample name: " + sample + " not found in a provided VCF")
+            sys.stderr.write("Input a valid sample name: " + sample + " not found in a provided VCF")
             sys.exit(1)
         v = v[:9] + [v[s_index]]
         if not any("SVTYPE=BND" in s for s in v):
