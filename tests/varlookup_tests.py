@@ -17,6 +17,8 @@ class IntegrationTest_varlookup(TestCase):
         with os.fdopen(temp_descriptor, 'w') as output_handle:
             svtools.varlookup.varLookup(input_a, input_b, output_handle, 50, '#', 'TEST')
         expected_lines = open(expected_result).readlines()
+        # set timestamp for diff
+        expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
         produced_lines = open(temp_output_path).readlines()
         diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
         result = ''.join(diff)
