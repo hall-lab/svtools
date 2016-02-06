@@ -150,9 +150,9 @@ def run_from_args(args):
             args.aFile = sys.stdin
 
     try:
-    	varLookup(args.aFile, args.bFile,args.output, args.max_distance,pass_prefix,args.cohort_name)
+        varLookup(args.aFile, args.bFile, args.output, args.max_distance, pass_prefix, args.cohort_name)
     except IOError as err:
-    	sys.stderr.write("IOError " + str(err) + "\n");
+        sys.stderr.write("IOError " + str(err) + "\n");
 
 if __name__ == '__main__':
     parser = command_parser()
