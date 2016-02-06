@@ -2,7 +2,7 @@ import svtools.l_bp as l_bp
 
 import sys
 import numpy as np
-from optparse import OptionParser
+import argparse
 
 def get_p(ls):
     return np.exp(ls)
@@ -577,7 +577,7 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparser.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description())
     add_arguments_to_parser(parser)
     return parser
 
