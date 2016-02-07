@@ -1,7 +1,7 @@
 import sys
 
 class Genotype(object):
-    def __init__(self, variant, sample_name, gt):
+    def __init__(self, variant, gt):
         self.format = dict()
         self.variant = variant
         self.set_format('GT', gt)
