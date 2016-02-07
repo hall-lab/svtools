@@ -345,7 +345,7 @@ def has_low_freq_depth_support(test_set):
     mad_threshold = 2
     mad_quorum = 0.5 # this fraction of the pos. genotyped results must meet the mad_threshold
     absolute_cn_diff = 0.5
-
+    
     hom_ref_cn=test_set[test_set.GT=="0/0"]['CN'].values.astype(float)
     hom_het_alt_cn=test_set[(test_set.GT=="0/1") | (test_set.GT=="1/1")]['CN'].values.astype(float)
 
@@ -366,13 +366,15 @@ def has_low_freq_depth_support(test_set):
         return False
 
     # tally up the pos. genotyped samples meeting the mad_threshold
+    #test_set.to_csv('./test_set.csv')
 
     resid=hom_het_alt_cn-cn_median
     if test_set['svtype'][0]=='DEL':
         resid=-resid
     
     resid=resid[(resid > (cn_mad * mad_threshold) ) & (resid>absolute_cn_diff)]
-    if float(len(resid))/len(hom_het_alt_cn):
+
+    if float(len(resid))/len(hom_het_alt_cn)>mad_quorum:
         return True
     else:
         return False
@@ -384,11 +386,12 @@ def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
 
     rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
     if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:
-        # calculate regression
+        
         (slope, intercept, r_value, p_value, std_err) = stats.linregress(rd)
         if df['svtype'][0] == 'DEL':
             slope=-slope
-        sys.stderr.write(df['var_id'][0]+"\t"+str(slope)+"\t"+str(r_value)+"\n")
+        #sys.stderr.write(df['var_id'][0]+"\t"+str(slope)+"\t"+str(r_value)+"\n")
+
         if (slope < slope_threshold or r_value*r_value < rsquared_threshold):
             return False
         return True
@@ -478,7 +481,7 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             vcf_out.write(line)
         else:
             df=load_df(var, exclude, sex)
-            df.to_csv('./df.csv')
+            #df.to_csv('./df.csv')
 
             if has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params):
                 nb_support = True
