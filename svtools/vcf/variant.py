@@ -38,11 +38,11 @@ class Variant(object):
         for s in self.sample_list:
             try:
                 sample_field = var_list[vcf.sample_to_col(s)].split(':')
-                self.gts[s] = Genotype(self, s, sample_field[0])
+                self.gts[s] = Genotype(self, sample_field[0])
                 # import the existing fmt fields
                 self.gts[s].set_formats(format_field_tags, sample_field)
             except IndexError:
-                self.gts[s] = Genotype(self, s, './.')
+                self.gts[s] = Genotype(self, './.')
         self.update_active_format_list()
         if fixed_genotypes == True:          
             self.gts_string='\t'.join(var_list[9:])
