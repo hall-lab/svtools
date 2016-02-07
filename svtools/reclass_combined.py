@@ -296,7 +296,7 @@ def rd_support_nb(temp, p_cnv, frac_BND):
     return  p_cnv * np.prod(temp['p_mix']) > (1- p_cnv) * np.prod(temp['lld0'])
    
 
-def has_re_support_by_nb(test_set, het_del_fit, hom_del_fit, params, frac_BND = 0.25, p_cnv = 0.5, epsilon=0.1): 
+def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, frac_BND = 0.25, p_cnv = 0.5, epsilon=0.1): 
 
     shomd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="1/1") & (test_set.svlen<1000)]
     shetd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="0/1") & (test_set.svlen<1000)]
@@ -321,7 +321,8 @@ def has_re_support_by_nb(test_set, het_del_fit, hom_del_fit, params, frac_BND = 
     return  rd_support_nb(mm, p_cnv, frac_BND)
 
 def load_df(var, exclude, sex):
-
+    
+    epsilon=0.1
     test_set = list()
 
     for s in var.sample_list:
@@ -345,8 +346,8 @@ def has_low_freq_depth_support(test_set):
     mad_quorum = 0.5 # this fraction of the pos. genotyped results must meet the mad_threshold
     absolute_cn_diff = 0.5
 
-    hom_ref_cn=test_set[test_set.GT=="0/0"]['CN']
-    hom_het_alt_cn=test_set[(test_set.GT=="0/1") | (test_set.GT=="1/1")]['CN']
+    hom_ref_cn=test_set[test_set.GT=="0/0"]['CN'].values.astype(float)
+    hom_het_alt_cn=test_set[(test_set.GT=="0/1") | (test_set.GT=="1/1")]['CN'].values.astype(float)
 
     if len(hom_ref_cn) > 0:
         cn_mean = np.mean(hom_ref_cn)
@@ -370,7 +371,7 @@ def has_low_freq_depth_support(test_set):
     if test_set['svtype'][0]=='DEL':
         resid=-resid
     
-    resid=resid[(resid > (cn_mad * mad_threshodl) ) & (resid>absolute_cn_diff)]
+    resid=resid[(resid > (cn_mad * mad_threshold) ) & (resid>absolute_cn_diff)]
     if float(len(resid))/len(hom_het_alt_cn):
         return True
     else:
@@ -381,25 +382,17 @@ def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
     # slope_threshold = 0.1
     # rsquared_threshold = 0.1
 
-    test_set=df[['CN', 'AB']]
-    test_set=test_set[test_set['AB']!='.']
-
-    if (len(unique(test_set['AB']))==1 or len(unique(test_set['CN']))==1):
-       return False
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        hf_fit=smf.ols('AB~CN', test_set).fit()
-        hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
-
-    slope=hom_del_fit.params[1]
-    if test_set['svtype'][0] == 'DEL':
-        slope=-slope
-
-    if (slope < slope_threshold or hom_del_fit.rsquared < rsquared_threshold):
-        return False
-
-    return True
+    rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
+    if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:
+        # calculate regression
+        (slope, intercept, r_value, p_value, std_err) = stats.linregress(rd)
+        if df['svtype'][0] == 'DEL':
+            slope=-slope
+        sys.stderr.write(df['var_id'][0]+"\t"+str(slope)+"\t"+str(r_value)+"\n")
+        if (slope < slope_threshold or r_value*r_value < rsquared_threshold):
+            return False
+        return True
+    return False
 
 
 # primary function
@@ -485,9 +478,9 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             vcf_out.write(line)
         else:
             df=load_df(var, exclude, sex)
-            df.to_csv('.df.csv')
+            df.to_csv('./df.csv')
 
-            if has_cn_support_by_nb(df, het_del_fit, hom_del_fit, params):
+            if has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params):
                 nb_support = True
 
             if num_pos_samps < min_pos_samps_for_regression:
