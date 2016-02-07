@@ -1,16 +1,22 @@
 #!/usr/bin/env python
 
-import argparse, sys, copy, gzip, os
-import math, time, re
+import argparse, sys, copy, gzip, os, time, math, re
 import numpy as np
+import pandas as pd
 from scipy import stats
-from collections import Counter
+from collections import Counter, defaultdict, namedtuple
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
 from argparse import RawTextHelpFormatter
 from operator import itemgetter
+import warnings
+import pickle
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
 
+
+#  attempting to merge Colby's reclassifier with hja version
 
 __author__ = "Colby Chiang (cc2qe@virginia.edu)"
 __version__ = "$Revision: 0.0.2 $"
@@ -32,8 +38,9 @@ description: classify structural variants")
     parser.add_argument('-f', '--fraction', metavar='FLOAT', dest='f_overlap', type=float, default=0.9, help='fraction of reciprocal overlap to apply annotation to variant [0.9]')
     parser.add_argument('-s', '--slope_threshold', metavar='FLOAT', dest='slope_threshold', type=float, default=1.0, help='minimum slope absolute value of regression line to classify as DEL or DUP[1.0]')
     parser.add_argument('-r', '--rsquared_threshold', metavar='FLOAT', dest='rsquared_threshold', type=float, default=0.2, help='minimum R^2 correlation value of regression line to classify as DEL or DUP [0.2]')
+    parser.add_argument('-t', '--tSet', metavar='String', dest='tSet', type=argparse.FileType('r'), default=sys.stdin, required=True, help='high quality deletions & duplications training dataset[vcf]/[stdin]')
+    parser.add_argument('-d', '--diag_file', metavar='String', dest='diag_outfile', type=str, default=None, required=False, help='text file to output method comparisons')
 
-    # parse the arguments
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
@@ -43,8 +50,8 @@ description: classify structural variants")
             exit(1)
         else:
             args.vcf_in = sys.stdin
-    # send back the user input
     return args
+
 
 
 # http://stackoverflow.com/questions/8930370/where-can-i-find-mad-mean-absolute-deviation-in-scipy
@@ -191,13 +198,14 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
         if (resid > (cn_mad * mad_threshold) and
             resid > absolute_cn_diff):
             q += 1
+
     # check if meets quorum
     if float(q)/len(het_cn + hom_alt_cn) > mad_quorum:
         return True
     else:
         return False
 
-def to_bnd_strings(var):
+def to_bnd_strings(var, fixed_gts):
 
     old_type = var.info['SVTYPE']
     old_id = var.var_id
@@ -222,7 +230,7 @@ def to_bnd_strings(var):
         var.alt = 'N[%s:%s[' % (var.chrom, old_end)
     else:
         var.alt = ']%s:%s]N' % (var.chrom, old_end)
-    var1=var.get_var_string(True)
+    var1=var.get_var_string(fixed_gts)
 
     #var2
     var.var_id = old_id + "_2"
@@ -237,7 +245,7 @@ def to_bnd_strings(var):
         var.alt = ']%s:%s]N' % (var.chrom, old_pos)
     else:
         var.alt = 'N[%s:%s[' % (var.chrom, old_pos)
-    var2=var.get_var_string(True)
+    var2=var.get_var_string(fixed_gts)
     return var1, var2
 
 
@@ -320,9 +328,6 @@ def annotation_intersect(var, ae_dict, threshold):
         # print class_overlap
         for me_class in class_overlap:
             class_overlap[me_class] = collapse_bed_records(class_overlap[me_class])
-            # print 'class_overlap[me_class]:', class_overlap[me_class]
-            # print 'recip:', reciprocal_overlap([var_start, var_end], class_overlap[me_class])
-
             frac_overlap = reciprocal_overlap([var_start, var_end], class_overlap[me_class])
             if frac_overlap > best_frac_overlap:
                 best_frac_overlap = frac_overlap
@@ -334,8 +339,152 @@ def annotation_intersect(var, ae_dict, threshold):
 
     return None
 
+def lowQuantile(xx):
+    return np.percentile(xx,2.5)
+
+def highQuantile(xx):
+    return np.percentile(xx,97.5)
+
+def lld(xx, mean, sd):
+    ll = 1 / sd * math.exp(-(xx-mean) * (xx-mean) / (2*sd*sd))
+    return ll
+
+def p_mix(row):
+    return row['lld0'] * row['p0'] + row['lld1'] * row['p1'] + row['lld2'] * row['p2']
+
+def find_max(row):
+    return row.idxmax()
+
+
+
+CN_rec = namedtuple ('CN_rec', 'var_id sample svtype svlen AF GT CN log_len log2r')
+
+def calc_params(vcf_file):
+
+    tSet = list()
+    epsilon=0.1
+    header=[]
+    
+
+    in_header = True
+    vcf = Vcf()
+    for line in vcf_file:
+        if in_header:
+            if line[0] == '#':
+                header.append(line)
+                if line[1] != '#':
+                    vcf_samples = line.rstrip().split('\t')[9:]
+                    in_header = False
+                    vcf.add_header(header)
+                continue
+        else:
+            # split variant line, quick pre-check if the SVTYPE is BND, and skip if so
+            v = line.rstrip().split('\t')
+            info = v[7].split(';')
+            svtype = None
+            for x in info:
+                if x.startswith('SVTYPE='):
+                    svtype = x.split('=')[1]
+                    break
+
+            if svtype not in ['DEL', 'DUP'] or v[0]=="X" or v[0]=="Y":
+                continue
+
+            var = Variant(v, vcf)
+    
+            for sample in vcf_samples:
+                if var.gts[sample].get_format('GT') != './.':
+                    log2r = math.log((float(var.gts[sample].get_format('CN'))+ epsilon)/2,2)  #to avoid log(0)
+                    tSet.append(CN_rec(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
+                        var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), math.log(abs(float(var.info['SVLEN']))), log2r))
+
+    df=pd.DataFrame(tSet, columns=CN_rec._fields)
+    df['q_low']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(lowQuantile)
+    df['q_high']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(highQuantile)
+    df=df[(df.log2r>=df.q_low) & (df.log2r<=df.q_high)]
+
+    #adjust copy number for small deletions (<1kb), no strong relationship b/w cn and size for dups evident so far
+
+    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) ]
+    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) ]
+    small_het_dels['offset']=small_het_dels['log2r']-np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
+    small_hom_dels['offset']=small_hom_dels['log2r']-np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
+        het_del_fit=smf.ols('offset~log_len',small_het_dels).fit()
+        small_hom_dels['log2r_adj'] = small_hom_dels['log2r'] - hom_del_fit.predict(small_hom_dels)
+        small_het_dels['log2r_adj'] = small_het_dels['log2r'] - het_del_fit.predict(small_het_dels)
+
+    small_dels=small_hom_dels.append(small_het_dels)
+    small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj']]
+    df1=df[(df.svtype!="DEL") | (df.GT=="0/0") | (df.svlen>=1000)]
+    df1['log2r_adj']=df1['log2r']
+    df1=df1.append(small_dels)
+
+    params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean, np.std]).reset_index()
+    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'std']).reset_index()
+    params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'sd0', 'sd1', 'sd2']
+    return (params, het_del_fit, hom_del_fit)
+
+
+
+def rd_support_nb(temp, p_cnv, frac_BND):
+
+    tr = pd.DataFrame({'p0' : [1.0, 0.1, 0.0], 'p1' : [0.0, 0.45, 0.50], 'p2' : [0.0, 0.45, 0.5], 'GT' : ["0/0", "0/1", "1/1"]})
+    temp = pd.merge(temp, tr, on='GT', how='left')
+    temp['p_mix'] = temp['lld0'] * temp['p0'] + temp['lld1'] * temp['p1'] + temp['lld2'] * temp['p2']
+    return  p_cnv * np.prod(temp['p_mix']) > (1- p_cnv) * np.prod(temp['lld0'])
+   
+
+def has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params, frac_BND = 0.25, p_cnv = 0.5, epsilon=0.1):
+
+    test_set = list()
+
+    for s in var.sample_list:
+        if s in exclude:
+            continue
+        # ignoring sex chrom for now
+        #if (var.chrom == 'X' or var.chrom == 'Y') and gender[s] == 1:
+        #    cn = float(var.genotype(s).get_format('CN')) * 2
+        #else:
+        cn = var.genotype(s).get_format('CN')
+        log2r = math.log((float(cn)+epsilon)/2, 2)  # to avoid log(0)
+        test_set.append(CN_rec(var.var_id, s, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
+           var.genotype(s).get_format('GT'),  cn , math.log(abs(float(var.info['SVLEN']))), log2r))
+
+
+    test_set = pd.DataFrame(data = test_set, columns=CN_rec._fields)
+
+    shomd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="1/1") & (test_set.svlen<1000)]
+    shetd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="0/1") & (test_set.svlen<1000)]
+    shomd['log2r_adj']=shomd['log2r']-hom_del_fit.predict(shomd)
+    shetd['log2r_adj']=shetd['log2r']-het_del_fit.predict(shetd)
+
+    small_dels=shomd.append(shetd)
+    small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'log2r_adj']]
+
+    df1=test_set[(test_set.svtype!="DEL") | (test_set.GT=="0/0") | (test_set.svlen>=1000)]
+    df1['log2r_adj']=df1['log2r']
+    df1=df1.append(small_dels)
+    df1=df1[df1.GT!="0/0"]
+    #df1.to_csv('./df1')
+    mm=pd.merge(df1, params, how='left')
+    #mm.to_csv('./mm1.csv')
+
+    mm['lld0'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean0"],row["sd0"]), axis=1)
+    mm['lld1'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean1"],row["sd1"]), axis=1)
+    mm['lld2'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean2"],row["sd2"]), axis=1)
+
+    return  rd_support_nb(mm, p_cnv, frac_BND)
+
+
+
+
 # primary function
-def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_threshold, rsquared_threshold):
+def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_threshold, rsquared_threshold, het_del_fit, hom_del_fit, params, diag_outfile):
+
     vcf_out = sys.stdout
     vcf = Vcf()
     header = []
@@ -353,6 +502,9 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
         for line in exclude_file:
             exclude.append(line.rstrip())
 
+    if diag_outfile is not None:
+        outf=open(diag_outfile, 'w', 4096)
+
     for line in vcf_in:
         if in_header:
             if line[0] == '#':
@@ -361,12 +513,10 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             else:
                 in_header = False
                 vcf.add_header(header)
-                # write the output header
                 vcf_out.write(vcf.get_header() + '\n')
 
         # split variant line, quick pre-check if the SVTYPE is BND, and skip if so
         v = line.rstrip().split('\t')
-
         info = v[7].split(';')
         svtype = None
         for x in info:
@@ -378,7 +528,7 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
         if svtype not in ['DEL', 'DUP']:
             vcf_out.write(line)
             continue
-
+        
         # parse the VCF line
         var = Variant(v, vcf, True)
 
@@ -393,56 +543,64 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                 vcf_out.write(var.get_var_string(True) + '\n')
                 continue
 
-        # # write to directory
-        # writedir = 'data/r11.100kb.dup'
 
-        # annotate based on read depth
-        if var.info['SVTYPE'] in ['DEL', 'DUP']:
-            # count the number of positively genotyped samples
-            num_pos_samps = 0;
-            for s in var.sample_list:
-                if s in exclude:
-                    continue
-                if var.genotype(s).get_format('GT') not in ["./.", "0/0"]:
-                    num_pos_samps += 1
+        # for now, don't worry about sex chromosomes
+        if (var.chrom == 'X' or var.chrom == 'Y'):
+            vcf_out.write(line)
+            continue
 
+        #count positively genotyped samples
+        num_pos_samps = 0;
+        for s in var.sample_list:
+            if s in exclude:
+                continue
+            if var.genotype(s).get_format('GT') not in ["./.", "0/0"]:
+                num_pos_samps += 1
+
+        high_freq_support = False
+        low_freq_support = False
+        nb_support = False
+
+        if num_pos_samps == 0:
+            vcf_out.write(line)
+        else:
+            if has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params):
+                nb_support = True
             if num_pos_samps < min_pos_samps_for_regression:
                 if has_low_freq_depth_support(var, gender, exclude):
-                    # has_low_freq_depth_support(var, gender, exclude, writedir + '/low_freq_rd')
-                    # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/low_freq_rd')
-                    # write variant
-                    #vcf_out.write(var.get_var_string(True) + '\n')
+                    low_freq_support = True
                     vcf_out.write(line)
                 else:
-                    # has_low_freq_depth_support(var, gender, exclude, writedir + '/low_freq_no_rd')
-                    # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/low_freq_no_rd')
-                    for m_var in to_bnd_strings(var):
+                    for m_var in to_bnd_strings(var, True ):
                         vcf_out.write(m_var + '\n')
             else:
                 if has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold):
-                    # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/high_freq_rd')
-                    # has_low_freq_depth_support(var, gender, exclude, writedir + '/high_freq_rd')
-                    # write variant
-                    #vcf_out.write(var.get_var_string(True) + '\n')
+                    high_freq_support = True
                     vcf_out.write(line)
                 else:
-                    # has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir + '/high_freq_no_rd')
-                    # has_low_freq_depth_support(var, gender, exclude, writedir + '/high_freq_no_rd')
-                    for m_var in to_bnd_strings(var):
+                    for m_var in to_bnd_strings(var, True):
                         vcf_out.write(m_var + '\n')
+            
+        if diag_outfile is not None:
+            outf.write(var.var_id+"\t"+svtype+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(high_freq_support)+"\t"+str(low_freq_support)+"\n")
+
+
     vcf_out.close()
+    if diag_outfile is not None:
+        outf.close()
     return
 
 # --------------------------------------
 # main function
 
 def main():
-    # parse the command line args
+
     args = get_args()
 
     # load the annotated elements
     ae_dict = None
     if args.ae_path is not None:
+        sys.stderr.write("loading annotations\n")
         if args.ae_path.endswith('.gz'):
             ae_bedfile = gzip.open(args.ae_path, 'rb')
         else:
@@ -459,15 +617,24 @@ def main():
                 ae_dict[v[0]].append(v[1:])
             else:
                 ae_dict[v[0]] = [v[1:]]
+    
+    sys.stderr.write("calculating parameters\n")
+    #calculate per-sample CN profiles on training set
+    [params, het_del_fit, hom_del_fit]=calc_params(args.tSet)
 
-    # call primary function
+    sys.stderr.write("reclassifying\n")
     sv_classify(args.vcf_in,
                 args.gender,
                 args.exclude,
                 ae_dict,
                 args.f_overlap,
                 args.slope_threshold,
-                args.rsquared_threshold)
+                args.rsquared_threshold,
+                het_del_fit,
+                hom_del_fit,
+                params,
+                args.diag_outfile,
+                )
 
     # close the files
     args.vcf_in.close()
