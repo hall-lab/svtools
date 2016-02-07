@@ -13,20 +13,12 @@ class Genotype(object):
                 if field not in self.variant.active_formats:
                     self.variant.active_formats.add(field)
             else:
-                # FIXME This should be an exception
                 sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
                 sys.exit(1)
 
     def set_format(self, field, value):
-        if field in self.variant.format_set:
-            self.format[field] = value
-            if field not in self.variant.active_formats:
-                self.variant.active_formats.add(field)
-                self.variant.update_active_format_list()
-        else:
-            # FIXME This should be an exception
-            sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
-            sys.exit(1)
+        self.set_formats( [field], [value])
+        self.variant.update_active_format_list()
 
     def get_format(self, field):
         return self.format[field]
