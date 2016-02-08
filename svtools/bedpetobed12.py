@@ -91,7 +91,7 @@ def description():
     return 'converts BEDPE to BED12 format for viewing in IGV or the UCSC browser'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument(metavar='bedpe', dest='bedpe', nargs='?', default=None, help='BEDPE input file')
+    parser.add_argument('-i', '--bedpe', help='BEDPE input file', required=True)
     parser.add_argument('-n', '--name', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
     parser.add_argument('-d', '--maxdist', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
     parser.set_defaults(entry_point=run_from_args)
