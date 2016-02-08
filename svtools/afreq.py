@@ -113,7 +113,7 @@ def command_parser():
 
 def run_from_args(args):
     with su.InputStream(args.input_vcf) as input_stream:
-        updater = UpdateInfo(sio.InputStream(args.input_vcf))
+        updater = UpdateInfo(input_stream)
         updater.execute()
 
 if __name__ == '__main__':
