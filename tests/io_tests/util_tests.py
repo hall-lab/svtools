@@ -25,7 +25,16 @@ class InputStreamTest(TestCase):
                 sys.stdout.write(line)
         self.assertTrue(temporary_obj.closed)
 
+    def test_plain_iteration(self):
+        test_directory = os.path.dirname(os.path.abspath(__file__))
+        test_data_dir = os.path.join(test_directory, '..', 'test_data', 'io', 'utils')
+        test_input = os.path.join(test_data_dir, 'file.txt')
 
+        stream = sio.InputStream(test_input)
+        for line in stream:
+            sys.stdout.write(line)
+        stream.close()
+        self.assertTrue(stream.handle.closed)
 
 
 if __name__ == "__main__":
