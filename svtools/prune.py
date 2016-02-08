@@ -201,14 +201,6 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    # if no input, check if part of pipe and if so, read stdin.
-    if args.input == None:
-        if sys.stdin.isatty():
-            sys.stderr.write('Please stream in input to this command or specify the file to read\n')
-            sys.exit(1)
-        else:
-            args.input = sys.stdin
-
     with su.InputStream(args.input) as stream:
         cluster_bedpe(stream,
                   args.max_distance,
