@@ -8,6 +8,10 @@ class InputStreamTest(TestCase):
         new_handle = su.InputStream('-')
         self.assertIs(new_handle.handle, sys.stdin)
 
+    def test_init_stdin(self):
+        new_handle = su.InputStream('stdin')
+        self.assertIs(new_handle.handle, sys.stdin)
+
     def test_valid(self):
         self.assertTrue(su.InputStream.valid('-'))
         with self.assertRaises(IOError):

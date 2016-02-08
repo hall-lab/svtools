@@ -5,7 +5,7 @@ class InputStream(object):
 
     def __init__(self, string):
         '''Create a new wrapper around a stream'''
-        if string in (None, '-') and self.valid(string):
+        if string in (None, '-', 'stdin') and self.valid(string):
             self.handle = sys.stdin
         elif string.endswith('.gz'):
             import gzip
