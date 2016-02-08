@@ -2,6 +2,7 @@ import argparse, sys , re
 from argparse import RawTextHelpFormatter
 from collections import Counter
 from svtools.bedpe import Bedpe
+import svtools.utils as su
 
 class Cluster(object):
     def __init__(self):
@@ -208,7 +209,8 @@ def run_from_args(args):
         else:
             args.input = sys.stdin
 
-    cluster_bedpe(args.input,
+    with su.InputStream(args.input) as stream:
+        cluster_bedpe(stream,
                   args.max_distance,
                   args.eval_param,
                   args.output,
