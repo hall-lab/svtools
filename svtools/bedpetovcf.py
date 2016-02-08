@@ -5,6 +5,7 @@ from argparse import RawTextHelpFormatter
 from svtools.bedpe import Bedpe
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
+import svtools.utils as su
 
 # primary function
 def bedpeToVcf(bedpe_file, vcf_out):
@@ -140,13 +141,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    if args.bedpe == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.bedpe = sys.stdin
-    bedpeToVcf(args.bedpe, args.output)
+    with su.InputStream(args.bedpe) as stream:
+        bedpeToVcf(stream, args.output)
 
 if __name__ == '__main__':
     parser = command_parser()
