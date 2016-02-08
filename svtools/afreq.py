@@ -1,7 +1,7 @@
 import argparse, sys
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
-import svtools.io.utils as sio
+import svtools.utils as su
 
 class UpdateInfo(object):
     def __init__(self, vcf_stream):
@@ -112,7 +112,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with sio.InputStream(args.input_vcf) as input_stream:
+    with su.InputStream(args.input_vcf) as input_stream:
         updater = UpdateInfo(sio.InputStream(args.input_vcf))
         updater.execute()
 
