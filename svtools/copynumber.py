@@ -75,7 +75,7 @@ def description():
     return 'Compute genotype of structural variants based on breakpoint depth'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-v', '--input-vcf', type=argparse.FileType('r'), default=None, help='VCF input')
+    parser.add_argument('-v', '--input-vcf', default=None, help='VCF input')
     parser.add_argument('-c', '--coordinates', type=argparse.FileType('r'), required=True, default=None, help='BED input')
     parser.add_argument('-r', '--root', required=True, help='CNVnator .root histogram file (required)')
     parser.add_argument('-w', '--window', required=True, help='CNVnator window size (required)')
