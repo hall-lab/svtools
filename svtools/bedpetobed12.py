@@ -1,6 +1,7 @@
 import sys
 import argparse
 from svtools.bedpe import Bedpe
+import svtools.utils as su
 
 def bedpeToBlockedBed(bedpe, dist, output_handle=sys.stdout):
 
@@ -68,28 +69,18 @@ def bedpeToBlockedBed(bedpe, dist, output_handle=sys.stdout):
     if len(output_lines) > 0:
         output_handle.write('\n'.join(output_lines) + '\n')
             
-def processBEDPE(bedpeFile, name, dist, output_handle=sys.stdout):
+def processBEDPE(bedpe_stream, name, dist, output_handle=sys.stdout):
     #Process the BEDPE file and convert each entry to SAM.
-    if name is not None or bedpeFile == "stdin":
+    if name is not None or bedpe_stream == sys.stdin:
         writeTrackName(name, output_handle)
-    elif bedpeFile != "stdin":
-        writeTrackName(bedpeFile.name, output_handle)    
-    if bedpeFile == "stdin":		
-        for line in sys.stdin:
-            # ignore header
-            if line[0] == "#":
-                continue
-            lineList = line.strip().split()
-            if (len(lineList) > 0):
-                bedpe = Bedpe(lineList)
-                bedpeToBlockedBed(bedpe, dist, output_handle)
     else:
-         for line in open(bedpeFile, 'r'):
-             # ignore header
-            if line[0] == "#":
-                 continue
-            lineList = line.strip().split()
-            if (len(lineList) > 0):
+        writeTrackName(bedpe_stream.name, output_handle)    
+    for line in bedpe_stream:
+        # ignore header
+        if line[0] == "#":
+            continue
+        lineList = line.strip().split()
+        if (len(lineList) > 0):
                 bedpe = Bedpe(lineList)
                 bedpeToBlockedBed(bedpe, dist, output_handle)
 
@@ -111,7 +102,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    processBEDPE(args.bedpe, args.name, args.dist)
+    with su.InputStream(args.bedpe) as stream:
+        processBEDPE(stream, args.name, args.dist)
 
 if __name__ == "__main__":
     parser = command_parser()
