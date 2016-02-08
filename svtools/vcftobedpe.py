@@ -257,12 +257,6 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    if args.input == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.input = sys.stdin
     with su.InputStream(args.input) as stream:
         return vcfToBedpe(stream, args.output)
 
