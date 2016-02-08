@@ -25,7 +25,7 @@ class InputStream(object):
         return self.handle
 
     def __exit__(self, *kwargs):
-        '''Support use of with by passing back the originating handle'''
+        '''Support use of with by closing on exit of the context'''
         self.handle.close()
 
     def __iter__(self):
