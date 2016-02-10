@@ -58,9 +58,11 @@ def svtools_cli_parser():
 
     return parser
 
-if __name__ == '__main__':
+def main():
     parser = svtools_cli_parser()
     args = parser.parse_args()
     sys.exit(args.entry_point(args))
 
+if __name__ == '__main__':
+    main()
 
