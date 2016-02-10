@@ -4,22 +4,20 @@ import os
 import argparse
 import subprocess
 import signal
+import pkg_resources as pkg
 
-class ShellCmd(object):
+class ExternalCmd(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, name, relative_path=None):
+    def __init__(self, name, resource_path=None):
         self.name = name
-        if relative_path is not None:
-            self.relative_path = relative_path
+        if resource_path is not None:
+            self.resource_path = resource_path
         else:
-            self.relative_path = name
+            self.resource_path = name
 
     def path_to_shell_script(self):
-        # FIXME This may not be the best way to find the location of these scripts. See pkg_resources as a possible alternative
-        path = os.path.dirname(os.path.abspath(__file__))
-
-        path_to_script = os.path.join(path, self.relative_path)
+        path_to_script = pkg.resource_filename(__name__, self.resource_path)
         if os.path.isfile(path_to_script):
             return path_to_script
         else:
