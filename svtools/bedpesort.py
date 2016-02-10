@@ -1,18 +1,8 @@
-import sys
-import os
-import argparse
-import subprocess
-import signal
+from svtools.external_cmd import ExternalCmd
 
-def path_to_shell_script():
-    # FIXME This may not be the best way to find the location of these scripts. See pkg_resources as a possible alternative
-    path = os.path.dirname(os.path.abspath(__file__))
-    path_to_script = os.path.join(path, 'bin', 'bedpesort')
-    if os.path.isfile(path_to_script):
-        return path_to_script
-    else:
-        sys.stderr.write("Unable to locate bedpesort script")
-        sys.exit(1)
+class BedpeSort(ExternalCmd):
+    def __init__(self):
+        super(BedpeSort, self).__init__('bedpesort', 'bin/bedpesort')
 
 def description():
     return 'sort a BEDPE file'
@@ -28,26 +18,14 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    cmd = [ path_to_shell_script() ]
+    opts = list()
     if args.input:
-        cmd.append(args.input)
+        opts.append(args.input)
     if args.output:
-        cmd.append(args.output)
-    # Here we re-set Python's treatment of SIGPIPE to the default
-    # as described here: http://www.chiark.greenend.org.uk/~cjwatson/blog/python-sigpipe.html
-    p = subprocess.Popen(cmd, preexec_fn=lambda:
-            signal.signal(signal.SIGPIPE, signal.SIG_DFL))
-    code = p.wait()
-    # The check for code != 141 is here because 
-    # 141 indicates a SIGPIPE signal returned in the underlying bash pipelines
-    # We want to be silent there
-    # FIXME 141 is bash specific and while the underlying scripts are bash
-    # It is not clear that the shell this script is run in should be exiting with 141 
-    # or if that is even necessary
-    if code:
-        if code is not 141:
-            sys.stderr.write('bedpesort bash script exited with code {0}\n'.format(code))
-        sys.exit(code)
+        opts.append(args.output)
+
+    sort_cmd_runner = BedpeSort()
+    sort_cmd_runner.run_cmd_with_options(opts)
 
 if __name__ == "__main__":
     parser = command_parser()
