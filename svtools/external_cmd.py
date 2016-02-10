@@ -9,12 +9,9 @@ import pkg_resources as pkg
 class ExternalCmd(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, name, resource_path=None):
+    def __init__(self, name, resource_path):
         self.name = name
-        if resource_path is not None:
-            self.resource_path = resource_path
-        else:
-            self.resource_path = name
+        self.resource_path = resource_path
 
     def path_to_shell_script(self):
         path_to_script = pkg.resource_filename(__name__, self.resource_path)
