@@ -1,3 +1,5 @@
+import sys
+import argparse
 from svtools.external_cmd import ExternalCmd
 
 class VcfSort(ExternalCmd):
