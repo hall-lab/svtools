@@ -1,7 +1,6 @@
 from abc import ABCMeta
 import sys
 import os
-import argparse
 import subprocess
 import signal
 import pkg_resources as pkg
