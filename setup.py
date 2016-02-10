@@ -1,16 +1,16 @@
 from setuptools import setup, find_packages
 
-#here = path.abspath(path.dirname(__file__))
+'''
+This package provides tools for combining, genotyping and refining structural variant calls from LUMPY in a highly scalable way. The current package efficiently scales to process thousands of individuals.
+'''
 
-#with open(path.join(here, 'README.md', encoding='utf-8')) as f:
-#        long_description = f.read()
 
 setup(
     name='svtools',
     version='0.1.2',
 
     description='Tools for processing and analyzing structural variants',
-#    long_description=long_description,
+    long_description=__doc__,
     
     url='https://github.com/hall-lab/svtools',
     author='Ira Hall lab',
