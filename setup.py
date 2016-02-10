@@ -27,8 +27,9 @@ setup(
     keywords='genomics structural variants sv bioinformatics',
 
     packages=find_packages(exclude=['tests']),
+    include_package_data=True,
 
-    install_requires=['pysam', 'numpy', 'scipy', 'statsmodels', 'pandas'],
+    install_requires=['pysam', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
     
     entry_points={
         'console_scripts': [
