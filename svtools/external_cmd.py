@@ -25,7 +25,7 @@ class ExternalCmd(object):
         cmd.extend(options)
         # Here we re-set Python's treatment of SIGPIPE to the default
         # as described here: http://www.chiark.greenend.org.uk/~cjwatson/blog/python-sigpipe.html
-        sys.stderr.write('Running svtyper with options: {0}\n'.format(' '.join(cmd)))
+        sys.stderr.write('Running {1} with options: {0}\n'.format(' '.join(cmd), self.name))
         p = subprocess.Popen(cmd, preexec_fn=lambda:
                 signal.signal(signal.SIGPIPE, signal.SIG_DFL))
         code = p.wait()
