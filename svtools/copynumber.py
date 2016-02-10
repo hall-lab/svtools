@@ -2,6 +2,7 @@ import argparse
 import sys
 from subprocess import Popen, PIPE, STDOUT
 from svtools.vcf.file import Vcf
+import svtools.utils as su
 
 def run_cnvnator(cnvnator_path, root, window, coord_list):
     # Read and run cnvnator
@@ -74,7 +75,7 @@ def description():
     return 'Compute genotype of structural variants based on breakpoint depth'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-v', '--input-vcf', type=argparse.FileType('r'), default=None, help='VCF input')
+    parser.add_argument('-v', '--input-vcf', default=None, help='VCF input')
     parser.add_argument('-c', '--coordinates', type=argparse.FileType('r'), required=True, default=None, help='BED input')
     parser.add_argument('-r', '--root', required=True, help='CNVnator .root histogram file (required)')
     parser.add_argument('-w', '--window', required=True, help='CNVnator window size (required)')
@@ -89,15 +90,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    if args.input_vcf == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.input_vcf = sys.stdin
-    sv_readdepth(args.input_vcf, args.sample, args.root, args.window, args.output_vcf, args.cnvnator, args.coordinates)
-    if args.input_vcf != sys.stdin:
-        args.input_vcf.close()
+    with su.InputStream(args.input_vcf) as stream:
+        sv_readdepth(stream, args.sample, args.root, args.window, args.output_vcf, args.cnvnator, args.coordinates)
 
 # initialize the script
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ import re
 
 import svtools.vcf.file
 import svtools.vcf.variant
+import svtools.utils as su
 
 def writeBND(prim, sec, v, bedpe_out):
     '''
@@ -246,7 +247,7 @@ def description():
     return 'Convert a VCF file to a BEDPE file'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--input', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
+    parser.add_argument('-i', '--input', default=None, help='VCF input (default: stdin)')
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
@@ -256,13 +257,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    if args.input == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.input = sys.stdin
-    return vcfToBedpe(args.input, args.output)
+    with su.InputStream(args.input) as stream:
+        return vcfToBedpe(stream, args.output)
 
 # initialize the script
 if __name__ == '__main__':

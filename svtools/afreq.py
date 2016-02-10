@@ -1,6 +1,7 @@
 import argparse, sys
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
+import svtools.utils as su
 
 class UpdateInfo(object):
     def __init__(self, vcf_stream):
@@ -111,19 +112,9 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    handle = None
-    if args.input_vcf == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            handle = sys.stdin
-    else:
-        handle = open(args.input_vcf, 'r')
-    updater = UpdateInfo(handle)
-    updater.execute()
-    if handle != sys.stdin:
-        handle.close()
+    with su.InputStream(args.input_vcf) as input_stream:
+        updater = UpdateInfo(input_stream)
+        updater.execute()
 
 if __name__ == '__main__':
     parser = command_parser()
