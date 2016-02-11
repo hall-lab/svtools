@@ -56,7 +56,7 @@ class UpdateInfo(object):
                 continue
 
             v = line.rstrip().split('\t')
-            var = Variant(v, vcf)
+            var = Variant(v, vcf, fixed_genotypes=True)
 
             # extract genotypes from VCF
             num_alt = len(var.alt.split(','))
@@ -96,7 +96,7 @@ class UpdateInfo(object):
             var.info['MSQ'] = self.calc_msq(var)
 
             # after all samples have been processed, write
-            vcf_out.write(var.get_var_string() + '\n')
+            vcf_out.write(var.get_var_string(use_cached_gt_string=True) + '\n')
         vcf_out.close()
 
 def description():
