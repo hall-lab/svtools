@@ -1,6 +1,5 @@
 from unittest import TestCase, main
 import os
-import time
 import sys
 import tempfile
 import difflib

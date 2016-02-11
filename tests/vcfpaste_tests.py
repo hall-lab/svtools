@@ -38,6 +38,8 @@ class IntegrationTest_vcfpaste(TestCase):
 
     def tearDown(self):
         os.remove(self.list_of_vcfs)
+        os.remove(self.list_of_vcfs_with_truncated)
+        os.remove(self.list_of_gz_vcfs)
 
     def run_integration_test_without_master(self):
         expected_result = os.path.join(self.test_data_dir, 'expected_no_master.vcf')
@@ -56,6 +58,7 @@ class IntegrationTest_vcfpaste(TestCase):
             for line in result:
                 sys.stdout.write(line)
             self.assertFalse(result)
+        os.remove(temp_output_path)
 
     def run_integration_test_without_master_gzipped(self):
         expected_result = os.path.join(self.test_data_dir, 'expected_no_master.vcf')
@@ -74,6 +77,7 @@ class IntegrationTest_vcfpaste(TestCase):
             for line in result:
                 sys.stdout.write(line)
             self.assertFalse(result)
+        os.remove(temp_output_path)
 
     def run_integration_test_with_master(self):
         master_file = os.path.join(self.test_data_dir, 'master.vcf')
@@ -93,6 +97,7 @@ class IntegrationTest_vcfpaste(TestCase):
             for line in result:
                 sys.stdout.write(line)
             self.assertFalse(result)
+        os.remove(temp_output_path)
 
     def run_integration_test_with_truncated_vcf(self):
         temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
@@ -103,6 +108,7 @@ class IntegrationTest_vcfpaste(TestCase):
             exception = cm.exception
             self.assertEqual(exception.error_code, 1)
             output_handle.close()
+        os.remove(temp_output_path)
 
 class Test_vcfpaste(TestCase):
 

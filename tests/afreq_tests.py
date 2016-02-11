@@ -26,6 +26,7 @@ class IntegrationTest_afreq(TestCase):
                 for line in result:
                     sys.stdout.write(line)
                 self.assertFalse(result)
+        os.remove(temp_output_path)
 
 class AfreqUiTest(TestCase):
     def test_parser(self):
