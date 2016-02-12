@@ -99,9 +99,9 @@ def description():
     return 'Paste VCFs from multiple samples'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-m', '--master', default=None, help='VCF file to set first 8 columns of variant info [first file in vcf_list]')
+    parser.add_argument('-m', '--master', metavar='FILE', default=None, help='VCF file to set first 8 columns of variant info [first file in vcf_list]')
     parser.add_argument('-q', '--sum-quals', required=False, action='store_true', help='Sum QUAL scores of input VCFs as output QUAL score')
-    parser.add_argument('-f', '--vcf-list', required=True, help='Line-delimited list of VCF files to paste')
+    parser.add_argument('-f', '--vcf-list', metavar='FILE', required=True, help='File containing a line-delimited list of VCF files to paste')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
