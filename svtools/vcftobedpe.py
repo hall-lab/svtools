@@ -42,32 +42,28 @@ def writeBND(prim, sec, v, bedpe_out):
     if 'CIPOS' in primary.info:
         span = map(int, primary.info['CIPOS'].split(','))
         if o1 == '-':
-            span[0]-=1
-            span[1]-=1
+            b1 -= 1
         s1 = b1 + span[0]
         e1 = b1 + span[1]
     else:
         if o1 == '-':
-            e1 = b1 - 1
-            s1 = b1 - 1
+            b1 -= 1
         else:
-            e1 = b1
             s1 = b1
+            e1 = b1
     
     if 'CIEND' in primary.info:    
         span = map(int, primary.info['CIEND'].split(','))
         if o2 == '-':
-            span[0]-=1
-            span[1]-=1
+            b2 -= 1
         s2 = b2 + span[0]
         e2 = b2 + span[1]
     else:
         if o2== '-':
-            e2 = b2 - 1
-            s2 = b2 - 1
+            b2 -= 1
         else:
-            e2 = b2
             s2 = b2
+            e2 = b2
 
     ispan = s2 - e1
     ospan = e2 - s1
@@ -91,10 +87,10 @@ def writeBND(prim, sec, v, bedpe_out):
         info_B = secondary.get_info_string()    
     bedpe_out.write('\t'.join(map(str,
                                   [chrom_A,
-                                   max(s1,0),
+                                   max(s1,1) - 1,
                                    max(e1,0),
                                    chrom_B,
-                                   max(s2,0),
+                                   max(s2,1) - 1,
                                    max(e2,0),
                                    primary.info['EVENT'],
                                    primary.original_qual,
