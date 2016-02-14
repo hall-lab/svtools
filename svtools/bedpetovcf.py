@@ -130,9 +130,12 @@ def bedpeToVcf(bedpe_file, vcf_out):
 def description():
     return 'convert a BEDPE file to VCF'
 
+def epilog():
+    return 'The input BEDPE file can be gzipped if it is specified explicitly.'
+
 def add_arguments_to_parser(parser):
-    parser.add_argument('-b', '--bedpe', default=None, help='BEDPE input (default: stdin)')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
+    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
+    parser.add_argument('-o', '--output', metavar='<VCF>', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():

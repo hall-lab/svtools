@@ -10,8 +10,8 @@ def description():
     return 'sort a VCF file'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('input', metavar='<VCF file>', nargs='?', help='VCF file to sort')
-    parser.add_argument('output', metavar='<output file>', nargs='?', help='output file to write to')
+    parser.add_argument('input', metavar='<VCF>', nargs='?', help='VCF file to sort (default: stdin)')
+    parser.add_argument('output', metavar='<VCF>', nargs='?', help='output file to write to (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():

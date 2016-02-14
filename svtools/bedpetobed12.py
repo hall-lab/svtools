@@ -88,16 +88,19 @@ def writeTrackName(name, output_handle=sys.stdout):
     output_handle.write("track name=" + name + " itemRgb=On\n")
 
 def description():
-    return 'converts BEDPE to BED12 format for viewing in IGV or the UCSC browser'
+    return 'convert a BEDPE file to BED12 format for viewing in IGV or the UCSC browser'
+
+def epilog():
+    return 'The input BEDPE file may be gzipped. If the input file is omitted then input is read from stdin. Output is written to stdout.' 
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--bedpe', default=None, help='BEDPE input file')
-    parser.add_argument('-n', '--name', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
-    parser.add_argument('-d', '--maxdist', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
+    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input file')
+    parser.add_argument('-n', '--name', metavar='<STRING>', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
+    parser.add_argument('-d', '--maxdist', metavar='<INT>', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 

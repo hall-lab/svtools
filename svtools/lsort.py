@@ -71,16 +71,20 @@ class Lsort(object):
         self.vcf_lines = []
 
 def description():
-    return 'Sort N LUMPY VCF files into a single file'
+    return 'sort N LUMPY VCF files into a single file'
+
+def epilog():
+    return '''Specify -t to override where temporary files are placed. Use -b to control the amount of memory required. 
+    This will vary depending on the number of lines in your input files.'''
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('vcf_files', metavar='<VCF file>', nargs='+', help='VCF files to combine and sort')
-    parser.add_argument('-t', '--tempdir', default=gettempdir(), help='temporary directory')
-    parser.add_argument('-b', '--batchsize', type=int, default=200, help='number of files to sort in batch')
+    parser.add_argument('vcf_files', metavar='<VCF>', nargs='+', help='VCF files to combine and sort')
+    parser.add_argument('-t', '--tempdir', metavar='<DIRECTORY_PATH>', default=gettempdir(), help='temporary directory')
+    parser.add_argument('-b', '--batchsize', metavar='<INT>', type=int, default=200, help='number of files to sort in batch')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 
