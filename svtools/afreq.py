@@ -100,14 +100,18 @@ class UpdateInfo(object):
         vcf_out.close()
 
 def description():
-    return 'Add allele frequency information to a VCF file'
+    return 'add allele frequency information to a VCF file'
+
+def epilog():
+    return 'Specify the path to an (optionally) bgzipped VCF. If no file is specified then input is read from stdin.'
+
 
 def add_arguments_to_parser(parser):
-    parser.add_argument(metavar='vcf', dest='input_vcf', nargs='?', default=None, help='VCF input')
+    parser.add_argument(metavar='<VCF>', dest='input_vcf', nargs='?', default=None, help='VCF input')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 

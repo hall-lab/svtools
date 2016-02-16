@@ -125,14 +125,14 @@ def varLookup(aFile, bFile, bedpe_out, max_distance, pass_prefix, cohort_name):
             bedpe_out.write(get_var_string(a, cohort_name))
 
 def description():
-    return 'Look for variants common between two bedpe files'
+    return 'look for variants common between two BEDPE files'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-d', '--distance', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci between bedpe files [50]')
-    parser.add_argument("-a", "--aFile", dest="aFile", help="Pruned merged bedpe (A file) or standard input (-a stdin).")
-    parser.add_argument("-b", "--bFile", dest="bFile", help="Pruned merged bedpe (B file) (-b stdin). For pruning use svtools prune")
-    parser.add_argument("-c", "--cohort", dest='cohort_name', default=None, help="Cohort name to add information of matching variants (default:bFile)")                    
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
+    parser.add_argument('-d', '--distance', metavar='<INT>', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci between bedpe files [50]')
+    parser.add_argument("-a", "--aFile", dest="aFile", metavar='<BEDPE>', help="pruned, merged BEDPE (A file) or standard input (-a stdin).")
+    parser.add_argument("-b", "--bFile", dest="bFile", metavar='<BEDPE>', help="pruned merged BEDPE (B file) (-b stdin). For pruning use svtools prune")
+    parser.add_argument("-c", "--cohort", dest='cohort_name', metavar='<STRING>', default=None, help="cohort name to add information of matching variants (default:bFile)")                    
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), metavar='<BEDPE>', default=sys.stdout, help='output BEDPE to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
