@@ -14,6 +14,7 @@ import pickle
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
+import svtools.util as su
 
 
 #  attempting to merge Colby's reclassifier with hja version
@@ -31,7 +32,7 @@ sv_classifier.py\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: classify structural variants")
-    parser.add_argument('-i', '--input', metavar='VCF', dest='vcf_in', type=argparse.FileType('r'), default=None, help='VCF input [stdin]')
+    parser.add_argument('-i', '--input', metavar='VCF', dest='vcf_in', default=None, help='VCF input [stdin]')
     parser.add_argument('-g', '--gender', metavar='FILE', dest='gender', type=argparse.FileType('r'), required=True, default=None, help='tab delimited file of sample genders (male=1, female=2)\nex: SAMPLE_A\t2')
     parser.add_argument('-e', '--exclude', metavar='FILE', dest='exclude', type=argparse.FileType('r'), required=False, default=None, help='list of samples to exclude from classification algorithms')
     parser.add_argument('-a', '--annotation', metavar='BED', dest='ae_path', type=str, default=None, help='BED file of annotated elements')
@@ -44,12 +45,7 @@ description: classify structural variants")
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
-    if args.vcf_in == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            args.vcf_in = sys.stdin
+    args.vcf_in = su.InputStream(args.vcf_in)
     return args
 
 

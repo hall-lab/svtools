@@ -5,6 +5,7 @@ from argparse import RawTextHelpFormatter
 from svtools.bedpe import Bedpe
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
+import svtools.utils as su
 
 # primary function
 def bedpeToVcf(bedpe_file, vcf_out):
@@ -129,9 +130,12 @@ def bedpeToVcf(bedpe_file, vcf_out):
 def description():
     return 'convert a BEDPE file to VCF'
 
+def epilog():
+    return 'The input BEDPE file can be gzipped if it is specified explicitly.'
+
 def add_arguments_to_parser(parser):
-    parser.add_argument('-b', '--bedpe', type=argparse.FileType('r'), default=None, help='BEDPE input (default: stdin)')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
+    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
+    parser.add_argument('-o', '--output', metavar='<VCF>', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -140,13 +144,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    if args.bedpe == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.bedpe = sys.stdin
-    bedpeToVcf(args.bedpe, args.output)
+    with su.InputStream(args.bedpe) as stream:
+        bedpeToVcf(stream, args.output)
 
 if __name__ == '__main__':
     parser = command_parser()

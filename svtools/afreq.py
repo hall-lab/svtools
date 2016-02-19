@@ -1,6 +1,7 @@
 import argparse, sys
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
+import svtools.utils as su
 
 class UpdateInfo(object):
     def __init__(self, vcf_stream):
@@ -55,7 +56,7 @@ class UpdateInfo(object):
                 continue
 
             v = line.rstrip().split('\t')
-            var = Variant(v, vcf)
+            var = Variant(v, vcf, fixed_genotypes=True)
 
             # extract genotypes from VCF
             num_alt = len(var.alt.split(','))
@@ -95,35 +96,29 @@ class UpdateInfo(object):
             var.info['MSQ'] = self.calc_msq(var)
 
             # after all samples have been processed, write
-            vcf_out.write(var.get_var_string() + '\n')
+            vcf_out.write(var.get_var_string(use_cached_gt_string=True) + '\n')
         vcf_out.close()
 
 def description():
-    return 'Add allele frequency information to a VCF file'
+    return 'add allele frequency information to a VCF file'
+
+def epilog():
+    return 'Specify the path to an (optionally) bgzipped VCF. If no file is specified then input is read from stdin.'
+
 
 def add_arguments_to_parser(parser):
-    parser.add_argument(metavar='vcf', dest='input_vcf', nargs='?', default=None, help='VCF input')
+    parser.add_argument(metavar='<VCF>', dest='input_vcf', nargs='?', default=None, help='VCF input')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 
 def run_from_args(args):
-    handle = None
-    if args.input_vcf == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            handle = sys.stdin
-    else:
-        handle = open(args.input_vcf, 'r')
-    updater = UpdateInfo(handle)
-    updater.execute()
-    if handle != sys.stdin:
-        handle.close()
+    with su.InputStream(args.input_vcf) as input_stream:
+        updater = UpdateInfo(input_stream)
+        updater.execute()
 
 if __name__ == '__main__':
     parser = command_parser()

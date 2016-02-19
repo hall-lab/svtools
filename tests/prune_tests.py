@@ -1,6 +1,5 @@
 from unittest import TestCase, main
 import os
-import time
 import sys
 import tempfile
 import difflib
@@ -23,7 +22,7 @@ class IntegrationTest_bedpetovcf(TestCase):
             for line in result:
                 sys.stdout.write(line)
             self.assertFalse(result)
-        #os.remove(temp_output_path)
+        os.remove(temp_output_path)
 
 if __name__ == "__main__":
     main()

@@ -1,10 +1,10 @@
 from unittest import TestCase, main
 import os
 import time
-import svtools.copynumber
 import sys
 import tempfile
 import difflib
+import svtools.copynumber
 
 class IntegrationTest_copynumber(TestCase):
     def run_integration_test(self):
@@ -27,6 +27,7 @@ class IntegrationTest_copynumber(TestCase):
                 for line in result:
                     sys.stdout.write(line)
                 self.assertFalse(result)
+        os.remove(temp_output_path)
 
 #class CopynumberUiTest(TestCase):
 #    def test_parser(self):

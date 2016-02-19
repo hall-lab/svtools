@@ -2,6 +2,7 @@ import argparse, sys , re
 from argparse import RawTextHelpFormatter
 from collections import Counter
 from svtools.bedpe import Bedpe
+import svtools.utils as su
 
 class Cluster(object):
     def __init__(self):
@@ -184,31 +185,27 @@ def cluster_bedpe(in_file,max_distance,eval_param,bedpe_out,is_sorted):
     return
 
 def description():
-    return 'Cluster and prune a BEDPE file by position based on allele frequency'
+    return 'cluster and prune a BEDPE file by position based on allele frequency'
+
+def epilog():
+    return 'The input BEDPE file can be gzipped if it is specified explicitly.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-d', '--distance', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci in cluster [50]')
-    parser.add_argument('-e', '--eval-param', help='evaluating parameter for choosing best bedpe in a cluster(e.g. af=AlleleFrequency default:af)')
+    parser.add_argument('-d', '--distance', metavar='<INT>', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci in cluster [50]')
+    parser.add_argument('-e', '--eval-param', metavar='<STRING>', help='evaluating parameter for choosing best bedpe in a cluster(e.g. af=AlleleFrequency default:af)')
     parser.add_argument('-s', '--is-sorted', action='store_true', help='specify if an input file is sorted. Sort with svtools bedpesort. (default=False)')
-    parser.add_argument('input', nargs='?', type=argparse.FileType('r'), default=None, help='BEDPE file to read. If \'-\' or absent then defaults to stdin.')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output bedpe to write (default: stdout)')
+    parser.add_argument('input', nargs='?', metavar='<BEDPE>', default=None, help='BEDPE file to read. If \'-\' or absent then defaults to stdin.')
+    parser.add_argument('-o', '--output', metavar='<BEDPE>', type=argparse.FileType('w'), default=sys.stdout, help='output bedpe to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 
 def run_from_args(args):
-    # if no input, check if part of pipe and if so, read stdin.
-    if args.input == None:
-        if sys.stdin.isatty():
-            sys.stderr.write('Please stream in input to this command or specify the file to read\n')
-            sys.exit(1)
-        else:
-            args.input = sys.stdin
-
-    cluster_bedpe(args.input,
+    with su.InputStream(args.input) as stream:
+        cluster_bedpe(stream,
                   args.max_distance,
                   args.eval_param,
                   args.output,

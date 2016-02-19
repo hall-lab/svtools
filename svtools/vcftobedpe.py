@@ -5,6 +5,7 @@ import re
 
 import svtools.vcf.file
 import svtools.vcf.variant
+import svtools.utils as su
 
 def writeBND(prim, sec, v, bedpe_out):
     '''
@@ -41,32 +42,28 @@ def writeBND(prim, sec, v, bedpe_out):
     if 'CIPOS' in primary.info:
         span = map(int, primary.info['CIPOS'].split(','))
         if o1 == '-':
-            span[0]-=1
-            span[1]-=1
+            b1 -= 1
         s1 = b1 + span[0]
         e1 = b1 + span[1]
     else:
         if o1 == '-':
-            e1 = b1 - 1
-            s1 = b1 - 1
+            b1 -= 1
         else:
-            e1 = b1
             s1 = b1
+            e1 = b1
     
     if 'CIEND' in primary.info:    
         span = map(int, primary.info['CIEND'].split(','))
         if o2 == '-':
-            span[0]-=1
-            span[1]-=1
+            b2 -= 1
         s2 = b2 + span[0]
         e2 = b2 + span[1]
     else:
         if o2== '-':
-            e2 = b2 - 1
-            s2 = b2 - 1
+            b2 -= 1
         else:
-            e2 = b2
             s2 = b2
+            e2 = b2
 
     ispan = s2 - e1
     ospan = e2 - s1
@@ -90,10 +87,10 @@ def writeBND(prim, sec, v, bedpe_out):
         info_B = secondary.get_info_string()    
     bedpe_out.write('\t'.join(map(str,
                                   [chrom_A,
-                                   max(s1,0),
+                                   max(s1,1) - 1,
                                    max(e1,0),
                                    chrom_B,
-                                   max(s2,0),
+                                   max(s2,1) - 1,
                                    max(e2,0),
                                    primary.info['EVENT'],
                                    primary.original_qual,
@@ -243,26 +240,24 @@ def vcfToBedpe(vcf_file, bedpe_out):
     return
 
 def description():
-    return 'Convert a VCF file to a BEDPE file'
+    return 'convert a VCF file to a BEDPE file'
+
+def epilog():
+    return 'The input VCF file can be gzipped if it is specified explicitly.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--input', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='Output BEDPE to write (default: stdout)')
+    parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input (default: stdin)')
+    parser.add_argument('-o', '--output', metavar='<BEDPE>', type=argparse.FileType('w'), default=sys.stdout, help='output BEDPE to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 
 def run_from_args(args):
-    if args.input == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.input = sys.stdin
-    return vcfToBedpe(args.input, args.output)
+    with su.InputStream(args.input) as stream:
+        return vcfToBedpe(stream, args.output)
 
 # initialize the script
 if __name__ == '__main__':

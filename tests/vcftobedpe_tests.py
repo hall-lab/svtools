@@ -28,6 +28,7 @@ class IntegrationTest_vcftobedpe(TestCase):
                 for line in result:
                     sys.stdout.write(line)
                 self.assertFalse(result)
+        os.remove(temp_output_path)
 
 if __name__ == "__main__":
     main()

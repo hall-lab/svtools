@@ -1,5 +1,4 @@
 from unittest import TestCase, main
-import os
 from svtools.bedpe import Bedpe
 
 class BedpeTests(TestCase):
