@@ -14,7 +14,6 @@ import pickle
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
-import svtools.util as su
 
 
 #  attempting to merge Colby's reclassifier with hja version
@@ -32,7 +31,7 @@ sv_classifier.py\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: classify structural variants")
-    parser.add_argument('-i', '--input', metavar='VCF', dest='vcf_in', default=None, help='VCF input [stdin]')
+    parser.add_argument('-i', '--input', metavar='VCF', dest='vcf_in', type=argparse.FileType('r'), default=None, help='VCF input [stdin]')
     parser.add_argument('-g', '--gender', metavar='FILE', dest='gender', type=argparse.FileType('r'), required=True, default=None, help='tab delimited file of sample genders (male=1, female=2)\nex: SAMPLE_A\t2')
     parser.add_argument('-e', '--exclude', metavar='FILE', dest='exclude', type=argparse.FileType('r'), required=False, default=None, help='list of samples to exclude from classification algorithms')
     parser.add_argument('-a', '--annotation', metavar='BED', dest='ae_path', type=str, default=None, help='BED file of annotated elements')
@@ -45,7 +44,12 @@ description: classify structural variants")
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
-    args.vcf_in = su.InputStream(args.vcf_in)
+    if args.vcf_in == None:
+        if sys.stdin.isatty():
+            parser.print_help()
+            exit(1)
+        else:
+            args.vcf_in = sys.stdin
     return args
 
 
@@ -249,72 +253,122 @@ def calc_params(vcf_file):
             for sample in vcf_samples:
                 if var.gts[sample].get_format('GT') != './.':
                     log2r = math.log((float(var.gts[sample].get_format('CN'))+ epsilon)/2,2)  #to avoid log(0)
-                    tSet.append(CN_rec(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-                        var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), math.log(abs(float(var.info['SVLEN']))), log2r))
+                    tSet.append(CN_rec1(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
+                        var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), var.gts[sample].get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
 
-    df=pd.DataFrame(tSet, columns=CN_rec._fields)
+    df=pd.DataFrame(tSet, columns=CN_rec1._fields)
     df['q_low']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(lowQuantile)
     df['q_high']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(highQuantile)
     df=df[(df.log2r>=df.q_low) & (df.log2r<=df.q_high)]
+    df.to_csv('./train.csv')
 
     #adjust copy number for small deletions (<1kb), no strong relationship b/w cn and size for dups evident so far
 
-    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) ]
-    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) ]
-    small_het_dels['offset']=small_het_dels['log2r']-np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
-    small_hom_dels['offset']=small_hom_dels['log2r']-np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
+    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) & (df.svlen>=100)]
+    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) & (df.svlen>=100)]
+    het_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
+    hom_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
+    small_het_dels['offset']=small_het_dels['log2r']-het_del_mean
+    small_hom_dels['offset']=small_hom_dels['log2r']-hom_del_mean
+    
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
         het_del_fit=smf.ols('offset~log_len',small_het_dels).fit()
+        print hom_del_fit.summary()
+        print het_del_fit.summary()
         small_hom_dels['log2r_adj'] = small_hom_dels['log2r'] - hom_del_fit.predict(small_hom_dels)
         small_het_dels['log2r_adj'] = small_het_dels['log2r'] - het_del_fit.predict(small_het_dels)
 
     small_dels=small_hom_dels.append(small_het_dels)
     small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj']]
+
+    # dels of length<100 bp are excluded here
     df1=df[(df.svtype!="DEL") | (df.GT=="0/0") | (df.svlen>=1000)]
     df1['log2r_adj']=df1['log2r']
     df1=df1.append(small_dels)
 
-    params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean, np.std]).reset_index()
-    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'std']).reset_index()
-    params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'sd0', 'sd1', 'sd2']
+
+    params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean,np.var, len]).reset_index()
+    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()
+    
+    params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'var0', 'var1', 'var2', 'len0', 'len1', 'len2']
+    params['std_pooled']=np.sqrt((params['var0']*params['len0']+params['var1']*params['len1']+params['var2']*params['len2'])/(params['len0']+params['len1']+params['len2']))
+    params.to_csv('./params.csv')
     return (params, het_del_fit, hom_del_fit)
 
 
 
-def rd_support_nb(temp, p_cnv, frac_BND):
+def rd_support_nb(temp, p_cnv):
 
-    tr = pd.DataFrame({'p0' : [1.0, 0.1, 0.0], 'p1' : [0.0, 0.45, 0.50], 'p2' : [0.0, 0.45, 0.5], 'GT' : ["0/0", "0/1", "1/1"]})
+    tr = pd.DataFrame({'p0' : [1.0, 0.1, 0.0], 'p1' : [0.0, 0.7, 0.25], 'p2' : [0.0, 0.2, 0.75], 'GT' : ["0/0", "0/1", "1/1"]})
     temp = pd.merge(temp, tr, on='GT', how='left')
     temp['p_mix'] = temp['lld0'] * temp['p0'] + temp['lld1'] * temp['p1'] + temp['lld2'] * temp['p2']
     return  p_cnv * np.prod(temp['p_mix']) > (1- p_cnv) * np.prod(temp['lld0'])
    
 
-def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, frac_BND = 0.25, p_cnv = 0.5, epsilon=0.1): 
+def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5, epsilon=0.1):
 
-    shomd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="1/1") & (test_set.svlen<1000)]
-    shetd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="0/1") & (test_set.svlen<1000)]
-    shomd['log2r_adj']=shomd['log2r']-hom_del_fit.predict(shomd)
-    shetd['log2r_adj']=shetd['log2r']-het_del_fit.predict(shetd)
+    svtype=test_set['svtype'][0]
+    svlen=test_set['svlen'][0]
+    log_len=test_set['log_len'][0]
+    iid=test_set['var_id'][0]
+    sys.stderr.write(str(iid)+"\n")
+    
+    if svtype == 'DEL' and svlen<1000:
+        params1=params[params.svtype=='DEL'].copy()
+        if svlen<100:
+            params1['log_len']=math.log(100)
+        else:
+            params1['log_len']=log_len
 
-    small_dels=shomd.append(shetd)
-    small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'AB', 'log_len', 'log2r', 'log2r_adj']]
+        params1['mean1_adj'] = params1['mean1'] + het_del_fit.predict(params1)
+        params1['mean2_adj'] = params1['mean2'] + hom_del_fit.predict(params1)
+        #params1.to_csv('./params1.csv')
+        #sys.exit(1)
 
-    df1=test_set[(test_set.svtype!="DEL") | (test_set.GT=="0/0") | (test_set.svlen>=1000)]
-    df1['log2r_adj']=df1['log2r']
-    df1=df1.append(small_dels)
-    df1=df1[df1.GT!="0/0"]
-    #df1.to_csv('./df1')
-    mm=pd.merge(df1, params, how='left')
-    #mm.to_csv('./mm1.csv')
+    else:
+        params1=params.copy()
+        params1['mean1_adj'] = params1['mean1']
+        params1['mean2_adj'] = params1['mean2']
 
-    mm['lld0'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean0"],row["sd0"]), axis=1)
-    mm['lld1'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean1"],row["sd1"]), axis=1)
-    mm['lld2'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean2"],row["sd2"]), axis=1)
+    v0=test_set[test_set.GT=="0/0"]['log2r'].values
+    v1=test_set[test_set.GT=="0/1"]['log2r'].values
+    v2=test_set[test_set.GT=="1/1"]['log2r'].values
 
-    return  rd_support_nb(mm, p_cnv, frac_BND)
+    if len(v0)>0:
+        med0=np.median(v0)
+    else:
+        if len(v1)>0:
+            med0=med1=np.median(v1)
+        elif len(v2)>0:
+            med0=med1=med2=np.median(v2)
+        else:
+            return False
+
+    if len(v1)>0:
+        med1=np.median(v1)
+    else:
+        med1=med0
+    if len(v2)>0:
+        med2=np.median(v2)
+    else:
+        med2=med1
+
+    if svtype=='DEL' and ( med1>med0 or med2>med0 ):
+        return False
+    elif svtype=='DUP' and (med1<med0 or med2<med0):
+        return False
+
+    mm=pd.merge(test_set, params1, how='left')
+
+    mm['lld0'] = mm.apply(lambda row:lld(row["log2r"], row["mean0"],row["std_pooled"]), axis=1)
+    mm['lld1'] = mm.apply(lambda row:lld(row["log2r"], row["mean1_adj"],row["std_pooled"]), axis=1)
+    mm['lld2'] = mm.apply(lambda row:lld(row["log2r"], row["mean2_adj"],row["std_pooled"]), axis=1)
+   
+    return  rd_support_nb(mm, p_cnv)
+
 
 def load_df(var, exclude, sex):
     
@@ -379,7 +433,7 @@ def has_low_freq_depth_support(test_set):
 def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
     # slope_threshold = 0.1
     # rsquared_threshold = 0.1
-
+    
     rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
     if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:
         
@@ -477,7 +531,6 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             vcf_out.write(line)
         else:
             df=load_df(var, exclude, sex)
-            #df.to_csv('./df.csv')
 
             if has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params):
                 nb_support = True
@@ -498,7 +551,8 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                         vcf_out.write(m_var + '\n')
             
         if diag_outfile is not None:
-            outf.write(var.var_id+"\t"+svtype+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(high_freq_support)+"\t"+str(low_freq_support)+"\n")
+            svlen=df['svlen'][0]
+            outf.write(var.var_id+"\t"+svtype+"\t"+str(svlen)+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(high_freq_support)+"\t"+str(low_freq_support)+"\n")
 
 
     vcf_out.close()
