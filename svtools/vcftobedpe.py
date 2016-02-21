@@ -87,10 +87,10 @@ def writeBND(prim, sec, v, bedpe_out):
         info_B = secondary.get_info_string()    
     bedpe_out.write('\t'.join(map(str,
                                   [chrom_A,
-                                   max(s1,1) - 1,
+                                   max(s1,0) - 1,
                                    max(e1,0),
                                    chrom_B,
-                                   max(s2,1) - 1,
+                                   max(s2,0) - 1,
                                    max(e2,0),
                                    primary.info['EVENT'],
                                    primary.original_qual,
