@@ -14,7 +14,6 @@ import pickle
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
-import svtools.util as su
 
 
 #  attempting to merge Colby's reclassifier with hja version
@@ -32,7 +31,7 @@ sv_classifier.py\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: classify structural variants")
-    parser.add_argument('-i', '--input', metavar='VCF', dest='vcf_in', default=None, help='VCF input [stdin]')
+    parser.add_argument('-i', '--input', metavar='VCF', dest='vcf_in', type=argparse.FileType('r'), default=None, help='VCF input [stdin]')
     parser.add_argument('-g', '--gender', metavar='FILE', dest='gender', type=argparse.FileType('r'), required=True, default=None, help='tab delimited file of sample genders (male=1, female=2)\nex: SAMPLE_A\t2')
     parser.add_argument('-e', '--exclude', metavar='FILE', dest='exclude', type=argparse.FileType('r'), required=False, default=None, help='list of samples to exclude from classification algorithms')
     parser.add_argument('-a', '--annotation', metavar='BED', dest='ae_path', type=str, default=None, help='BED file of annotated elements')
@@ -45,9 +44,13 @@ description: classify structural variants")
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
-    args.vcf_in = su.InputStream(args.vcf_in)
+    if args.vcf_in == None:
+        if sys.stdin.isatty():
+            parser.print_help()
+            exit(1)
+        else:
+            args.vcf_in = sys.stdin
     return args
-
 
 
 # http://stackoverflow.com/questions/8930370/where-can-i-find-mad-mean-absolute-deviation-in-scipy
@@ -60,145 +63,6 @@ def mad(arr):
     med = np.median(arr)
     return np.median(np.abs(arr - med))
 
-# test whether variant has read depth support by regression
-def has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold, writedir=None):
-    # slope_threshold = 0.1
-    # rsquared_threshold = 0.1
-    
-    if 'CN' in var.active_formats:
-        # allele balance list
-        ab_list = []
-        for s in var.sample_list:
-            # if s in exclude:
-            #     continue
-            ab_str = var.genotype(s).get_format('AB')
-            if ab_str == '.':
-                ab_list.append(-1)
-                continue
-
-            ab_list.append(float(ab_str))
-
-        # populate read-depth list, accounting for sample gender
-        rd_list = []
-        for s in var.sample_list:
-            # if s in exclude:
-            #     continue
-            if (var.chrom == 'X' or var.chrom == 'Y') and gender[s] == 1:
-                rd_list.append(float(var.genotype(s).get_format('CN')) * 2)
-            else:
-                rd_list.append(float(var.genotype(s).get_format('CN')))
-
-        rd = np.array([ab_list, rd_list])
-
-        # remove missing genotypes
-        rd = rd[:, rd[0]!=-1]
-
-        # ensure non-uniformity in genotype and read depth
-        if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:
-            # calculate regression
-            (slope, intercept, r_value, p_value, std_err) = stats.linregress(rd)
-            # print slope, intercept, r_value, var.info['SVTYPE'], var.var_id
-
-
-            # write the scatterplot to a file
-            if writedir is not None:
-                try:
-                    os.makedirs(writedir)
-                except OSError as exc: # Python >2.5
-                    if os.path.isdir(writedir):
-                        pass
-                    else: raise
-
-                f = open('%s/reg_%s_%s_%sbp.txt' % (writedir, var.info['SVTYPE'], var.var_id, var.info['SVLEN']), 'w')
-                np.savetxt(f, np.transpose(rd), delimiter='\t')
-                f.close()
-
-            if r_value ** 2 < rsquared_threshold:
-                return False
-
-            if var.info['SVTYPE'] == 'DEL':
-                slope = -slope
-
-            if slope < slope_threshold:
-                return False
-
-            return True
-    return False
-
-# test for read depth support of low frequency variants
-def has_low_freq_depth_support(var, gender, exclude, writedir=None):
-    mad_threshold = 2
-    mad_quorum = 0.5 # this fraction of the pos. genotyped results must meet the mad_threshold
-    absolute_cn_diff = 0.5
-    
-    hom_ref_cn = []
-    het_cn = []
-    hom_alt_cn = []
-
-    for s in var.sample_list:
-        if s in exclude:
-            continue
-        if (var.chrom == 'X' or var.chrom == 'Y') and gender[s] == 1:
-            cn = float(var.genotype(s).get_format('CN')) * 2
-        else:
-            cn = float(var.genotype(s).get_format('CN'))
-
-        if var.genotype(s).get_format('GT') == '0/0':
-            hom_ref_cn.append(cn)
-        elif var.genotype(s).get_format('GT') == '0/1':
-            het_cn.append(cn)
-        elif var.genotype(s).get_format('GT') == '1/1':
-            hom_alt_cn.append(cn)
-
-    if len(hom_ref_cn) > 0:
-        cn_mean = np.mean(hom_ref_cn)
-        cn_stdev = np.std(hom_ref_cn)
-        cn_median = np.median(hom_ref_cn)
-        cn_mad = mad(hom_ref_cn)
-    else:
-        cn_mean = None
-        cn_stdev = None
-        cn_median = None
-        cn_mad = None
-
-    # write the cn values to a file
-    if writedir is not None:
-
-        try:
-            os.makedirs(writedir)
-        except OSError as exc: # Python >2.5
-            if os.path.isdir(writedir):
-                pass
-            else: raise
-
-        f = open('%s/mad_%s_%s_%sbp.txt' % (writedir, var.info['SVTYPE'], var.var_id, var.info['SVLEN']), 'w')
-        for cn in hom_ref_cn:
-            f.write('\t'.join(map(str, [0, cn, cn_mean, cn_stdev, cn_median, cn_mad])) + '\n')
-        for cn in het_cn:
-            f.write('\t'.join(map(str, [1, cn, cn_mean, cn_stdev, cn_median, cn_mad])) + '\n')
-        for cn in hom_alt_cn:
-            f.write('\t'.join(map(str, [2, cn, cn_mean, cn_stdev, cn_median, cn_mad])) + '\n')
-        f.close()
-
-    # bail after writing out diagnostic info, if no ref samples or all ref samples
-    if (len(hom_ref_cn) == 0 or
-        len(het_cn + hom_alt_cn) == 0):
-        return False
-
-    # tally up the pos. genotyped samples meeting the mad_threshold
-    q = 0
-    for cn in het_cn + hom_alt_cn:
-        resid = cn - cn_median
-        if var.info['SVTYPE'] == 'DEL':
-            resid = -resid
-        if (resid > (cn_mad * mad_threshold) and
-            resid > absolute_cn_diff):
-            q += 1
-    # check if meets quorum
-    if float(q)/len(het_cn + hom_alt_cn) > mad_quorum:
-        return True
-    else:
-        return False
 
 def to_bnd_strings(var, fixed_gts):
 
@@ -263,10 +127,9 @@ def reciprocal_overlap(a, b_list):
     return min(overlap / (a[1] - a[0]), overlap / b_aggregate)
 
 def collapse_bed_records(bed_list):
-    bed_list_sorted = sorted(bed_list, key=itemgetter(1))
 
+    bed_list_sorted = sorted(bed_list, key=itemgetter(1))
     collapsed_bed_list = []
-    
     i = 0
     curr_rec = bed_list_sorted[i]
     while i < len(bed_list_sorted):
@@ -351,8 +214,8 @@ def find_max(row):
     return row.idxmax()
 
 
-
 CN_rec = namedtuple ('CN_rec', 'var_id sample svtype svlen AF GT CN log_len log2r')
+CN_rec1 = namedtuple ('CN_rec1', 'var_id sample svtype svlen AF GT CN AB log_len log2r')
 
 def calc_params(vcf_file):
 
@@ -390,51 +253,126 @@ def calc_params(vcf_file):
             for sample in vcf_samples:
                 if var.gts[sample].get_format('GT') != './.':
                     log2r = math.log((float(var.gts[sample].get_format('CN'))+ epsilon)/2,2)  #to avoid log(0)
-                    tSet.append(CN_rec(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-                        var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), math.log(abs(float(var.info['SVLEN']))), log2r))
+                    tSet.append(CN_rec1(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
+                        var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), var.gts[sample].get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
 
-    df=pd.DataFrame(tSet, columns=CN_rec._fields)
+    df=pd.DataFrame(tSet, columns=CN_rec1._fields)
     df['q_low']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(lowQuantile)
     df['q_high']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(highQuantile)
     df=df[(df.log2r>=df.q_low) & (df.log2r<=df.q_high)]
+    df.to_csv('./train.csv')
 
     #adjust copy number for small deletions (<1kb), no strong relationship b/w cn and size for dups evident so far
 
-    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) ]
-    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) ]
-    small_het_dels['offset']=small_het_dels['log2r']-np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
-    small_hom_dels['offset']=small_hom_dels['log2r']-np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
+    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) & (df.svlen>=100)]
+    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) & (df.svlen>=100)]
+    het_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
+    hom_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
+    small_het_dels['offset']=small_het_dels['log2r']-het_del_mean
+    small_hom_dels['offset']=small_hom_dels['log2r']-hom_del_mean
+    
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
         het_del_fit=smf.ols('offset~log_len',small_het_dels).fit()
+        print hom_del_fit.summary()
+        print het_del_fit.summary()
         small_hom_dels['log2r_adj'] = small_hom_dels['log2r'] - hom_del_fit.predict(small_hom_dels)
         small_het_dels['log2r_adj'] = small_het_dels['log2r'] - het_del_fit.predict(small_het_dels)
 
     small_dels=small_hom_dels.append(small_het_dels)
     small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj']]
+
+    # dels of length<100 bp are excluded here
     df1=df[(df.svtype!="DEL") | (df.GT=="0/0") | (df.svlen>=1000)]
     df1['log2r_adj']=df1['log2r']
     df1=df1.append(small_dels)
 
-    params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean, np.std]).reset_index()
-    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'std']).reset_index()
-    params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'sd0', 'sd1', 'sd2']
+
+    params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean,np.var, len]).reset_index()
+    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()
+    
+    params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'var0', 'var1', 'var2', 'len0', 'len1', 'len2']
+    params['std_pooled']=np.sqrt((params['var0']*params['len0']+params['var1']*params['len1']+params['var2']*params['len2'])/(params['len0']+params['len1']+params['len2']))
+    params.to_csv('./params.csv')
     return (params, het_del_fit, hom_del_fit)
 
 
 
-def rd_support_nb(temp, p_cnv, frac_BND):
+def rd_support_nb(temp, p_cnv):
 
-    tr = pd.DataFrame({'p0' : [1.0, 0.1, 0.0], 'p1' : [0.0, 0.45, 0.50], 'p2' : [0.0, 0.45, 0.5], 'GT' : ["0/0", "0/1", "1/1"]})
+    tr = pd.DataFrame({'p0' : [1.0, 0.1, 0.0], 'p1' : [0.0, 0.7, 0.25], 'p2' : [0.0, 0.2, 0.75], 'GT' : ["0/0", "0/1", "1/1"]})
     temp = pd.merge(temp, tr, on='GT', how='left')
     temp['p_mix'] = temp['lld0'] * temp['p0'] + temp['lld1'] * temp['p1'] + temp['lld2'] * temp['p2']
     return  p_cnv * np.prod(temp['p_mix']) > (1- p_cnv) * np.prod(temp['lld0'])
    
 
-def has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params, frac_BND = 0.25, p_cnv = 0.5, epsilon=0.1):
+def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5, epsilon=0.1):
 
+    svtype=test_set['svtype'][0]
+    svlen=test_set['svlen'][0]
+    log_len=test_set['log_len'][0]
+    iid=test_set['var_id'][0]
+    sys.stderr.write(str(iid)+"\n")
+    
+    if svtype == 'DEL' and svlen<1000:
+        params1=params[params.svtype=='DEL'].copy()
+        if svlen<100:
+            params1['log_len']=math.log(100)
+        else:
+            params1['log_len']=log_len
+
+        params1['mean1_adj'] = params1['mean1'] + het_del_fit.predict(params1)
+        params1['mean2_adj'] = params1['mean2'] + hom_del_fit.predict(params1)
+        #params1.to_csv('./params1.csv')
+        #sys.exit(1)
+
+    else:
+        params1=params.copy()
+        params1['mean1_adj'] = params1['mean1']
+        params1['mean2_adj'] = params1['mean2']
+
+    v0=test_set[test_set.GT=="0/0"]['log2r'].values
+    v1=test_set[test_set.GT=="0/1"]['log2r'].values
+    v2=test_set[test_set.GT=="1/1"]['log2r'].values
+
+    if len(v0)>0:
+        med0=np.median(v0)
+    else:
+        if len(v1)>0:
+            med0=med1=np.median(v1)
+        elif len(v2)>0:
+            med0=med1=med2=np.median(v2)
+        else:
+            return False
+
+    if len(v1)>0:
+        med1=np.median(v1)
+    else:
+        med1=med0
+    if len(v2)>0:
+        med2=np.median(v2)
+    else:
+        med2=med1
+
+    if svtype=='DEL' and ( med1>med0 or med2>med0 ):
+        return False
+    elif svtype=='DUP' and (med1<med0 or med2<med0):
+        return False
+
+    mm=pd.merge(test_set, params1, how='left')
+
+    mm['lld0'] = mm.apply(lambda row:lld(row["log2r"], row["mean0"],row["std_pooled"]), axis=1)
+    mm['lld1'] = mm.apply(lambda row:lld(row["log2r"], row["mean1_adj"],row["std_pooled"]), axis=1)
+    mm['lld2'] = mm.apply(lambda row:lld(row["log2r"], row["mean2_adj"],row["std_pooled"]), axis=1)
+   
+    return  rd_support_nb(mm, p_cnv)
+
+
+def load_df(var, exclude, sex):
+    
+    epsilon=0.1
     test_set = list()
 
     for s in var.sample_list:
@@ -446,35 +384,68 @@ def has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params,
         #else:
         cn = var.genotype(s).get_format('CN')
         log2r = math.log((float(cn)+epsilon)/2, 2)  # to avoid log(0)
-        test_set.append(CN_rec(var.var_id, s, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-           var.genotype(s).get_format('GT'),  cn , math.log(abs(float(var.info['SVLEN']))), log2r))
+        test_set.append(CN_rec1(var.var_id, s, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
+             var.genotype(s).get_format('GT'),  cn , var.genotype(s).get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
 
+    test_set = pd.DataFrame(data = test_set, columns=CN_rec1._fields)
+    return test_set
 
-    test_set = pd.DataFrame(data = test_set, columns=CN_rec._fields)
+# test for read depth support of low frequency variants
+def has_low_freq_depth_support(test_set):
+    mad_threshold = 2
+    mad_quorum = 0.5 # this fraction of the pos. genotyped results must meet the mad_threshold
+    absolute_cn_diff = 0.5
+    
+    hom_ref_cn=test_set[test_set.GT=="0/0"]['CN'].values.astype(float)
+    hom_het_alt_cn=test_set[(test_set.GT=="0/1") | (test_set.GT=="1/1")]['CN'].values.astype(float)
 
-    shomd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="1/1") & (test_set.svlen<1000)]
-    shetd=test_set[(test_set.svtype=="DEL") & (test_set.GT=="0/1") & (test_set.svlen<1000)]
-    shomd['log2r_adj']=shomd['log2r']-hom_del_fit.predict(shomd)
-    shetd['log2r_adj']=shetd['log2r']-het_del_fit.predict(shetd)
+    if len(hom_ref_cn) > 0:
+        cn_mean = np.mean(hom_ref_cn)
+        cn_stdev = np.std(hom_ref_cn)
+        cn_median = np.median(hom_ref_cn)
+        cn_mad = mad(hom_ref_cn)
+    else:
+        cn_mean = None
+        cn_stdev = None
+        cn_median = None
+        cn_mad = None
+ 
+    # bail after writing out diagnostic info, if no ref samples or all ref samples
+    if (len(hom_ref_cn) == 0 or
+        len(hom_het_alt_cn) == 0):
+        return False
 
-    small_dels=shomd.append(shetd)
-    small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'log2r_adj']]
+    # tally up the pos. genotyped samples meeting the mad_threshold
+    #test_set.to_csv('./test_set.csv')
 
-    df1=test_set[(test_set.svtype!="DEL") | (test_set.GT=="0/0") | (test_set.svlen>=1000)]
-    df1['log2r_adj']=df1['log2r']
-    df1=df1.append(small_dels)
-    df1=df1[df1.GT!="0/0"]
-    #df1.to_csv('./df1')
-    mm=pd.merge(df1, params, how='left')
-    #mm.to_csv('./mm1.csv')
+    resid=hom_het_alt_cn-cn_median
+    if test_set['svtype'][0]=='DEL':
+        resid=-resid
+    
+    resid=resid[(resid > (cn_mad * mad_threshold) ) & (resid>absolute_cn_diff)]
 
-    mm['lld0'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean0"],row["sd0"]), axis=1)
-    mm['lld1'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean1"],row["sd1"]), axis=1)
-    mm['lld2'] = mm.apply(lambda row:lld(row["log2r_adj"], row["mean2"],row["sd2"]), axis=1)
+    if float(len(resid))/len(hom_het_alt_cn)>mad_quorum:
+        return True
+    else:
+        return False
 
-    return  rd_support_nb(mm, p_cnv, frac_BND)
+# test whether variant has read depth support by regression
+def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
+    # slope_threshold = 0.1
+    # rsquared_threshold = 0.1
+    
+    rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
+    if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:
+        
+        (slope, intercept, r_value, p_value, std_err) = stats.linregress(rd)
+        if df['svtype'][0] == 'DEL':
+            slope=-slope
+        #sys.stderr.write(df['var_id'][0]+"\t"+str(slope)+"\t"+str(r_value)+"\n")
 
-
+        if (slope < slope_threshold or r_value*r_value < rsquared_threshold):
+            return False
+        return True
+    return False
 
 
 # primary function
@@ -486,11 +457,11 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
     in_header = True
     min_pos_samps_for_regression = 10
 
-    gender = {}
+    sex = {}
     # read sample genders
     for line in gender_file:
         v = line.rstrip().split('\t')
-        gender[v[0]] = int(v[1])
+        sex[v[0]] = int(v[1])
 
     exclude = []
     if exclude_file is not None:
@@ -559,17 +530,20 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
         if num_pos_samps == 0:
             vcf_out.write(line)
         else:
-            if has_cn_support_by_nb(var, gender, exclude, het_del_fit, hom_del_fit, params):
+            df=load_df(var, exclude, sex)
+
+            if has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params):
                 nb_support = True
+
             if num_pos_samps < min_pos_samps_for_regression:
-                if has_low_freq_depth_support(var, gender, exclude):
+                if has_low_freq_depth_support(df):
                     low_freq_support = True
                     vcf_out.write(line)
                 else:
                     for m_var in to_bnd_strings(var, True ):
                         vcf_out.write(m_var + '\n')
             else:
-                if has_high_freq_depth_support(var, gender, exclude, slope_threshold, rsquared_threshold):
+                if has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
                     high_freq_support = True
                     vcf_out.write(line)
                 else:
@@ -577,7 +551,8 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
                         vcf_out.write(m_var + '\n')
             
         if diag_outfile is not None:
-            outf.write(var.var_id+"\t"+svtype+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(high_freq_support)+"\t"+str(low_freq_support)+"\n")
+            svlen=df['svlen'][0]
+            outf.write(var.var_id+"\t"+svtype+"\t"+str(svlen)+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(high_freq_support)+"\t"+str(low_freq_support)+"\n")
 
 
     vcf_out.close()
