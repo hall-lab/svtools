@@ -11,7 +11,7 @@ class IntegrationTest_vcftobedpe(TestCase):
         test_directory = os.path.dirname(os.path.abspath(__file__))
         test_data_dir = os.path.join(test_directory, 'test_data', 'vcftobedpe')
         input = os.path.join(test_data_dir, 'NA12878.vcf')
-        expected_result = os.path.join(test_data_dir, 'expected.vcf')
+        expected_result = os.path.join(test_data_dir, 'expected.bedpe')
         temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
         with open(input, 'r') as input_handle, os.fdopen(temp_descriptor, 'w') as output_handle:
             svtools.vcftobedpe.vcfToBedpe(input_handle, output_handle)

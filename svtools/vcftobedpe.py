@@ -194,10 +194,10 @@ def vcfToBedpe(vcf_file, bedpe_out):
             # write bedpe
             bedpe_out.write('\t'.join(map(str,
                                           [var.chrom,
-                                           max(s1,0),
+                                           max(s1,0) - 1,
                                            max(e1,0),
                                            var.chrom,
-                                           max(s2,0),
+                                           max(s2,0) - 1,
                                            max(e2,0),
                                            name,
                                            var.original_qual,
