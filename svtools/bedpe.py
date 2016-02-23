@@ -15,15 +15,10 @@ class Bedpe(object):
         self.o2 = bed_list[9]
         self.filter = bed_list[11]
         self.malformedFlag = 0
-        # FIXME The first two fields of misc are actually info fields. These are used in other modules and should probably be separated out.
-        self.misc = bed_list[12:]
+        self.info1 = bed_list[12]
+        self.info2 = bed_list[13]
+        self.misc = bed_list[14:]
         self.check_malformed()
-        # FIXME Cache second info field so lines can be reconstructued
-        # This is needed for prune
-        # The logic handling the two info fields is rather confusing in implementation
-        # and practice. Go back and harmonize across all Bedpe class users
-        self.info2 = self.misc[1]
-        del self.misc[1]
 
         # FIXME This is only really needed for varlookup. Something more general would be helpful
         self.cohort_vars = dict()
@@ -47,22 +42,22 @@ class Bedpe(object):
             return score
 
     def check_malformed(self):
-        if self.misc[0] == 'MISSING':
+        if self.info1 == 'MISSING':
             self.malformedFlag = 1
-            self.misc[0] = self.misc[1]
-        if self.misc[1] == 'MISSING':
+            self.info1 = self.info2
+        if self.info2 == 'MISSING':
             self.malformedFlag = 2      
 
     def retrieve_svtype(self):
         try:
-            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.misc[0].split(';'))))[1]
+            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.info1.split(';'))))[1]
         except IndexError:
             raise ValueError
         return svtype
 
     def retrieve_af(self):
         try:
-            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.misc[0].split(';'))))[1]
+            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.info1.split(';'))))[1]
         except IndexError:
             af = None
         return af
@@ -70,8 +65,8 @@ class Bedpe(object):
     def adjust_by_cipos(self):
         # CIPOS is adjusted to leftmost before conversion to BEDPE? This removes this adjustment
         # XXX Do we really want to do this for every single BEDPE line? Or just when converting back to VCF?
-        if 'CIPOS=' in self.misc[0]:
-            self.cipos = re.split('=|,', ''.join(filter(lambda x: 'CIPOS=' in x, self.misc[0].split(';'))))
+        if 'CIPOS=' in self.info1:
+            self.cipos = re.split('=|,', ''.join(filter(lambda x: 'CIPOS=' in x, self.info1.split(';'))))
             if self.o1 == '-' and self.svtype == 'BND':
                 self.b1 = self.s1 - int(self.cipos[1]) + 1 
             else:
@@ -83,8 +78,8 @@ class Bedpe(object):
                 self.b1 = self.s1
 
     def adjust_by_ciend(self):
-        if 'CIEND=' in self.misc[0]:     
-            self.ciend = re.split('=|,', ''.join(filter(lambda x: 'CIEND=' in x, self.misc[0].split(';'))))
+        if 'CIEND=' in self.info1:     
+            self.ciend = re.split('=|,', ''.join(filter(lambda x: 'CIEND=' in x, self.info1.split(';'))))
             if self.o2 == '-' and self.svtype == 'BND':
                 self.b2 = self.s2 - int(self.ciend[1]) + 1
             else:
