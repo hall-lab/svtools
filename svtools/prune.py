@@ -77,9 +77,9 @@ class Cluster(object):
             b.o2,
             b.svtype,
             b.filter,
-            b.misc[0],
+            b.info1,
             b.info2
-            ] + b.misc[1:])
+            ] + b.misc)
 
 
 # prints and removes clusters from cluster_list that are beyond
