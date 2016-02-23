@@ -47,7 +47,8 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
                     bedpe.score,
-                    bedpe.filter
+                    bedpe.filter,
+                    bedpe.info1
                     ]
             bedpe1_list.extend(bedpe.misc)
             var1 = Variant(bedpe1_list, myvcf)
@@ -61,19 +62,20 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     var1.alt = ']%s:%s]%s' % (bedpe.c2, bedpe.b2 + 1, var1.ref)
                 elif bedpe.o2 == '-':
                     var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2 + 1, var1.ref)
-            misc = copy.deepcopy(bedpe.misc)
-            strands = re.split('=|:',''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))))
+            bedpe_info = bedpe.info1
+            info = copy.deepcopy(bedpe.info1)
+            strands = re.split('=|:',''.join(filter(lambda x: 'STRANDS=' in x, bedpe_info.split(";"))))
             strands_str = str(strands[0]) + '=' + str(strands[1][::-1]) + ':' + str(strands[2])
-            misc[0]=misc[0].replace(''.join(filter(lambda x: 'STRANDS=' in x, bedpe.misc[0].split(";"))), strands_str)
+            info = info.replace(''.join(filter(lambda x: 'STRANDS=' in x, bedpe.info1.split(";"))), strands_str)
             #add the cipos ciend,cipos95 and ciend95 variables
-            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))),'CIPOS='+ re.split('=',''.join(filter(lambda x: 'CIEND=' in x, bedpe.misc[0].split(";"))))[1])            
-            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIEND='  in x, bedpe.misc[0].split(";"))),'CIEND='+ re.split('=',''.join(filter(lambda x: 'CIPOS=' in x, bedpe.misc[0].split(";"))))[1])
-            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))),'CIPOS95='+ re.split('=',''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))))[1])
-            misc[0]=misc[0].replace(''.join(filter(lambda x: 'CIEND95=' in x, bedpe.misc[0].split(";"))),'CIEND95='+ re.split('=',''.join(filter(lambda x: 'CIPOS95=' in x, bedpe.misc[0].split(";"))))[1])
+            info = info.replace(''.join(filter(lambda x: 'CIPOS=' in x, bedpe_info.split(";"))),'CIPOS='+ re.split('=',''.join(filter(lambda x: 'CIEND=' in x, bedpe_info.split(";"))))[1])            
+            info = info.replace(''.join(filter(lambda x: 'CIEND='  in x, bedpe_info.split(";"))),'CIEND='+ re.split('=',''.join(filter(lambda x: 'CIPOS=' in x, bedpe_info.split(";"))))[1])
+            info = info.replace(''.join(filter(lambda x: 'CIPOS95=' in x, bedpe_info.split(";"))),'CIPOS95='+ re.split('=',''.join(filter(lambda x: 'CIEND95=' in x, bedpe_info.split(";"))))[1])
+            info = info.replace(''.join(filter(lambda x: 'CIEND95=' in x, bedpe_info.split(";"))),'CIEND95='+ re.split('=',''.join(filter(lambda x: 'CIPOS95=' in x, bedpe_info.split(";"))))[1])
             #Change MATEID
-            misc[0]= misc[0].replace(''.join(filter(lambda x: 'MATEID=' in x, bedpe.misc[0].split(";"))),'MATEID=' + bedpe.name + '_2')
+            info = info.replace(''.join(filter(lambda x: 'MATEID=' in x, bedpe_info.split(";"))),'MATEID=' + bedpe.name + '_2')
             #ADD IDENTIFIER FOR SECONDARY BREAKEND MATE
-            misc[0]=misc[0].replace(''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))),''.join(filter(lambda x: 'EVENT=' in x, bedpe.misc[0].split(";"))) + ';SECONDARY;')
+            info = info.replace(''.join(filter(lambda x: 'EVENT=' in x, bedpe_info.split(";"))),''.join(filter(lambda x: 'EVENT=' in x, bedpe_info.split(";"))) + ';SECONDARY;')
 
             bedpe2_list = [
                     bedpe.c2,  #chrom1
@@ -82,9 +84,10 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
                     bedpe.score,
-                    bedpe.filter
+                    bedpe.filter,
+                    info
                     ]
-            bedpe2_list.extend(misc)
+            bedpe2_list.extend(bedpe.misc)
 
             var2 = Variant(bedpe2_list, myvcf)
             # add the strands field. For variant 2 must switch the order
@@ -114,7 +117,8 @@ def bedpeToVcf(bedpe_file, vcf_out):
                     'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
                     bedpe.score,
-                    bedpe.filter
+                    bedpe.filter,
+                    bedpe.info1
                     ]
             bedpe_list.extend(bedpe.misc)
 
