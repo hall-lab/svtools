@@ -360,11 +360,11 @@ def vcfToBedpe(vcf_file, bedpe_out):
             o2 = strands[1]
 
             span = map(int, var.info['CIPOS'].split(','))
-            s1 = b1 + span[0] - 1
+            s1 = b1 + span[0]
             e1 = b1 + span[1]
 
             span = map(int, var.info['CIEND'].split(','))
-            s2 = b2 + span[0] - 1
+            s2 = b2 + span[0]
             e2 = b2 + span[1]
 
             ispan = s2 - e1
