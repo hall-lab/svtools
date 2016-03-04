@@ -1,22 +1,41 @@
-from distutils.core import setup
-from distutils.command.install import INSTALL_SCHEMES
+from setuptools import setup, find_packages
+
+'''
+This package provides tools for combining, genotyping and refining structural variant calls from LUMPY in a highly scalable way. The current package efficiently scales to process thousands of individuals.
+'''
+
 
 setup(
     name='svtools',
-    version='0.1.1',
-    author='Ira Hall lab',
-    author_email='abadve@genome.wustl.edu',
-    #data_files=[('data', ['data/repeatMasker.recent.lt200millidiv.b37.sorted.bed.gz']),('data', ['data/repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz'])],
-    scripts=["bin/vcftobedpe","bin/varlookup","bin/svtools","bin/vcfsort",\
-             "bin/bedpesort","bin/prune","bin/copynumber","bin/bedpetovcf",\
-             "bin/bedpetobed12","bin/afreq","bin/classify","bin/genotype",\
-             "bin/lsort","bin/lmerge","bin/vcfpaste",\
-             'scripts/l_bp.py',"scripts/vcf_group_multiline.py",\
-             "bin/cnvnator-multi","scripts/create_coordinates.py","scripts/create.master.stats.sh","scripts/sv_counts.sh","scripts/get_stats_final.sh"],
-    url='https://github.com/hall-lab/svtools',
-    license='LICENSE.txt',
+    version='0.1.2',
+
     description='Tools for processing and analyzing structural variants',
-    long_description=open('README.txt').read()
+    long_description=__doc__,
+    
+    url='https://github.com/hall-lab/svtools',
+    author='Ira Hall lab',
+    author_email='dlarson@genome.wustl.edu',
+    license='MIT',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2.7',
+    ],
+
+    keywords='genomics structural variants sv bioinformatics',
+
+    packages=find_packages(exclude=['tests']),
+    include_package_data=True,
+
+    install_requires=['pysam', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
+    
+    entry_points={
+        'console_scripts': [
+            'svtools=svtools.cli:main',
+            ]
+    },
 )
 
 #

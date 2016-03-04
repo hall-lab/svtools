@@ -1,2 +1,4 @@
 *.pyc
 *~
+.travis.yml.old
+.travis.yml.new

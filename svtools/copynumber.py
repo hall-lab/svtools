@@ -2,6 +2,7 @@ import argparse
 import sys
 from subprocess import Popen, PIPE, STDOUT
 from svtools.vcf.file import Vcf
+import svtools.utils as su
 
 def run_cnvnator(cnvnator_path, root, window, coord_list):
     # Read and run cnvnator
@@ -39,7 +40,7 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
                   try:
                         s_index = line.rstrip().split('\t').index(sample)
                   except ValueError:
-                        stderr.write("Please input valid VCF, format field for " + sample + " not found in VCF")
+                        sys.stderr.write("Please input valid VCF, format field for " + sample + " not found in VCF")
                         sys.exit(1)
                   line = '\t'.join(map(str, line.rstrip().split('\t')[:9] + [sample]))
                   header.append(line)
@@ -52,7 +53,7 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
         v = line.rstrip().split('\t')
         # XXX Is this second check necessary? Wouldn't this be handled above? Missing header would hit this?
         if s_index == -1:
-            stderr.write("Input a valid sample name: " + sample + " not found in a provided VCF")
+            sys.stderr.write("Input a valid sample name: " + sample + " not found in a provided VCF")
             sys.exit(1)
         v = v[:9] + [v[s_index]]
         if not any("SVTYPE=BND" in s for s in v):
@@ -71,33 +72,29 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
     return
 
 def description():
-    return 'Compute genotype of structural variants based on breakpoint depth'
+    return 'compute genotype of structural variants based on breakpoint depth'
+
+def epilog():
+    return '''As this program runs cnvnator-multi you must provide its location and must remember to have the ROOT package installed and properly configured. The input VCF file may be gzipped. If the input VCF file is omitted then the tool reads from stdin. Note that the coordinates file must end with a line containing the word exit.'''
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-v', '--input-vcf', type=argparse.FileType('r'), default=None, help='VCF input')
-    parser.add_argument('-c', '--coordinates', type=argparse.FileType('r'), required=True, default=None, help='BED input')
-    parser.add_argument('-r', '--root', required=True, help='CNVnator .root histogram file (required)')
-    parser.add_argument('-w', '--window', required=True, help='CNVnator window size (required)')
-    parser.add_argument('-s', '--sample', required=True, help='sample to annotate')
-    parser.add_argument('--cnvnator', required=True, help='path to cnvnator-multi binary')
-    parser.add_argument('-o', '--output-vcf', type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
+    parser.add_argument('-c', '--coordinates', metavar='<FILE>', type=argparse.FileType('r'), required=True, default=None, help='file containing coordinate for which to retrieve copynumber (required)')
+    parser.add_argument('-r', '--root', metavar='<FILE>', required=True, help='CNVnator .root histogram file (required)')
+    parser.add_argument('-w', '--window', metavar='<INT>', required=True, help='CNVnator window size (required)')
+    parser.add_argument('-s', '--sample', metavar='<STRING>', required=True, help='sample to annotate (required)')
+    parser.add_argument('--cnvnator', metavar='<PATH>', required=True, help='path to cnvnator-multi binary (required)')
+    parser.add_argument('-v', '--input-vcf', metavar='<VCF>', default=None, help='VCF input')
+    parser.add_argument('-o', '--output-vcf', metavar='<PATH>', type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 
 def run_from_args(args):
-    if args.input_vcf == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            sys.exit(1)
-        else:
-            args.input_vcf = sys.stdin
-    sv_readdepth(args.input_vcf, args.sample, args.root, args.window, args.output_vcf, args.cnvnator, args.coordinates)
-    if args.input_vcf != sys.stdin:
-        args.input_vcf.close()
+    with su.InputStream(args.input_vcf) as stream:
+        sv_readdepth(stream, args.sample, args.root, args.window, args.output_vcf, args.cnvnator, args.coordinates)
 
 # initialize the script
 if __name__ == '__main__':

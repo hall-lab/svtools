@@ -1,6 +1,7 @@
 import sys
 import argparse
 from svtools.bedpe import Bedpe
+import svtools.utils as su
 
 def bedpeToBlockedBed(bedpe, dist, output_handle=sys.stdout):
 
@@ -68,28 +69,18 @@ def bedpeToBlockedBed(bedpe, dist, output_handle=sys.stdout):
     if len(output_lines) > 0:
         output_handle.write('\n'.join(output_lines) + '\n')
             
-def processBEDPE(bedpeFile, name, dist, output_handle=sys.stdout):
+def processBEDPE(bedpe_stream, name, dist, output_handle=sys.stdout):
     #Process the BEDPE file and convert each entry to SAM.
-    if name is not None or bedpeFile == "stdin":
+    if name is not None or bedpe_stream == sys.stdin:
         writeTrackName(name, output_handle)
-    elif bedpeFile != "stdin":
-        writeTrackName(bedpeFile.name, output_handle)    
-    if bedpeFile == "stdin":		
-        for line in sys.stdin:
-            # ignore header
-            if line[0] == "#":
-                continue
-            lineList = line.strip().split()
-            if (len(lineList) > 0):
-                bedpe = Bedpe(lineList)
-                bedpeToBlockedBed(bedpe, dist, output_handle)
     else:
-         for line in open(bedpeFile, 'r'):
-             # ignore header
-            if line[0] == "#":
-                 continue
-            lineList = line.strip().split()
-            if (len(lineList) > 0):
+        writeTrackName(bedpe_stream.name, output_handle)    
+    for line in bedpe_stream:
+        # ignore header
+        if line[0] == "#":
+            continue
+        lineList = line.strip().split()
+        if (len(lineList) > 0):
                 bedpe = Bedpe(lineList)
                 bedpeToBlockedBed(bedpe, dist, output_handle)
 
@@ -97,21 +88,25 @@ def writeTrackName(name, output_handle=sys.stdout):
     output_handle.write("track name=" + name + " itemRgb=On\n")
 
 def description():
-    return 'converts BEDPE to BED12 format for viewing in IGV or the UCSC browser'
+    return 'convert a BEDPE file to BED12 format for viewing in IGV or the UCSC browser'
+
+def epilog():
+    return 'The input BEDPE file may be gzipped. If the input file is omitted then input is read from stdin. Output is written to stdout.' 
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--bedpe', help='BEDPE input file', required=True)
-    parser.add_argument('-n', '--name', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
-    parser.add_argument('-d', '--maxdist', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
+    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input file')
+    parser.add_argument('-n', '--name', metavar='<STRING>', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
+    parser.add_argument('-d', '--maxdist', metavar='<INT>', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
-    parser = argparse.ArgumentParser(description=description())
+    parser = argparse.ArgumentParser(description=description(), epilog=epilog())
     add_arguments_to_parser(parser)
     return parser
 
 def run_from_args(args):
-    processBEDPE(args.bedpe, args.name, args.dist)
+    with su.InputStream(args.bedpe) as stream:
+        processBEDPE(stream, args.name, args.dist)
 
 if __name__ == "__main__":
     parser = command_parser()

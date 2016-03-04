@@ -10,6 +10,7 @@ from operator import itemgetter
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
+import svtools.utils as su
 
 
 __author__ = "Colby Chiang (cc2qe@virginia.edu)"
@@ -37,12 +38,7 @@ description: classify structural variants")
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
-    if args.vcf_in == None:
-        if sys.stdin.isatty():
-            parser.print_help()
-            exit(1)
-        else:
-            args.vcf_in = sys.stdin
+    args.vcf_in = su.InputStream(args.vcf_in)
     # send back the user input
     return args
 
@@ -472,7 +468,8 @@ def main():
     # close the files
     args.vcf_in.close()
     args.gender.close()
-    args.exclude.close()
+    if args.exclude is not None:
+        args.exclude.close()
     if args.ae_path is not None:
         ae_bedfile.close()
 
