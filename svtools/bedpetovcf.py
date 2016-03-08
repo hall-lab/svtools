@@ -8,6 +8,9 @@ from svtools.vcf.variant import Variant
 import svtools.utils as su
 
 def adjust_by_cipos(bedpe):
+    '''
+    Undo adjustments to BEDPE coordinates for the VCF POS based on confidence intervals
+    '''
     position = bedpe.s1
     if bedpe.o1 == '-' and bedpe.svtype == 'BND':
         position += 1   #undo left adjust based on strandedness
@@ -17,6 +20,9 @@ def adjust_by_cipos(bedpe):
     return position
 
 def adjust_by_ciend(bedpe):
+    '''
+    Undo adjustments to bEDPE coordinates for the VCF END field based on confidence intervals
+    '''
     end = bedpe.s2
     if bedpe.o2 == '-' and bedpe.svtype == 'BND':
         end += 1
