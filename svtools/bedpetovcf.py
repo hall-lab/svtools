@@ -7,6 +7,25 @@ from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 import svtools.utils as su
 
+def adjust_by_cipos(bedpe):
+    position = bedpe.s1
+    if bedpe.o1 == '-' and bedpe.svtype == 'BND':
+        position += 1   #undo left adjust based on strandedness
+    if 'CIPOS=' in bedpe.info1:
+        cipos = re.split('=|,', ''.join(filter(lambda x: 'CIPOS=' in x, bedpe.info1.split(';'))))
+        position -= int(cipos[1])
+    return position
+
+def adjust_by_ciend(bedpe):
+    end = bedpe.s2
+    if bedpe.o2 == '-' and bedpe.svtype == 'BND':
+        end += 1
+
+    if 'CIEND=' in bedpe.info1:     
+        ciend = re.split('=|,', ''.join(filter(lambda x: 'CIEND=' in x, bedpe.info1.split(';'))))
+        end -= int(ciend[1])
+    return end
+
 # primary function
 def bedpeToVcf(bedpe_file, vcf_out):
     myvcf = Vcf()
@@ -39,10 +58,12 @@ def bedpeToVcf(bedpe_file, vcf_out):
                 vcf_out.write(myvcf.get_header() + '\n')
         # 
         bedpe = Bedpe(line.rstrip().split('\t'))
+        b1 = adjust_by_cipos(bedpe)
+        b2 = adjust_by_ciend(bedpe)
         if bedpe.svtype == 'BND':
             bedpe1_list = [
                     bedpe.c1, 
-                    bedpe.b1 + 1,
+                    b1,
                     bedpe.name + '_1', #ID
                     'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
@@ -54,14 +75,14 @@ def bedpeToVcf(bedpe_file, vcf_out):
             var1 = Variant(bedpe1_list, myvcf)
             if bedpe.o1 == '+':
                 if bedpe.o2 == '-':
-                    var1.alt = '%s[%s:%s[' % (var1.ref, bedpe.c2, bedpe.b2 + 1)
+                    var1.alt = '%s[%s:%s[' % (var1.ref, bedpe.c2, b2)
                 elif bedpe.o2 == '+':
-                    var1.alt = '%s]%s:%s]' % (var1.ref, bedpe.c2, bedpe.b2 + 1)
+                    var1.alt = '%s]%s:%s]' % (var1.ref, bedpe.c2, b2)
             elif bedpe.o1 == '-':
                 if bedpe.o2 == '+':
-                    var1.alt = ']%s:%s]%s' % (bedpe.c2, bedpe.b2 + 1, var1.ref)
+                    var1.alt = ']%s:%s]%s' % (bedpe.c2, b2, var1.ref)
                 elif bedpe.o2 == '-':
-                    var1.alt = '[%s:%s[%s' % (bedpe.c2, bedpe.b2 + 1, var1.ref)
+                    var1.alt = '[%s:%s[%s' % (bedpe.c2, b2, var1.ref)
             bedpe_info = bedpe.info1
             info = copy.deepcopy(bedpe.info1)
             strands = re.split('=|:',''.join(filter(lambda x: 'STRANDS=' in x, bedpe_info.split(";"))))
@@ -79,7 +100,7 @@ def bedpeToVcf(bedpe_file, vcf_out):
 
             bedpe2_list = [
                     bedpe.c2,  #chrom1
-                    bedpe.b2 + 1,
+                    b2,
                     bedpe.name + '_2', #ID
                     'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
@@ -93,14 +114,14 @@ def bedpeToVcf(bedpe_file, vcf_out):
             # add the strands field. For variant 2 must switch the order
             if bedpe.o2 == '+':
                 if bedpe.o1 == '-':
-                    var2.alt = '%s[%s:%s[' % (var2.ref, bedpe.c1, bedpe.b1 + 1)
+                    var2.alt = '%s[%s:%s[' % (var2.ref, bedpe.c1, b1)
                 elif bedpe.o1 == '+':
-                    var2.alt = '%s]%s:%s]' % (var2.ref, bedpe.c1, bedpe.b1 + 1)
+                    var2.alt = '%s]%s:%s]' % (var2.ref, bedpe.c1, b1)
             elif bedpe.o2 == '-':
                 if bedpe.o1 == '+':
-                    var2.alt = ']%s:%s]%s' % (bedpe.c1, bedpe.b1 + 1, var2.ref)
+                    var2.alt = ']%s:%s]%s' % (bedpe.c1, b1, var2.ref)
                 elif bedpe.o1 == '-':
-                    var2.alt = '[%s:%s[%s' % (bedpe.c1, bedpe.b1 + 1, var2.ref)
+                    var2.alt = '[%s:%s[%s' % (bedpe.c1, b1, var2.ref)
             if bedpe.malformedFlag == 0:
                 vcf_out.write(var1.get_var_string() + '\n')
                 vcf_out.write(var2.get_var_string() + '\n')
@@ -112,7 +133,7 @@ def bedpeToVcf(bedpe_file, vcf_out):
             # set VCF info elements for simple events
             bedpe_list = [
                     bedpe.c1,  #chrom1
-                    bedpe.b1 + 1,
+                    b1,
                     bedpe.name, #ID
                     'N',
                     '<' + str(bedpe.svtype) + '>', #ALT
