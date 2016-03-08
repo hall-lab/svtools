@@ -67,7 +67,7 @@ def convert_breakend(vcf_line_array, primary_variant, secondary_variant):
     sep1, region, sep2 = r.findall(variant.alt)[0]
     
     assert sep1 == sep2
-    assert sep1 != None
+    assert sep1 is not None
     
     chrom2, breakpoint2 = region.split(':')
     breakpoint2 = int(breakpoint2)
