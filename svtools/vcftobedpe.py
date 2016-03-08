@@ -93,28 +93,28 @@ def convert_breakend(vcf_line_array, primary_variant, secondary_variant):
         start2 += span[0]
         end2 += span[1]
 
-    chrom_A = variant.chrom
-    chrom_B = chrom2
+    chrom_a = variant.chrom
+    chrom_b = chrom2
     
     # write bedpe
     #Swap fields for no primary present as we did calculation with secondary
     if primary_variant is None:
-        info_A = "MISSING"
-        chrom_A, chrom_B = chrom_B, chrom_A
+        info_a = "MISSING"
+        chrom_a, chrom_b = chrom_b, chrom_a
         start1, start2 = start2, start1
         end1, end2 = end2, end1
         orientation1, orientation2 = orientation2, orientation1
     else:
-        info_A = primary_variant.get_info_string()    
+        info_a = primary_variant.get_info_string()    
     if secondary_variant is None:
-        info_B = "MISSING"
+        info_b = "MISSING"
     else:
-        info_B = secondary_variant.get_info_string()    
+        info_b = secondary_variant.get_info_string()    
     return '\t'.join(map(str,
-                                  [chrom_A,
+                                  [chrom_a,
                                    max(start1,0),
                                    max(end1,0),
-                                   chrom_B,
+                                   chrom_b,
                                    max(start2,0),
                                    max(end2,0),
                                    variant.info['EVENT'],
@@ -122,7 +122,7 @@ def convert_breakend(vcf_line_array, primary_variant, secondary_variant):
                                    orientation1,
                                    orientation2,
                                    variant.info['SVTYPE'],
-                                   variant.filter] + [info_A] + [info_B] + vcf_line_array[8:]
+                                   variant.filter] + [info_a] + [info_b] + vcf_line_array[8:]
                                   ))
 
 # primary function
