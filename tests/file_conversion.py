@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import tempfile
+import shutil
 
 class FileConversionBase(object):
     __metaclass__ = abc.ABCMeta
@@ -65,6 +66,9 @@ class FileConversionBase(object):
 
         with open(input_file_path, 'r') as input_handle, os.fdopen(temp_descriptor, 'w') as output_handle:
             conversion_fn(input_handle, output_handle)
+
+        if os.environ.get("SVTOOLS_REGENERATE_TEST_DATA", False):
+            shutil.copyfile(temp_output_path, expected_output_file_path)
 
         self._compare_files(temp_output_path, expected_output_file_path)
         os.remove(temp_output_path)
