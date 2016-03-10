@@ -6,7 +6,6 @@ install:
 
 
   - sudo apt-get update
-  - sudo apt-get install libgfortran3
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -22,7 +21,7 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - deps='pip nose coverage statsmodels numpy=1.10.4 pandas scipy=0.16.0 libgfortran'
+  - deps='libgfortran pip nose coverage statsmodels numpy=1.10.4 pandas scipy=0.16.0'
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION $deps
   - source activate test-environment
 
