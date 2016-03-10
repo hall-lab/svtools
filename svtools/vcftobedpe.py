@@ -58,7 +58,6 @@ def convert_breakend(vcf_line_array, primary_variant, secondary_variant):
     variant = primary_variant
     if primary_variant is None:
         variant = secondary_variant
-    chrom1 = variant.chrom
     breakpoint1 = variant.pos
     orientation1 = '+'
     orientation2 = '+'
