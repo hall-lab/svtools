@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import argparse
+import errno
+import os
+import shutil
+
+
+def _makedir(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('directories', metavar='N', type=str, nargs='+', help='vcftobedpe data directories to convert')
+
+args = parser.parse_args()
+
+directories = []
+for given_directory in args.directories:
+    abs_directory = os.path.abspath(given_directory)
+    if os.path.exists(abs_directory):
+        directories.append(abs_directory)
+    else:
+        raise RuntimeError("Directory (%s) does not exist!" % abs_directory)
+
+test_data_directory = os.path.dirname(os.path.dirname(directories[0]))
+bedpe_base_directory = os.path.join(test_data_directory, 'bedpetovcf')
+
+for directory in directories:
+    test_name = os.path.basename(directory)
+    bedpe_directory = os.path.join(bedpe_base_directory, test_name)
+    _makedir(bedpe_directory)
+    shutil.copyfile(os.path.join(directory, 'input.vcf'),
+            os.path.join(bedpe_directory, 'expected.vcf'))
+    shutil.copyfile(os.path.join(directory, 'expected.bedpe'),
+            os.path.join(bedpe_directory, 'input.bedpe'))
