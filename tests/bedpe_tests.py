@@ -32,36 +32,6 @@ class BedpeTests(TestCase):
         b2 = Bedpe(entry2)
         self.assertIsNone(b2.retrieve_af())
 
-    def test_adjust_by_cipos(self):
-        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]
-        b1 = Bedpe(entry1)
-        self.assertEqual(b1.b1, 200)
-        b1.o1 = '-'
-        b1.adjust_by_cipos()
-        self.assertEqual(b1.b1, 201)
-        b1.info1 = 'SVTYPE=BND;AF=0.2;CIPOS=-2,3'
-        b1.adjust_by_cipos()
-        self.assertEqual(b1.b1, 203)
-        b1.o1 = '+'
-        b1.adjust_by_cipos()
-        self.assertEqual(b1.b1, 202)
-
-    def test_adjust_by_ciend(self):
-        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]
-        b1 = Bedpe(entry1)
-        self.assertEqual(b1.b2, 301)
-        b1.o2 = '+'
-        b1.adjust_by_ciend()
-        self.assertEqual(b1.b2, 300)
-
-        b1.info1 = 'SVTYPE=BND;AF=0.2;CIEND=-2,3'
-        b1.adjust_by_ciend()
-        self.assertEqual(b1.b2, 302)
-        b1.o2 = '-'
-        b1.adjust_by_ciend()
-        self.assertEqual(b1.b2, 303)
-
-
 if __name__ == "__main__":
     main()
 
