@@ -26,7 +26,7 @@ def convert_simple(vcf_line_array, variant):
     if 'CIEND' in variant.info:
         span = map(int, variant.info['CIEND'].split(','))
         start2 += span[0]
-        start2 += span[1]
+        end2 += span[1]
     return '\t'.join(map(str,
         [variant.chrom,
         max(start1, 0),
