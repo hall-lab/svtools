@@ -28,13 +28,13 @@ class IntegrationTest_afreq(TestCase):
                 self.assertFalse(result)
         os.remove(temp_output_path)
 
-#class AfreqUiTest(TestCase):
-#    def test_parser(self):
-#        parser = svtools.afreq.command_parser()
-#        args1 = parser.parse_args([])
-#        self.assertIsNone(args1.input_vcf)
-#        args2 = parser.parse_args(['somefile'])
-#        self.assertEqual(args2.input_vcf, 'somefile')
+class AfreqUiTest(TestCase):
+    def test_parser(self):
+        parser = svtools.afreq.command_parser()
+        args1 = parser.parse_args([])
+        self.assertIsNone(args1.input_vcf)
+        args2 = parser.parse_args(['somefile'])
+        self.assertEqual(args2.input_vcf, 'somefile')
 
 if __name__ == "__main__":
     main()
