@@ -46,7 +46,7 @@ class Vcfpaste(object):
             if master_line[:2] != '##':
                 break
             output_handle.write(master_line)
-        out_v = master_line.rstrip().split('\t', MAX_SPLIT)[:MAX_SPLIT]
+        out_v = master_line.rstrip().split('\t', MAX_SPLIT)[:(MAX_SPLIT - 1)] + ["FORMAT"]
 
         for vcf in self.vcf_files[1:]:
             while 1:

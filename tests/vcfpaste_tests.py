@@ -35,6 +35,7 @@ class IntegrationTest_vcfpaste(TestCase):
         temp_handle2.close()
 
         self.master = os.path.join(self.test_data_dir, 'master.vcf')
+        self.thin_master = os.path.join(self.test_data_dir, 'thin_master.vcf')
 
     def tearDown(self):
         os.remove(self.list_of_vcfs)
@@ -86,6 +87,25 @@ class IntegrationTest_vcfpaste(TestCase):
         output_handle = os.fdopen(temp_descriptor, 'w')
         try:
             paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs, master=master_file, sum_quals=True)
+            paster.execute(output_handle)
+        finally:
+            output_handle.close()
+        expected_lines = open(expected_result).readlines()
+        produced_lines = open(temp_output_path).readlines()
+        diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
+        result = '\n'.join(diff)
+        if result != '':
+            for line in result:
+                sys.stdout.write(line)
+            self.assertFalse(result)
+        os.remove(temp_output_path)
+
+    def run_integration_test_with_thin_master(self):
+        expected_result = os.path.join(self.test_data_dir, 'expected_master.vcf')
+        temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
+        output_handle = os.fdopen(temp_descriptor, 'w')
+        try:
+            paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs, master=self.thin_master, sum_quals=True)
             paster.execute(output_handle)
         finally:
             output_handle.close()
