@@ -7,15 +7,15 @@ from svtools.bedpe import Bedpe
 
 def get_var_string(bedpe, cohort_name):
     if len(bedpe.cohort_vars) > 0:
-        bedpe.misc[0]= bedpe.misc[0] + ';' + cohort_name + '_AF=' + ','.join([value for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
-        bedpe.misc[0] = bedpe.misc[0] + ';' + cohort_name + '_VarID=' + ','.join([key for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
+        bedpe.info1= bedpe.info1 + ';' + cohort_name + '_AF=' + ','.join([value for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
+        bedpe.info1 = bedpe.info1 + ';' + cohort_name + '_VarID=' + ','.join([key for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
     else:
-        bedpe.misc[0] = bedpe.misc[0] + ';' + cohort_name + '_AF=' + str(0)
-        bedpe.misc[0] = bedpe.misc[0] + ';' + cohort_name + '_VarID=' + 'NONE'
+        bedpe.info1 = bedpe.info1 + ';' + cohort_name + '_AF=' + str(0)
+        bedpe.info1 = bedpe.info1 + ';' + cohort_name + '_VarID=' + 'NONE'
     return '\t'.join([bedpe.c1, str(bedpe.s1), str(bedpe.e1),
         bedpe.c2, str(bedpe.s2), str(bedpe.e2),
         bedpe.name, str(bedpe.score), bedpe.o1, bedpe.o2,
-        bedpe.svtype, bedpe.filter, bedpe.misc[0], bedpe.info2, '\t'.join(bedpe.misc[1:])]) + '\n'
+        bedpe.svtype, bedpe.filter, bedpe.info1, bedpe.info2, '\t'.join(bedpe.misc)]) + '\n'
 
 def add(a_bedpe, b_bedpe, max_distance):
     if a_bedpe.svtype ==  b_bedpe.svtype:
