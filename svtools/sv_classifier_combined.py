@@ -397,8 +397,6 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
         cn_median = np.median(hom_ref_cn)
         cn_mad = mad(hom_ref_cn)
     else:
-        cn_mean = None
-        cn_stdev = None
         cn_median = None
         cn_mad = None
 
