@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 
-import argparse, sys, copy, gzip, os, time, math, re
+import argparse, sys, copy, gzip, time, math, re
 import numpy as np
 import pandas as pd
 from scipy import stats
 from collections import Counter, defaultdict, namedtuple
-import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from argparse import RawTextHelpFormatter
 from operator import itemgetter
 import warnings
-import pickle
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
@@ -44,7 +42,7 @@ description: classify structural variants")
     args = parser.parse_args()
 
     # if no input, check if part of pipe and if so, read stdin.
-    if args.vcf_in == None:
+    if args.vcf_in is None:
         if sys.stdin.isatty():
             parser.print_help()
             exit(1)
@@ -308,7 +306,7 @@ def rd_support_nb(temp, p_cnv):
 
    
 
-def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5, epsilon=0.1):
+def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5):
 
     svtype=test_set['svtype'][0]
     svlen=test_set['svlen'][0]
@@ -396,8 +394,6 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
     hom_het_alt_cn=test_set[(test_set.GT=="0/1") | (test_set.GT=="1/1")]['CN'].values.astype(float)
 
     if len(hom_ref_cn) > 0:
-        cn_mean = np.mean(hom_ref_cn)
-        cn_stdev = np.std(hom_ref_cn)
         cn_median = np.median(hom_ref_cn)
         cn_mad = mad(hom_ref_cn)
     else:
@@ -407,8 +403,7 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
         cn_mad = None
 
     # bail after writing out diagnostic info, if no ref samples or all ref samples
-    if (len(hom_ref_cn) == 0 or
-        len(hom_het_alt_cn) == 0):
+    if (len(hom_ref_cn) == 0 or len(hom_het_alt_cn) == 0):
         return False
 
     # tally up the pos. genotyped samples meeting the mad_threshold
@@ -527,20 +522,20 @@ def sv_classify(vcf_in, gender_file, exclude_file, ae_dict, f_overlap, slope_thr
             if num_total_samps<20:
                 if nb_support:
                     reclass = False
-                if num_pos_samps>10:
+                if num_pos_samps>min_pos_samps_for_regression:
                     high_freq_support=has_high_freq_depth_support(df, slope_threshold, rsquared_threshold)
                 else:
                     low_freq_support=has_low_freq_depth_support(df, 2, 0.5)
                     #sys.stderr.write(var.var_id+"\t"+str(low_freq_support)+"\n")
             else:
-                if num_pos_samps>10:
+                if num_pos_samps>min_pos_samps_for_regression:
                     high_freq_support=has_high_freq_depth_support(df, slope_threshold, rsquared_threshold)
                 else:
                     low_freq_support=has_low_freq_depth_support(df, 2, 0.5)
                 if num_total_samps>200 and num_pos_samps>20:
                     if high_freq_support:
                         reclass = False
-                elif num_pos_samps>10:
+                elif num_pos_samps>min_pos_samps_for_regression:
                     if high_freq_support:
                         if nb_support:
                             reclass = False
