@@ -8,11 +8,7 @@ class Variant(object):
         self.var_id = var_list[2]
         self.ref = var_list[3]
         self.alt = var_list[4]
-        self.original_qual = var_list[5]
-        if var_list[5] == '.':
-            self.qual = 0
-        else:
-            self.qual = float(var_list[5])
+        self.qual = var_list[5]
         self.filter = var_list[6]
         self.sample_list = vcf.sample_list
         self.info_list = vcf.info_list
@@ -103,7 +99,7 @@ class Variant(object):
                 self.var_id,
                 self.ref,
                 self.alt,
-                '%0.2f' % self.qual,
+                self.qual,
                 self.filter,
                 self.get_info_string()
             ]))
@@ -114,7 +110,7 @@ class Variant(object):
                 self.var_id,
                 self.ref,
                 self.alt,
-                '%0.2f' % self.qual,
+                self.qual,
                 self.filter,
                 self.get_info_string(),
                 self.get_format_string(),
@@ -131,7 +127,7 @@ class Variant(object):
                     self.var_id,
                     self.ref,
                     self.alt,
-                    '%0.2f' % self.qual,
+                    self.qual,
                     self.filter,
                     self.get_info_string(),
                     self.get_format_string(),
