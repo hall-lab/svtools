@@ -113,8 +113,12 @@ class TestVcf(TestCase):
         expected_lines2[1] = '##fileDate=' + time.strftime('%Y%m%d')
         self.assertEqual(v2.get_header(), '\n'.join(expected_lines2))
 
-
-
+    def test_parse_meta(self):
+        line = '##FILTER=<ID=MSQ_20,Description="Variant without read-depth support with MSQ > 20">'
+        expected_fields = ['ID=MSQ_20', 'Description="Variant without read-depth support with MSQ > 20"']
+        v = Vcf()
+        values = v.parse_meta(line)
+        self.assertEqual(values, expected_fields)
 
 if __name__ == "__main__":
     main()
