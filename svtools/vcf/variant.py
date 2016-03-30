@@ -30,8 +30,6 @@ class Variant(object):
             # FIXME This should be an exception
             sys.stderr.write('\nError: VCF file must have at least 8 columns\n')
             exit(1)
-        if len(var_list) < 9:
-            var_list.append("GT")
 
         # make a genotype for each sample at variant
         format_field_tags = var_list[8].split(':')
