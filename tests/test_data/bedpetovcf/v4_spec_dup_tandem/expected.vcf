@@ -13,4 +13,4 @@
 ##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">
 ##FORMAT=<ID=CNQ,Number=1,Type=Float,Description="Copy number genotype quality for imprecise events">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001
-4	18665128	.	N	<DUP>	11.00	PASS	CIEND=-10,10;CIPOS=-10,10;END=18665204;SVLEN=76;SVTYPE=DUP;POS=18665128	GT:GQ:CN:CNQ	./.:0:5:8.3
+4	18665128	.	N	<DUP>	11.0	PASS	CIEND=-10,10;CIPOS=-10,10;END=18665204;SVLEN=76;SVTYPE=DUP;POS=18665128	GT:GQ:CN:CNQ	./.:0:5:8.3

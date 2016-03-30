@@ -67,7 +67,9 @@ class Vcfpaste(object):
                 break
             master_v = master_line.rstrip().split('\t', MAX_SPLIT)
             out_v = master_v[:8] # output array of fields
-            qual = float(out_v[5])
+            qual = 0
+            if out_v[5] != '.':
+                qual = float(out_v[5])
             format = None # column 9, VCF format field.
 
             for vcf in self.vcf_files[1:]:
@@ -85,7 +87,8 @@ class Vcfpaste(object):
                     format = line_v[8]
                     out_v.append(format)
 
-                qual += float(line_v[5])
+                if line_v[5] != '.':
+                    qual += float(line_v[5])
                 out_v = out_v + line_v[9:]
             if self.sum_quals:
                 out_v[5] = qual
