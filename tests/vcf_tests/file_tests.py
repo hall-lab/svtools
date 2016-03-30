@@ -16,6 +16,18 @@ class TestFormat(TestCase):
         g = Vcf.Format('GT', 1, 'String', 'Genotype')
         self.assertEqual(f, g)
 
+class TestFilter(TestCase):
+    def test_init(self):
+        f = Vcf.Filter('s50', '"Less than 50% of samples have data"')
+        self.assertEqual(f.id, 's50')
+        self.assertEqual(f.desc, 'Less than 50% of samples have data')
+        self.assertEqual(f.hstring, '##FILTER=<ID=s50,Description="Less than 50% of samples have data">')
+
+    def test_eq(self):
+        f = Vcf.Filter('s50', '"Less than 50% of samples have data"')
+        g = Vcf.Filter('s50', '"Less than 50% of samples have data"')
+        self.assertEqual(f, g)
+
 class TestInfo(TestCase):
     def test_init(self):
         i = Vcf.Info('NS', 1, 'Integer', '"Number of Samples With Data"')
@@ -61,9 +73,9 @@ class TestVcf(TestCase):
                 '##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">',
                 '##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">',
                 '##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">',
+                '##ALT=<ID=DEL,Description="DELETION">',
                 '##FILTER=<ID=q10,Description="Quality below 10">',
                 '##FILTER=<ID=s50,Description="Less than 50% of samples have data">',
-                '##ALT=<ID=DEL,Description="DELETION">',
                 '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
                 '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">',
                 '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">',
@@ -72,7 +84,7 @@ class TestVcf(TestCase):
 
         v = Vcf()
         v.add_header(header_lines)
-        expected_header_lines = header_lines[:2] + header_lines[3:4] + header_lines[6:12] + header_lines[14:]
+        expected_header_lines = header_lines
         expected_header_lines[1] = '##fileDate=' + time.strftime('%Y%m%d')
         self.assertEqual(v.get_header(), '\n'.join(expected_header_lines))
         v.add_sample('ScottPilgrim')
