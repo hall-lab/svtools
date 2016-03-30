@@ -434,6 +434,11 @@ def merge(BP, sample_order, v_id, use_product):
             SVLEN = (new_start_L + max_i_L) - (new_start_R + max_i_R)
         else:
             SVLEN = (new_start_R + max_i_R) - (new_start_L + max_i_L)
+
+        # Don't set SVLEN if we have an interchromosomal event. Doesn't make any sense.
+        if BP[c[0]].chr_l != BP[c[0]].chr_r:
+            SVLEN = None
+
         END = new_start_R + max_i_R
         CIPOS=','.join([str(x) for x in [-1*max_i_L, len(p_L) - max_i_L - 1]])
         CIEND=','.join([str(x) for x in [-1*max_i_R, len(p_R) - max_i_R - 1]])
@@ -450,9 +455,11 @@ def merge(BP, sample_order, v_id, use_product):
             sys.stderr.write(CIEND + "\t" + str(CIEND95) + "\n")
 
         I = ['SVTYPE='   + str(SVTYPE),
-             'STRANDS='  + str(STRANDS),
-             'SVLEN='    + str(SVLEN),
-             'CIPOS='    + str(CIPOS),
+             'STRANDS='  + str(STRANDS)
+            ]
+        if SVLEN:
+            I += ['SVLEN='    + str(SVLEN)]
+        I += ['CIPOS='    + str(CIPOS),
              'CIEND='    + str(CIEND),
              'CIPOS95='  + str(CIPOS95),
              'CIEND95='  + str(CIEND95),
