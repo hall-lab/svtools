@@ -4,32 +4,40 @@ import time
 class Vcf(object):
     def __init__(self):
         self.file_format = 'VCFv4.2'
-        self.reference = ''
+        self.other_meta = []
         self.sample_list = []
         self.sample_indices = dict()
         self.info_list = []
         self.format_list = []
+        self.filter_list = []
         self.alt_list = []
         self.add_format('GT', 1, 'String', 'Genotype')
 
     def add_header(self, header):
         for line in header:
-            if line.split('=')[0] == '##fileformat':
+            split_header = line.split('=')
+            if split_header[0] == '##fileformat':
                 self.file_format = line.rstrip().split('=')[1]
-            elif line.split('=')[0] == '##reference':
-                self.reference = line.rstrip().split('=')[1]
-            elif line.split('=')[0] == '##INFO':
+            elif split_header[0] == '##fileDate':
+                self.other_meta.append('##fileDate=' + time.strftime('%Y%m%d'))
+            elif split_header[0] == '##INFO':
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_info(*[b.split('=')[1] for b in r.findall(a)])
-            elif line.split('=')[0] == '##ALT':
+            elif split_header[0] == '##ALT':
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_alt(*[b.split('=')[1] for b in r.findall(a)])
-            elif line.split('=')[0] == '##FORMAT':
+            elif split_header[0] == '##FORMAT':
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_format(*[b.split('=')[1] for b in r.findall(a)])
+            elif split_header[0] == '##FILTER':
+                a = line[line.find('<')+1:line.find('>')]
+                r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
+                self.add_filter(*[b.split('=')[1] for b in r.findall(a)])
+            elif split_header[0].startswith('##'):
+                self.other_meta.append(line.rstrip())
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
                 for i in xrange(0, len(self.sample_list)):
@@ -37,43 +45,23 @@ class Vcf(object):
 
     # return the VCF header
     def get_header(self, include_samples=True):
+        header_meta_array = ['##fileformat=' + self.file_format] + \
+                        self.other_meta + \
+                        [i.hstring for i in self.info_list] + \
+                        [a.hstring for a in self.alt_list] + \
+                        [f.hstring for f in self.filter_list] + \
+                        [f.hstring for f in self.format_list]
+        header_array = ['#CHROM',
+                        'POS',
+                        'ID',
+                        'REF',
+                        'ALT',
+                        'QUAL',
+                        'FILTER',
+                        'INFO']
         if include_samples:
-            header = '\n'.join(['##fileformat=' + self.file_format,
-                                '##fileDate=' + time.strftime('%Y%m%d'),
-                                '##reference=' + self.reference] + \
-                               [i.hstring for i in self.info_list] + \
-                               [a.hstring for a in self.alt_list] + \
-                               [f.hstring for f in self.format_list] + \
-                               ['\t'.join([
-                                   '#CHROM',
-                                   'POS',
-                                   'ID',
-                                   'REF',
-                                   'ALT',
-                                   'QUAL',
-                                   'FILTER',
-                                   'INFO',
-                                   'FORMAT'] + \
-                                          self.sample_list
-                                      )])
-        else:
-            header = '\n'.join(['##fileformat=' + self.file_format,
-                                '##fileDate=' + time.strftime('%Y%m%d'),
-                                '##reference=' + self.reference] + \
-                               [i.hstring for i in self.info_list] + \
-                               [a.hstring for a in self.alt_list] + \
-                               [f.hstring for f in self.format_list] + \
-                               ['\t'.join([
-                                   '#CHROM',
-                                   'POS',
-                                   'ID',
-                                   'REF',
-                                   'ALT',
-                                   'QUAL',
-                                   'FILTER',
-                                   'INFO']
-                                          )])
-        return header
+            header_array += ['FORMAT'] + self.sample_list
+        return '\n'.join(header_meta_array + ['\t'.join(header_array)])
 
     def add_info(self, id, number, type, desc):
         if id not in [i.id for i in self.info_list]:
@@ -96,6 +84,11 @@ class Vcf(object):
         if id not in [f.id for f in self.format_list]:
             fmt = self.Format(id, number, type, desc)
             self.format_list.append(fmt)
+
+    def add_filter(self, id, desc):
+        if id not in [f.id for f in self.filter_list]:
+            flt = self.Filter(id, desc)
+            self.filter_list.append(flt)
 
     def add_sample(self, name):
         self.sample_list.append(name)
@@ -144,3 +137,13 @@ class Vcf(object):
         def __eq__(self, other):
             return self.hstring == other.hstring
 
+    class Filter(object):
+        def __init__(self, id, desc):
+            self.id = str(id)
+            self.desc = str(desc)
+            # strip the double quotes around the string if present
+            if self.desc.startswith('"') and self.desc.endswith('"'):
+                self.desc = self.desc[1:-1]
+            self.hstring = '##FILTER=<ID=' + self.id + ',Description=\"' + self.desc + '\">'
+        def __eq__(self, other):
+            return self.hstring == other.hstring

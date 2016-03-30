@@ -20,7 +20,6 @@ class IntegrationTest_copynumber(TestCase):
             expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
             #remove reference line
             produced_lines = open(temp_output_path).readlines()
-            produced_lines.pop(2)
             diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
             result = ''.join(diff)
             if result != '':
