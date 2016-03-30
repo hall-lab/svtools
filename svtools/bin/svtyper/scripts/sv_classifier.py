@@ -359,20 +359,62 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
     het_cn = []
     hom_alt_cn = []
 
-    for s in var.sample_list:
-        if s in exclude:
-            continue
-        if (var.chrom == 'X' or var.chrom == 'Y') and gender[s] == 1:
-            cn = float(var.genotype(s).get_format('CN')) * 2
-        else:
+    # determine whether majority of 
+
+    # if on the sex chromosomes, only compare against the majority sex
+    if (var.chrom == 'X' or var.chrom == 'Y'):
+        male_hom_ref_cn = []
+        male_het_cn = []
+        male_hom_alt_cn = []
+
+        female_hom_ref_cn = []
+        female_het_cn = []
+        female_hom_alt_cn = []
+
+        for s in var.sample_list:
+            if s in exclude:
+                continue
             cn = float(var.genotype(s).get_format('CN'))
 
-        if var.genotype(s).get_format('GT') == '0/0':
-            hom_ref_cn.append(cn)
-        elif var.genotype(s).get_format('GT') == '0/1':
-            het_cn.append(cn)
-        elif var.genotype(s).get_format('GT') == '1/1':
-            hom_alt_cn.append(cn)
+            if var.genotype(s).get_format('GT') == '0/0':
+                if gender[s] == 1:
+                    male_hom_ref_cn.append(cn)
+                elif gender[s] == 2:
+                    female_hom_ref_cn.append(cn)
+            elif var.genotype(s).get_format('GT') == '0/1':
+                if gender[s] == 1:
+                    male_het_cn.append(cn)
+                elif gender[s] == 2:
+                    female_het_cn.append(cn)
+            elif var.genotype(s).get_format('GT') == '1/1':
+                if gender[s] == 1:
+                    male_hom_alt_cn.append(cn)
+                elif gender[s] == 2:
+                    female_hom_alt_cn.append(cn)
+
+        # take the gender with the most non-reference samples
+        if len(male_het_cn + male_hom_alt_cn) > len(female_het_cn + female_hom_alt_cn):
+            hom_ref_cn = male_hom_ref_cn
+            hom_ref_cn = male_het_cn
+            hom_alt_cn = male_hom_alt_cn
+        else:
+            hom_ref_cn = female_hom_ref_cn
+            hom_ref_cn = female_het_cn
+            hom_alt_cn = female_hom_alt_cn
+
+    # autosomal variant
+    else:
+        for s in var.sample_list:
+            if s in exclude:
+                continue
+            cn = float(var.genotype(s).get_format('CN'))
+
+            if var.genotype(s).get_format('GT') == '0/0':
+                hom_ref_cn.append(cn)
+            elif var.genotype(s).get_format('GT') == '0/1':
+                het_cn.append(cn)
+            elif var.genotype(s).get_format('GT') == '1/1':
+                hom_alt_cn.append(cn)
 
     if len(hom_ref_cn) > 0:
         cn_mean = np.mean(hom_ref_cn)
@@ -387,7 +429,6 @@ def has_low_freq_depth_support(var, gender, exclude, writedir=None):
 
     # write the cn values to a file
     if writedir is not None:
-
         try:
             os.makedirs(writedir)
         except OSError as exc: # Python >2.5
