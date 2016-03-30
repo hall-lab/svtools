@@ -42,6 +42,7 @@ class Vcf(object):
         self.sample_list = []
         self.info_list = []
         self.format_list = []
+        self.filter_list = []
         self.alt_list = []
         self.add_format('GT', 1, 'String', 'Genotype')
 
@@ -63,6 +64,10 @@ class Vcf(object):
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_format(*[b.split('=')[1] for b in r.findall(a)])
+            elif line.split('=')[0] == '##FILTER':
+                a = line[line.find('<')+1:-2]
+                r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
+                self.add_filter(*[b.split('=')[1] for b in r.findall(a)])
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
 
@@ -72,6 +77,7 @@ class Vcf(object):
             header = '\n'.join(['##fileformat=' + self.file_format,
                                 '##fileDate=' + time.strftime('%Y%m%d'),
                                 '##reference=' + self.reference] + \
+                               [f.hstring for f in self.filter_list] + \
                                [i.hstring for i in self.info_list] + \
                                [a.hstring for a in self.alt_list] + \
                                [f.hstring for f in self.format_list] + \
@@ -91,6 +97,7 @@ class Vcf(object):
             header = '\n'.join(['##fileformat=' + self.file_format,
                                 '##fileDate=' + time.strftime('%Y%m%d'),
                                 '##reference=' + self.reference] + \
+                               [f.hstring for f in self.filter_list] + \
                                [i.hstring for i in self.info_list] + \
                                [a.hstring for a in self.alt_list] + \
                                [f.hstring for f in self.format_list] + \
@@ -120,6 +127,11 @@ class Vcf(object):
         if id not in [f.id for f in self.format_list]:
             fmt = self.Format(id, number, type, desc)
             self.format_list.append(fmt)
+
+    def add_filter(self, id, desc):
+        if id not in [f.id for f in self.filter_list]:
+            filter = self.Filter(id, desc)
+            self.filter_list.append(filter)
 
     def add_sample(self, name):
         self.sample_list.append(name)
@@ -159,6 +171,15 @@ class Vcf(object):
             if self.desc.startswith('"') and self.desc.endswith('"'):
                 self.desc = self.desc[1:-1]
             self.hstring = '##FORMAT=<ID=' + self.id + ',Number=' + self.number + ',Type=' + self.type + ',Description=\"' + self.desc + '\">'
+
+    class Filter(object):
+        def __init__(self, id, desc):
+            self.id = str(id)
+            self.desc = str(desc)
+            # strip the double quotes around the string if present
+            if self.desc.startswith('"') and self.desc.endswith('"'):
+                self.desc = self.desc[1:-1]
+            self.hstring = '##FILTER=<ID=' + self.id + ',Description=\"' + self.desc + '\">'
 
 class Variant(object):
     def __init__(self, var_list, vcf):
