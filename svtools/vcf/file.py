@@ -13,6 +13,11 @@ class Vcf(object):
         self.alt_list = []
         self.add_format('GT', 1, 'String', 'Genotype')
 
+    def parse_meta(self, line):
+        a = line[line.find('<')+1:line.rfind('>')]
+        r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
+        return r.findall(a)
+
     def add_header(self, header):
         for line in header:
             split_header = line.split('=')
@@ -21,21 +26,17 @@ class Vcf(object):
             elif split_header[0] == '##fileDate':
                 self.other_meta.append('##fileDate=' + time.strftime('%Y%m%d'))
             elif split_header[0] == '##INFO':
-                a = line[line.find('<')+1:line.find('>')]
-                r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-                self.add_info(*[b.split('=')[1] for b in r.findall(a)])
+                self.add_info(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0] == '##ALT':
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-                self.add_alt(*[b.split('=')[1] for b in r.findall(a)])
+                self.add_alt(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0] == '##FORMAT':
                 a = line[line.find('<')+1:line.find('>')]
                 r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-                self.add_format(*[b.split('=')[1] for b in r.findall(a)])
+                self.add_format(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0] == '##FILTER':
-                a = line[line.find('<')+1:line.find('>')]
-                r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
-                self.add_filter(*[b.split('=')[1] for b in r.findall(a)])
+                self.add_filter(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0].startswith('##'):
                 self.other_meta.append(line.rstrip())
             elif line[0] == '#' and line[1] != '#':
