@@ -28,12 +28,8 @@ class Vcf(object):
             elif split_header[0] == '##INFO':
                 self.add_info(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0] == '##ALT':
-                a = line[line.find('<')+1:line.find('>')]
-                r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_alt(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0] == '##FORMAT':
-                a = line[line.find('<')+1:line.find('>')]
-                r = re.compile(r'(?:[^,\"]|\"[^\"]*\")+')
                 self.add_format(*[b.split('=')[1] for b in self.parse_meta(line)])
             elif split_header[0] == '##FILTER':
                 self.add_filter(*[b.split('=')[1] for b in self.parse_meta(line)])
