@@ -66,6 +66,9 @@ class Vcfpaste(object):
             if not master_line:
                 break
             master_v = master_line.rstrip().split('\t', MAX_SPLIT)
+            if len(master_v) < 8:
+                sys.stderr.write('\nERROR: Master file {0} had less than 8 columns.\n'.format(self.vcf_files[0].name))
+                exit(1)
             out_v = master_v[:8] # output array of fields
             qual = 0
             if out_v[5] != '.':
@@ -75,10 +78,12 @@ class Vcfpaste(object):
             for vcf in self.vcf_files[1:]:
                 line = vcf.readline()
                 if not line:
-                    # XXX This should probably be an exception
                     sys.stderr.write('\nERROR: VCF files differ in length\n')
                     exit(1)
                 line_v = line.rstrip().split('\t', MAX_SPLIT)
+                if len(line_v) < 10:
+                    sys.stderr.write('\nERROR: {0} had less than 10 columns. Only the master may be an 8 column VCF.\n'.format(vcf.name))
+                    exit(1)
 
                 # set FORMAT field as format in first VCF.
                 # cannot extract this from master, since it may have
