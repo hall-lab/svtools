@@ -31,3 +31,15 @@ class TestBedpeToVcfConverter(TestCase):
         self.assertEqual(self.converter.adjust_by_ciend(b1), 302)
         b1.o2 = '-'
         self.assertEqual(self.converter.adjust_by_ciend(b1), 303)
+
+    def test_determine_sep(self):
+        self.assertEqual(self.converter.determine_sep('-'), '[')
+        self.assertEqual(self.converter.determine_sep('+'), ']')
+
+    def test_determine_flanks(self):
+        self.assertEqual(self.converter.determine_flanks('-'), ('', 'N'))
+        self.assertEqual(self.converter.determine_flanks('+'), ('N', ''))
+
+    def test_bnd_alt_string(self):
+        self.assertEqual(self.converter.bnd_alt_string('+', '-', '2', '22222'), 'N[2:22222[')
+        self.assertEqual(self.converter.bnd_alt_string('-', '+', '2', '22222'), ']2:22222]N')
