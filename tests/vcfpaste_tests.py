@@ -23,9 +23,14 @@ class IntegrationTest_vcfpaste(TestCase):
 
         temp_descriptor3, self.list_of_gz_vcfs = tempfile.mkstemp()
         temp_handle3 = os.fdopen(temp_descriptor3, 'w')
+
+        temp_descriptor4, self.list_of_vcfs_with_8col = tempfile.mkstemp()
+        temp_handle4 = os.fdopen(temp_descriptor4, 'w')
+        
         for vcf_path in vcfs:
             temp_handle.write(vcf_path + '\n')
             temp_handle2.write(vcf_path + '\n')
+            temp_handle4.write(vcf_path + '\n')
             temp_handle3.write(vcf_path + '.gz\n')
         temp_handle.close()
         temp_handle3.close()
@@ -34,8 +39,13 @@ class IntegrationTest_vcfpaste(TestCase):
         temp_handle2.write(truncated_vcf + '\n')
         temp_handle2.close()
 
+        too_skinny_vcf = os.path.join(self.test_data_dir, '8col_NA12878.vcf')
+        temp_handle4.write(too_skinny_vcf + '\n')
+        temp_handle4.close()
+
         self.master = os.path.join(self.test_data_dir, 'master.vcf')
         self.thin_master = os.path.join(self.test_data_dir, 'thin_master.vcf')
+        self.too_thin_master = os.path.join(self.test_data_dir, '6col_master.vcf')
 
     def tearDown(self):
         os.remove(self.list_of_vcfs)
@@ -119,10 +129,33 @@ class IntegrationTest_vcfpaste(TestCase):
             self.assertFalse(result)
         os.remove(temp_output_path)
 
+    def run_integration_test_with_too_thin_master(self):
+        expected_result = os.path.join(self.test_data_dir, 'expected_master.vcf')
+        temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
+        output_handle = os.fdopen(temp_descriptor, 'w')
+        paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs, master=self.too_thin_master, sum_quals=True)
+        with self.assertRaises(SystemExit) as cm:
+            paster.execute(output_handle)
+            exception = cm.exception
+            self.assertEqual(exception.error_code, 1)
+            output_handle.close()
+        os.remove(temp_output_path)
+
     def run_integration_test_with_truncated_vcf(self):
         temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
         output_handle = os.fdopen(temp_descriptor, 'w')
         paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs_with_truncated, master=None, sum_quals=True)
+        with self.assertRaises(SystemExit) as cm:
+            paster.execute(output_handle)
+            exception = cm.exception
+            self.assertEqual(exception.error_code, 1)
+            output_handle.close()
+        os.remove(temp_output_path)
+
+    def run_integration_test_with_too_thin_vcf(self):
+        temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
+        output_handle = os.fdopen(temp_descriptor, 'w')
+        paster = svtools.vcfpaste.Vcfpaste(self.list_of_vcfs_with_8col, master=None, sum_quals=True)
         with self.assertRaises(SystemExit) as cm:
             paster.execute(output_handle)
             exception = cm.exception
