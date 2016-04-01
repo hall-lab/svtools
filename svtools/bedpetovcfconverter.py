@@ -71,7 +71,6 @@ class BedpeToVcfConverter(object):
         Convert a bedpe object to Vcf object(s). Returns a list of entries.
         '''
         b1 = self.adjust_by_cipos(bedpe)
-        b2 = self.adjust_by_ciend(bedpe)
         primary_bedpe_list = [
                 bedpe.c1, 
                 b1,
@@ -86,6 +85,7 @@ class BedpeToVcfConverter(object):
         to_return = [var]
 
         if bedpe.svtype == 'BND':
+            b2 = self.adjust_by_ciend(bedpe)
             var.var_id += '_1'
             var.alt = self.bnd_alt_string(bedpe.o1, bedpe.o2, bedpe.c2, b2)
             
