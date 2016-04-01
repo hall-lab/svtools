@@ -28,7 +28,7 @@ class BedpeToVcfConverter(object):
     @staticmethod
     def adjust_by_ciend(bedpe):
         '''
-        Undo adjustments to bEDPE coordinates for the VCF END field based on confidence intervals
+        Undo adjustments to BEDPE coordinates for the VCF END field based on confidence intervals
         '''
         end = bedpe.s2
         if bedpe.o2 == '-' and bedpe.svtype == 'BND':
@@ -40,22 +40,31 @@ class BedpeToVcfConverter(object):
         return end
 
     @staticmethod
-    def bnd_alt_string(o1, o2, chrom, pos):
+    def determine_sep(o2):
+        '''
+        Given the orientation of the other breakend, determine separator for VCF alt
+        '''
+        if o2 == '+':
+            return ']'
+        else:
+            return '['
+
+    @staticmethod
+    def determine_flanks(o1):
+        '''
+        Given the orientation of the breakend, return proper flanking sequence strings
+        '''
+        if o1 == '+':
+            return ('N', '')
+        else:
+            return ('', 'N')
+
+    def bnd_alt_string(self, o1, o2, chrom, pos):
         '''
         Given a Bedpe object generate the correct alt string for a BND VCF entry
         '''
-        alt_string = 'N{0}{1}:{2}{0}'# TODO use this format string below
-        if o1 == '+':
-            if o2 == '-':
-                alt_string = 'N[%s:%s[' % (chrom, pos)
-            elif o2 == '+':
-                alt_string = 'N]%s:%s]' % (chrom, pos)
-        elif o1 == '-':
-            if o2 == '+':
-                alt_string = ']%s:%s]N' % (chrom, pos)
-            elif o2 == '-':
-                alt_string = '[%s:%s[N' % (chrom, pos)
-        return alt_string
+        alt_string = '{3}{0}{1}:{2}{0}{4}'
+        return alt_string.format(self.determine_sep(o2), chrom, pos, *self.determine_flanks(o1))
 
     def convert(self, bedpe):
         '''
@@ -92,9 +101,8 @@ class BedpeToVcfConverter(object):
                     ] + bedpe.misc
 
             var2 = Variant(secondary_bedpe_list, self.vcf_header)
-            var2.var_id += '_2'
             if bedpe.malformedFlag == 0:
-                to_return.extend(var2)
+                to_return += [var2]
             elif bedpe.malformedFlag == 1:
                 #Only returning one of our entries
                 to_return[0] = var2
