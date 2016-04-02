@@ -1,6 +1,8 @@
 # svtools
 *Warning: This suite is under active development and this is not a stable nor well tested version. We are not able to provide user support for this version of svtools.*
 
+
+[![License](https://img.shields.io/github/license/hall-lab/svtools.svg)](LICENSE.txt)
 [![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools) 
 [![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
 
