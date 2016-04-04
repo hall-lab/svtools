@@ -1,5 +1,3 @@
-import sys
-from sets import Set
 import re
 
 def find_all(a_str, sub):
@@ -425,8 +423,8 @@ def bron_kerbosch(G, R, P, X):
     if (len(P) == 0) and (len(X) == 0):
         yield R
     for v in P:
-        V = Set([v])
-        N = Set([g[0] for g in G[v].edges])
+        V = set([v])
+        N = set([g[0] for g in G[v].edges])
     
         for r in bron_kerbosch(G, \
                                R.union(V), \
