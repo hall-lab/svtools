@@ -15,6 +15,8 @@ import svtools.varlookup
 
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
+    version_string = '%(prog)s {0}'.format(svtools.__version__)
+    parser.add_argument('--version', action='version', version=version_string)
     subparsers = parser.add_subparsers(title=None, metavar='subcommand', help='description')
 
     lsort = subparsers.add_parser('lsort', help=svtools.lsort.description(), epilog=svtools.lsort.epilog())
