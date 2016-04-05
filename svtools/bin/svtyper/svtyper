@@ -7,8 +7,8 @@ from collections import Counter
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang (cc2qe@virginia.edu)"
-__version__ = "$Revision: 0.0.3 $"
-__date__ = "$Date: 2016-03-29 16:50 $"
+__version__ = "$Revision: 0.0.4 $"
+__date__ = "$Date: 2016-04-05 09:07 $"
 
 # --------------------------------------
 # define functions
@@ -787,7 +787,7 @@ class Sample(object):
             self.lib_dict[name].calc_read_length()
             self.lib_dict[name].calc_insert_hist()
             self.lib_dict[name].calc_insert_density()
-            self.active_libs += [name]
+            self.active_libs += [self.lib_dict[name]]
 
     # get the maximum fetch flank for reading the BAM file
     def get_fetch_flank(self, z):
