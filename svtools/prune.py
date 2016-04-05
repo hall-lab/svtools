@@ -13,6 +13,12 @@ class Pruner(object):
         self.emitted_lines = 0
         self.cluster_list = []
 
+    def stats_report_string(self):
+        return "{0} variants read\n{1} skipped\n{2} pruned\n{3} emitted\n".format(self.bedpe_lines,
+            self.skipped_lines,
+            self.bedpe_lines - self.skipped_lines - self.emitted_lines,
+            self.emitted_lines)
+
     def cluster_bedpe(self, in_file, bedpe_out, is_sorted):
         # Locally alias instance variables
         max_distance = self.max_distance
@@ -67,6 +73,7 @@ class Pruner(object):
                              True,
                              bedpe_out)
 
+        sys.stderr.write(self.stats_report_string())
         return
 
     def prune(self, bedpe, print_ineligible, bedpe_out):
