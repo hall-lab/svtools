@@ -124,7 +124,7 @@ def command_parser():
 
 def run_from_args(args):
     with su.InputStream(args.input) as stream:
-        pruner = Prune(args.max_distance, args.eval_param)
+        pruner = Pruner(args.max_distance, args.eval_param)
         pruner.cluster_bedpe(stream, args.output, args.is_sorted)
 
 if __name__ == '__main__':
