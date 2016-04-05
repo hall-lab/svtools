@@ -3,7 +3,6 @@ class Cluster(object):
     Stores information about overlapping SV and tracks the "best" one of the group
     '''
     def __init__(self):
-        self.id = None
         self.elements = [None]
         self.chrom_a = None
         self.min_a = float("inf")
