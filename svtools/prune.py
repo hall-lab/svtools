@@ -1,6 +1,4 @@
-import argparse, sys , re
-from argparse import RawTextHelpFormatter
-from collections import Counter
+import argparse, sys
 from svtools.bedpe import Bedpe
 import svtools.utils as su
 
