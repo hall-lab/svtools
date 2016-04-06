@@ -35,19 +35,18 @@ class Pruner(object):
             if bedpe.af is None:
                 sys.stderr.write('No allele frequency for variant found. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
                 sys.exit(1)
-    
+            if bedpe.af == '.':
+                self.skipped_lines += 1
+                continue
             matched_clusters = []
             for cluster in self.cluster_list:
                 if cluster.can_add(bedpe, max_distance):
                     cluster.add(bedpe, eval_param)
                     matched_clusters.append(cluster)
             if not matched_clusters:
-                if bedpe.af == '.':
-                    self.skipped_lines += 1
-                else:
-                    new_cluster = Cluster()
-                    new_cluster.add(bedpe, eval_param)
-                    self.cluster_list.append(new_cluster)
+                new_cluster = Cluster()
+                new_cluster.add(bedpe, eval_param)
+                self.cluster_list.append(new_cluster)
             else:
                 if len(matched_clusters) > 1:
                     i = 0
