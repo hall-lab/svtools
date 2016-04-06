@@ -3,3 +3,4 @@ omit =
     */python?.?/*
     */site-packages/nose/*
     *tests*
+    *versioneer.py
