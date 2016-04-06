@@ -4,3 +4,4 @@ omit =
     */site-packages/nose/*
     *tests*
     *versioneer.py
+    svtools/_version.py
