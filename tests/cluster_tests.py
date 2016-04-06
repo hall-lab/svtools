@@ -58,7 +58,7 @@ class ClusterTests(TestCase):
         b2 = Bedpe(bedpe2)
 
         c = Cluster()
-        c.add(b1, 20, None)
+        c.add(b1, None)
         self.assertEqual(c.size, 1)
         self.assertEqual(c.sv_event, 'BND')
         self.assertEqual(c.filter, '0.2')
@@ -71,7 +71,7 @@ class ClusterTests(TestCase):
         self.assertEqual(c.strand_a, '+')
         self.assertEqual(c.strand_b, '-')
 
-        c.add(b2, 20, None)
+        c.add(b2, None)
         self.assertEqual(c.size, 2)
         self.assertEqual(c.sv_event, 'BND')
         self.assertEqual(c.filter, '0.3')
@@ -93,6 +93,6 @@ class ClusterTests(TestCase):
         with self.assertRaises(ValueError):
             c.get_cluster_string()
         
-        c.add(b, 1, None)
+        c.add(b, None)
         self.assertEqual(c.get_cluster_string(), str(b))
 

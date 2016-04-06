@@ -39,14 +39,14 @@ class Pruner(object):
             matched_clusters = []
             for cluster in self.cluster_list:
                 if cluster.can_add(bedpe, max_distance):
-                    cluster.add(bedpe, max_distance, eval_param)
+                    cluster.add(bedpe, eval_param)
                     matched_clusters.append(cluster)
             if not matched_clusters:
                 if bedpe.af == '.':
                     self.skipped_lines += 1
                 else:
                     new_cluster = Cluster()
-                    new_cluster.add(bedpe, max_distance, eval_param)
+                    new_cluster.add(bedpe, eval_param)
                     self.cluster_list.append(new_cluster)
             else:
                 if len(matched_clusters) > 1:
@@ -56,7 +56,7 @@ class Pruner(object):
                         j = i + 1
                         while j < len(matched_clusters):
                             if matched_clusters[i].can_add(matched_clusters[j].elements[0], max_distance):
-                                matched_clusters[i].add(matched_clusters[j].elements[0], max_distance, eval_param)
+                                matched_clusters[i].add(matched_clusters[j].elements[0], eval_param)
                                 matched_cluster_pruned = True
                                 del matched_clusters[j]
                             j += 1
