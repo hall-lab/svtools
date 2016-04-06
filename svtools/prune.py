@@ -61,7 +61,7 @@ class Pruner(object):
                                 del matched_clusters[j]
                             j += 1
                         i += 1        
-                    if matched_cluster_pruned == True:
+                    if matched_cluster_pruned:
                         self.cluster_list = [cluster for cluster in self.cluster_list if cluster not in matched_clusters]
             #prune and print eligible clusters
             if self.bedpe_lines % 1000 == 0 and is_sorted:
