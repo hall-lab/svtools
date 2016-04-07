@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import versioneer
 
 '''
 This package provides tools for combining, genotyping and refining structural variant calls from LUMPY in a highly scalable way. The current package efficiently scales to process thousands of individuals.
@@ -7,7 +8,8 @@ This package provides tools for combining, genotyping and refining structural va
 
 setup(
     name='svtools',
-    version='0.1.2',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
 
     description='Tools for processing and analyzing structural variants',
     long_description=__doc__,
@@ -29,7 +31,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
 
-    install_requires=['pysam', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
+    install_requires=['pysam>=0.8.1', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
     
     entry_points={
         'console_scripts': [
