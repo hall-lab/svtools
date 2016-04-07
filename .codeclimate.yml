@@ -14,3 +14,5 @@ ratings:
 exclude_paths:
 - tests/
 - svtools/bin/svtyper/
+- versioneer.py
+- svtools/_version.py
