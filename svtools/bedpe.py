@@ -13,6 +13,7 @@ class Bedpe(object):
         self.score = self.parse_score(bed_list[7])
         self.o1 = bed_list[8]
         self.o2 = bed_list[9]
+        self.svtype = bed_list[10]
         self.filter = bed_list[11]
         self.malformedFlag = 0
         self.info1 = bed_list[12]
@@ -59,3 +60,26 @@ class Bedpe(object):
         except IndexError:
             af = None
         return af
+    
+    def __str__(self):
+        '''
+        A string representation of the line represented by this object
+        '''
+        return '\t'.join([
+            self.c1,
+            str(self.s1),
+            str(self.e1),
+            self.c2,
+            str(self.s2),
+            str(self.e2),
+            self.name,
+            str(self.score),
+            self.o1,
+            self.o2,
+            self.svtype,
+            self.filter,
+            self.info1,
+            self.info2] + 
+            self.misc
+            )
+

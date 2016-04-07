@@ -32,6 +32,14 @@ class BedpeTests(TestCase):
         b2 = Bedpe(entry2)
         self.assertIsNone(b2.retrieve_af())
 
+    def test_str(self):
+        # Note that we are testing float to float equivalence. Actually passing in an integer will result in it being converted to float with
+        # with decimal place
+        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57.0', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]
+        b1 = Bedpe(entry1)
+        self.assertEqual(str(b1), '\t'.join(entry1))
+
+
 if __name__ == "__main__":
     main()
 
