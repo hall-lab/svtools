@@ -62,7 +62,8 @@ class VcfToBedpeConverter(object):
         except KeyError:
             raise ValueError('END entry in VCF required for conversion to BEDPE')
 
-        orientation1 = orientation2 = '+'
+        orientation1 = '+'
+        orientation2 = '-'
 
         if 'STRANDS' in vcf_variant.info:
             strands = vcf_variant.info['STRANDS']
