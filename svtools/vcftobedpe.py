@@ -1,7 +1,6 @@
 import argparse
 import sys
 import time
-import re
 
 import svtools.vcf.file
 import svtools.vcf.variant
