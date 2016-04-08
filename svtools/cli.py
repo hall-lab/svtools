@@ -15,7 +15,7 @@ import svtools.varlookup
 
 class SupportAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        support_string = 'For further help or to report a bug, please open an issue on the svtools repository: https://github.com/halllab/svtools/issues'
+        support_string = 'For further help or to report a bug, please open an issue on the svtools repository: https://github.com/hall-lab/svtools/issues'
         print support_string
         sys.exit()
 
