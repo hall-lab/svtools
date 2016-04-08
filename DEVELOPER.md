@@ -9,13 +9,27 @@ contributing to svtools development.
 1. from a conda thing
 1. using pip package on pypi
 1. downloading a github tarball
- 
-check out svtools
- <pre><code>git clone https://github.com/hall-lab/svtools.git svtools</code></pre>
-pip install in the repo
- cd svtools
- pip install .
-profit
+
+prepare your python environment
+  you might want to use pyenv virtual-env, you can learn about that here https://github.com/yyuu/pyenv-virtualenv 
+  we require python 2.7.X 
+  this process might look like this
+  <pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+  pyenv activate</pre></code> 
+check out svtools from the hall-lab github repository
+ <pre><code>git clone https://github.com/hall-lab/svtools.git svtools_test</code></pre>
+install dependencies as suggested in the requiremnts files
+  <pre><code>pip install nose
+  pip install coverage
+  pip install statsmodel
+  
+
+use pip to install svtools from within the repo
+ <pre><code>cd svtools
+ pip install .</pre></code>
+test your svtools installation
+<pre><code>svtools --version</pre></code>
+output should look like
 
 ## Releasing a new version
 
