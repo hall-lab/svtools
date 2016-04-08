@@ -10,17 +10,14 @@ class VcfToBedpeConverter(object):
         '''
         Initialize a new converter
         '''
-        pass
+        # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
+        self.bnd_regex = re.compile(r'([][])(.+?)([][])')
 
-    @staticmethod
-    def parse_bnd_alt_string(alt_string):
+    def parse_bnd_alt_string(self, alt_string):
         '''
         Parse the BND alt string and return separators and region
         '''
-        # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
-        # XXX Caching the compiled version of this on init may be advantageous
-        r = re.compile(r'([][])(.+?)([][])')
-        result = r.findall(alt_string)
+        result = self.bnd_regex.findall(alt_string)
         assert result
         sep1, region, sep2 = result[0]
         assert sep1 == sep2
