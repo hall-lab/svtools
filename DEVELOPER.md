@@ -11,7 +11,7 @@ contributing to svtools development.
 1. downloading a github tarball
  
 check out svtools
- git clone https://github.com/hall-lab/svtools.git svtools
+ <pre><code>git clone https://github.com/hall-lab/svtools.git svtools</code></pre>
 pip install in the repo
  cd svtools
  pip install .
