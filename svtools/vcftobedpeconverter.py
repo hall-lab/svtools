@@ -91,6 +91,8 @@ class VcfToBedpeConverter(object):
         '''
         if info_tag in vcf_variant.info:
             span = map(int, vcf_variant.info[info_tag].split(','))
+            if len(span) != 2:
+                raise ValueError('Invalid value for tag {0}. Require 2 values to adjust coordinates.'.format(info_tag))
             return (start + span[0], end + span[1])
         else:
             return (start, end)
