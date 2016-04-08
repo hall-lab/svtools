@@ -20,11 +20,10 @@ class VcfToBedpeConverter(object):
         # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
         # XXX Caching the compiled version of this on init may be advantageous
         r = re.compile(r'([][])(.+?)([][])')
-        sep1, region, sep2 = r.findall(alt_string)[0]
-        
+        result = r.findall(alt_string)
+        assert result
+        sep1, region, sep2 = result[0]
         assert sep1 == sep2
-        assert sep1 is not None
-        
         chrom2, breakpoint2 = region.split(':')
         breakpoint2 = int(breakpoint2)
         return sep1, chrom2, breakpoint2
@@ -131,15 +130,11 @@ class VcfToBedpeConverter(object):
                 info_b = secondary_variant.get_info_string()
 
         # For MANTA single-ended BNDs, EVENT is not present. 
-        # Also note that reconstruction of manta VCFs is likely to fail on name as currently implemented
         # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache? 
         # By adding to the variant class, perhaps?
         name = vcf_variant.var_id
         if 'EVENT' in vcf_variant.info:
             name = vcf_variant.info['EVENT']
-
-        # XXX Backwards compatibility...remove
-
 
         return Bedpe(map(str,[
             c1,
