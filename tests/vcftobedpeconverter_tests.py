@@ -45,12 +45,12 @@ class TestVcfToBedpeConverter(TestCase):
         v1 = Variant(vcf_array1, self.vcf)
         self.assertEqual(
                 self.converter.simple_breakpoints(v1),
-                ('1', 20000, 20000, '1', 20500, 20500, '+', '+'))
-        vcf_array2 = ['1', '20000', '235', 'T', '<DEL>', '0.00', '.', 'END=20500;STRANDS=--:2', 'GT', '0/0']
+                ('1', 20000, 20000, '1', 20500, 20500, '+', '-'))
+        vcf_array2 = ['1', '20000', '235', 'T', '<DEL>', '0.00', '.', 'END=20500;STRANDS=-+:2', 'GT', '0/0']
         v2 = Variant(vcf_array2, self.vcf)
         self.assertEqual(
                 self.converter.simple_breakpoints(v2),
-                ('1', 20000, 20000, '1', 20500, 20500, '-', '-'))
+                ('1', 20000, 20000, '1', 20500, 20500, '-', '+'))
         vcf_array3 = ['1', '20000', '235', 'T', '<DEL>', '0.00', '.', 'STRANDS=--:2', 'GT', '0/0']
         v3 = Variant(vcf_array3, self.vcf)
         with self.assertRaises(ValueError):
