@@ -39,9 +39,6 @@ class TestVcfToBedpeConverter(TestCase):
         self.assertEqual(
                 self.converter.bnd_breakpoints(v2),
                 ('1', 19999, 19999, '1', 6, 6, '-', '+'))
-        # Check end tag set
-        self.assertEqual(v1.info['END'], 5)
-        self.assertEqual(v2.info['END'], 6)
 
     def test_simple_breakpoints(self):
         vcf_array1 = ['1', '20000', '235', 'T', '<DEL>', '0.00', '.', 'END=20500', 'GT', '0/0']

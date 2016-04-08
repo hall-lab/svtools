@@ -42,9 +42,6 @@ class VcfToBedpeConverter(object):
             orientation2 = '-'
             breakpoint2 -= 1
 
-        # FIXME I don't think this makes ANY sense
-        vcf_variant.set_info('END', breakpoint2)
-
         return (chrom1,
                 breakpoint1,
                 breakpoint1,
