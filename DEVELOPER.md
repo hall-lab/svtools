@@ -3,6 +3,20 @@
 This document is intended to provide guidelines for software developers either maintaining or 
 contributing to svtools development.
 
+## Installing svtools
+
+1. from a repo
+1. from a conda thing
+1. using pip package on pypi
+1. downloading a github tarball
+ 
+check out svtools
+ git clone https://github.com/hall-lab/svtools.git svtools
+pip install in the repo
+ cd svtools
+ pip install .
+profit
+
 ## Releasing a new version
 
 svtools manages its versions using [python-versioneer](https://github.com/warner/python-versioneer). 
