@@ -13,10 +13,17 @@ import svtools.genotype
 import svtools.prune
 import svtools.varlookup
 
+class SupportAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        support_string = 'For further help or to report a bug, please open an issue on the svtools repository: https://github.com/hall-lab/svtools/issues'
+        print support_string
+        sys.exit()
+
 def svtools_cli_parser():
     parser = argparse.ArgumentParser(description='Comprehensive utilities to explore structural variation in genomes', prog='svtools')
     version_string = '%(prog)s {0}'.format(svtools.__version__)
     parser.add_argument('--version', action='version', version=version_string)
+    parser.add_argument('--support', action=SupportAction, nargs=0, help='information on obtaining support')
     subparsers = parser.add_subparsers(title=None, metavar='subcommand', help='description')
 
     lsort = subparsers.add_parser('lsort', help=svtools.lsort.description(), epilog=svtools.lsort.epilog())
