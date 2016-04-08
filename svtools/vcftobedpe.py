@@ -1,131 +1,14 @@
 import argparse
 import sys
 import time
-import re
 
 import svtools.vcf.file
 import svtools.vcf.variant
 import svtools.utils as su
+from svtools.vcftobedpeconverter import VcfToBedpeConverter
 
-def convert_simple(vcf_line_array, variant):
-    '''
-    Convert simple SVs to BEDPE
-    Precise breakpoints are specified by 0-length intervals.
-    For simple SVs, breakpoint 1 is the VCF coordinate and breakpoint 2 is the END coordinate
-    '''
-    start1 = end1 = variant.pos
-    start2 = end2 = int(variant.info['END'])
-    orientation1 = orientation2 = '+'
-    if 'STRANDS' in variant.info:
-        strands = variant.info['STRANDS']
-        orientation1, orientation2 = strands[:2]
-    if 'CIPOS' in variant.info:
-        span = map(int, variant.info['CIPOS'].split(','))
-        start1 += span[0]
-        end1 += span[1]
-    if 'CIEND' in variant.info:
-        span = map(int, variant.info['CIEND'].split(','))
-        start2 += span[0]
-        end2 += span[1]
-    return '\t'.join(map(str,
-        [variant.chrom,
-        max(start1, 0),
-        max(end1, 0),
-        variant.chrom,
-        max(start2, 0),
-        max(end2, 0),
-        variant.var_id,
-        variant.qual,
-        orientation1,
-        orientation2,
-        variant.info['SVTYPE'],
-        variant.filter] +
-        [variant.get_info_string()] + ['.'] + vcf_line_array[8:]
-        ))
-
-def convert_breakend(vcf_line_array, primary_variant, secondary_variant):
-    '''
-    Parse out strand orientation from BND alt fields
-    Simple mapping seems to be left-most strand corresponds to the direction of the square brackets. Right-most to side the reference base is on.
-
-    For example:
-
-    N[2:22222[ -> brackets pt left so - and N is on the left so plus +-
-    ]2:22222]N -> brackets pt right so + and N is on the right so minus -+
-    N]2:222222] -> brackets pt right so + and N is on the left so plus ++
-    [2:222222[N -> brackets pt left so + and N is on the right so minus --
-    '''
-    variant = primary_variant
-    if primary_variant is None:
-        variant = secondary_variant
-    breakpoint1 = variant.pos
-    orientation1 = '+'
-    orientation2 = '+'
-    # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
-    r = re.compile(r'([][])(.+?)([][])')
-    sep1, region, sep2 = r.findall(variant.alt)[0]
-    
-    assert sep1 == sep2
-    assert sep1 is not None
-    
-    chrom2, breakpoint2 = region.split(':')
-    breakpoint2 = int(breakpoint2)
-
-    if variant.alt.startswith(sep1):
-        orientation1 = '-'
-        breakpoint1 -= 1
-    if sep1 == '[':
-        orientation2 = '-'
-        breakpoint2 -= 1
-
-    start1 = end1 = breakpoint1
-    start2 = end2 = breakpoint2
-    variant.set_info('END', breakpoint2)
-
-    if 'CIPOS' in variant.info:
-        span = map(int, variant.info['CIPOS'].split(','))
-        start1 += span[0]
-        end1 += span[1]
-    
-    if 'CIEND' in variant.info:    
-        span = map(int, variant.info['CIEND'].split(','))
-        start2 += span[0]
-        end2 += span[1]
-
-    chrom_a = variant.chrom
-    chrom_b = chrom2
-    
-    # write bedpe
-    #Swap fields for no primary present as we did calculation with secondary
-    if primary_variant is None:
-        info_a = "MISSING"
-        chrom_a, chrom_b = chrom_b, chrom_a
-        start1, start2 = start2, start1
-        end1, end2 = end2, end1
-        orientation1, orientation2 = orientation2, orientation1
-    else:
-        info_a = primary_variant.get_info_string()    
-    if secondary_variant is None:
-        info_b = "MISSING"
-    else:
-        info_b = secondary_variant.get_info_string()    
-    return '\t'.join(map(str,
-                                  [chrom_a,
-                                   max(start1,0),
-                                   max(end1,0),
-                                   chrom_b,
-                                   max(start2,0),
-                                   max(end2,0),
-                                   variant.info['EVENT'],
-                                   variant.qual,
-                                   orientation1,
-                                   orientation2,
-                                   variant.info['SVTYPE'],
-                                   variant.filter] + [info_a] + [info_b] + vcf_line_array[8:]
-                                  ))
-
-# primary function
 def vcfToBedpe(vcf_file, bedpe_out):
+    converter = VcfToBedpeConverter()
     vcf = svtools.vcf.file.Vcf()
     in_header = True
     header = []
@@ -144,6 +27,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 continue
             elif line[0] == '#' and line[1] != '#':    
                 sample_list = line.rstrip().split('\t')[9:]
+                header.append(line)
                 continue
             else:
                 # print header
@@ -153,78 +37,62 @@ def vcfToBedpe(vcf_file, bedpe_out):
                    vcf.add_info_after("SVTYPE", "POS", 1, 'Integer', 'Position of the variant described in this record')
                 header=vcf.get_header()
                 bedpe_out.write(header[:header.rfind('\n')] + '\n')                
+                final_header_line = ['#CHROM_A',
+                        'START_A',
+                        'END_A',
+                        'CHROM_B',
+                        'START_B',
+                        'END_B',
+                        'ID',
+                        'QUAL',
+                        'STRAND_A',
+                        'STRAND_B',
+                        'TYPE',
+                        'FILTER',
+                        'INFO_A',
+                        'INFO_B']
+
                 if len(sample_list) > 0:
-                    bedpe_out.write('\t'.join(['#CHROM_A',
-                                               'START_A',
-                                               'END_A',
-                                               'CHROM_B',
-                                               'START_B',
-                                               'END_B',
-                                               'ID',
-                                               'QUAL',
-                                               'STRAND_A',
-                                               'STRAND_B',
-                                               'TYPE',
-                                               'FILTER',
-                                               'INFO_A','INFO_B',
-                                               'FORMAT','\t'.join(map(str,sample_list))] 
-                                             ) + '\n')
+                    bedpe_out.write('\t'.join(final_header_line + ['FORMAT','\t'.join(map(str,sample_list))]) + '\n')
                 else:
-                    bedpe_out.write('\t'.join(['#CHROM_A',
-                                               'START_A',
-                                               'END_A',
-                                               'CHROM_B',
-                                               'START_B',
-                                               'END_B',
-                                               'ID',
-                                               'QUAL',
-                                               'STRAND_A',
-                                               'STRAND_B',
-                                               'TYPE',
-                                               'FILTER',
-                                               'INFO_A','INFO_B']
-                                              ) + '\n')
+                    bedpe_out.write('\t'.join(final_header_line) + '\n')
 
         v = line.rstrip().split('\t')
-        var = svtools.vcf.variant.Variant(v, vcf)
+        var = svtools.vcf.variant.Variant(v, vcf, fixed_genotypes=True)
         var.set_info("POS", var.pos)
+        unique_name = var.var_id
+        if 'EVENT' in var.info:
+            unique_name = var.info['EVENT']
         if var.info['SVTYPE'] != 'BND':
-            bedpe_out.write(convert_simple(v, var))
-            bedpe_out.write('\n')
+            bedpe_out.write(str(converter.convert(var)) + '\n')
         else:
             if 'SECONDARY' in var.info:
-                if var.info['EVENT'] in bnds:
+                if unique_name in bnds:
                     #primary
-                    var1 = bnds[var.info['EVENT']]
-                    bedpe_out.write(convert_breakend(v, var1, var))
-                    bedpe_out.write('\n')
-                    del bnds[var.info['EVENT']]                              
+                    var1 = bnds[unique_name]
+                    bedpe_out.write(str(converter.convert(var1, var)) + '\n')
+                    del bnds[unique_name]
                 else:
-                    sec_bnds.update({var.info['EVENT']:var})
+                    sec_bnds.update({unique_name:var})
             else: 
-                bnds.update({var.info['EVENT']:var})
+                bnds.update({unique_name:var})
                 continue
     intersected_keys = bnds.viewkeys() & sec_bnds.viewkeys()
     for key in intersected_keys:
-        bedpe_out.write(convert_breakend(v, bnds[key], sec_bnds[key]))
-        bedpe_out.write('\n')
+        bedpe_out.write(str(converter.convert(bnds[key], sec_bnds[key])) + '\n')
         del bnds[key] 
         del sec_bnds[key]
     if bnds is not None:
         for bnd in bnds:
-            sys.stderr.write('Warning: missing secondary multiline variant at ID:' + bnds[bnd].info['EVENT'] + '\n')
-            bedpe_out.write(convert_breakend(v, bnds[bnd], None))
-            bedpe_out.write('\n')
+            sys.stderr.write('Warning: missing secondary multiline variant at ID:' + unique_name + '\n')
+            bedpe_out.write(str(converter.convert(bnds[bnd], None)) + '\n')
     if sec_bnds is not None:
         for bnd in sec_bnds:
-            sys.stderr.write('Warning: missing primary multiline variant at ID:' + sec_bnds[bnd].info['EVENT'] + '\n')
-            bedpe_out.write(convert_breakend(v, None, sec_bnds[bnd]))
-            bedpe_out.write('\n')
+            sys.stderr.write('Warning: missing primary multiline variant at ID:' + unique_name + '\n')
+            bedpe_out.write(str(converter.convert(None, sec_bnds[bnd])) + '\n')
             
     # close the files
     bedpe_out.close()
-    vcf_file.close()
-
     return
 
 def description():

@@ -83,6 +83,12 @@ class Variant(object):
             if f.id in self.active_formats:
                 f_list.append(f.id)
         return ':'.join(f_list)
+    
+    def get_gt_string(self):
+        if self.gts_string:
+            return self.gts_string
+        else:
+            return '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
 
     def genotype(self, sample_name):
         try:
