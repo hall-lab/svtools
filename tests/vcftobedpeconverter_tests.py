@@ -58,3 +58,17 @@ class TestVcfToBedpeConverter(TestCase):
         v3 = Variant(vcf_array3, self.vcf)
         with self.assertRaises(ValueError):
             self.converter.simple_breakpoints(v3)
+
+    def test_adjust_coordinate(self):
+        vcf_array1 = ['1', '20000', '235', 'T', '<DEL>', '0.00', '.', 'CIEND=-50,50', 'GT', '0/0']
+        v1 = Variant(vcf_array1, self.vcf)
+        self.assertEqual(
+                self.converter.adjust_coordinate(v1, 'CIEND', 500, 1000),
+                (450, 1050))
+        self.assertEqual(
+                self.converter.adjust_coordinate(v1, 'CIPOS', 500, 1000),
+                (500, 1000))
+        vcf_array2 = ['1', '20000', '235', 'T', '<DEL>', '0.00', '.', 'CIEND=50', 'GT', '0/0']
+        v2 = Variant(vcf_array2, self.vcf)
+        with self.assertRaises(ValueError):
+            self.converter.adjust_coordinate(v2, 'CIEND', 500, 1000)
