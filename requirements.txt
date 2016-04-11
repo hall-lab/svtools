@@ -1,6 +1,7 @@
 nose
 coverage
 statsmodels
+pysam
 numpy
 pandas
 scipy
