@@ -10,7 +10,7 @@ contributing to svtools development.
 1. using pip package on pypi
 1. downloading a github tarball
 
-[from the git repo]
+# From the git repo
 prepare your python environment
   you might want to use pyenv virtual-env, you can learn about that here https://github.com/yyuu/pyenv-virtualenv 
   we require python 2.7.X 
@@ -33,9 +33,9 @@ pip install .</pre></code>
 test your svtools installation
 <pre><code>svtools --version</pre></code>
 
-[from a conda package] TODO
-[using pip package on pypi] TODO
-[downloading a github tarball] TODO
+# From a conda package TODO
+# Using pip package on pypi TODO
+# Downloading a github tarball TODO
 
 ## Releasing a new version
 
