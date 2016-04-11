@@ -10,7 +10,6 @@ class BedpeTests(TestCase):
         entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b1 = Bedpe(entry1)
         self.assertEqual(b1.malformedFlag, 1)
-        self.assertNotEqual(b1.info1, 'MISSING') 
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'MISSING' ]
         b2 = Bedpe(entry2)
         self.assertEqual(b2.malformedFlag, 2)
