@@ -11,26 +11,27 @@ contributing to svtools development.
 1. downloading a github tarball
 
 ### From the git repo
-prepare your python environment
-  you might want to use pyenv virtual-env, you can learn about that here https://github.com/yyuu/pyenv-virtualenv 
-  we require python 2.7.X 
-  this process might look like this
+First you will need to prepare your python environment.
+You might want to use pyenv virtualenv. 
+You can learn about that here <https://github.com/yyuu/pyenv-virtualenv> 
+We require python 2.7.X 
+The creation of the pyenv and activation looks like this in our environment
   <pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
   pyenv activate</pre></code> 
-check out svtools from the hall-lab github repository
+Once you have your python environment set up you will want to check out svtools from the hall-lab github repository.
  <pre><code>git clone https://github.com/hall-lab/svtools.git svtools_test</code></pre>
-install dependencies as suggested in the requiremnts files
+Now install the dependencies suggested in the requiremnts files
 <pre><code>pip install nose
 pip install coverage
 pip install statsmodels</pre></code>
-installing statsmodel can take a while, but in our testing it satisfies the requirement for numpy,pandas, and scipy
-in our local environment we need to specify pysam versions less than 0.9.0, YMMV
+Installing statsmodel can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
+In our environment we need to specify pysam versions greater than 0.8.1 and less than 0.9.0
 <pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
 
-use pip to install svtools from within the repo
+Now we can use pip to install svtools from within the repo
 <pre><code>cd svtools
 pip install .</pre></code>
-test your svtools installation
+Finally we can spot check our svtools installation and observe the version number.
 <pre><code>svtools --version</pre></code>
 
 ### From a conda package TODO
