@@ -21,7 +21,8 @@ check out svtools from the hall-lab github repository
 install dependencies as suggested in the requiremnts files
   <pre><code>pip install nose
   pip install coverage
-  pip install statsmodel
+  pip install statsmodel</pre></code>
+installing statsmodel can take a while, but in our testing it satisfies the requirement for numpy,pandas, and scipy
   
 
 use pip to install svtools from within the repo
