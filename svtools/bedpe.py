@@ -49,6 +49,18 @@ class Bedpe(object):
         else:
             return self.info1
 
+    def set_info(self, field, value):
+        '''
+        Add the info field to the BEDPE line info fields. As BEDPE lines don't know about their headers this is not a safe operation
+        '''
+        new_tag = ';' + str(field);
+        if value is not None:
+            new_tag += '=' + str(value)
+        if self.malformedFlag != 1:
+            self.info1 = self.info1 + new_tag
+        if self.malformedFlag != 2:
+            self.info2 = self.info2 + new_tag
+
     def check_malformed(self):
         if self.info1 == 'MISSING':
             self.malformedFlag = 1
