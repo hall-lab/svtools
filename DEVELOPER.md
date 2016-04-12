@@ -20,7 +20,7 @@ The creation of the pyenv and activation looks like this in our environment
 pyenv activate svtools_install_instructions-2.7.9</pre></code>
 Now you will need to satisfy the pysam dependency
 <pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
-Then you should be able to just install the svtools package
+Then you should be able to install the svtools package from pypi
 <pre><code>pip install svtools</pre></code>
 You can spot check your svtools install by running
 <pre><code>svtools --version</pre></code>
@@ -42,7 +42,6 @@ pip install statsmodels</pre></code>
 Installing statsmodel can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
 In our environment we need to specify pysam versions greater than 0.8.1 and less than 0.9.0
 <pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
-
 Now we can use pip to install svtools from within the repo
 <pre><code>cd svtools
 pip install .</pre></code>
