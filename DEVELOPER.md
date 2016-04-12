@@ -28,7 +28,7 @@ You can spot check your svtools install by running
 <h3> From the git repo</h3>
 First you will need to prepare your python environment.
 You might want to use pyenv virtualenv. 
-You can learn about that here <https://github.com/yyuu/pyenv-virtualenv> 
+You can learn about that here <a href="https://github.com/yyuu/pyenv-virtualenv">https://github.com/yyuu/pyenv-virtualenv</a> 
 We require python 2.7.X 
 The creation of the pyenv and activation looks like this in our environment
 <pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
