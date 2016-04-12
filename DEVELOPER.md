@@ -19,7 +19,7 @@ The creation of the pyenv and activation looks like this in our environment
 <pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
 pyenv activate svtools_install_instructions-2.7.9</pre></code>
 Now you will need to satisfy the pysam dependency
-<pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
+<pre><code>pip install pysam>=0.8.1,<0.9.0</pre></code>
 Then you should be able to install the svtools package from pypi
 <pre><code>pip install svtools</pre></code>
 You can spot check your svtools install by running
