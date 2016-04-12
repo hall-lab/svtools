@@ -13,31 +13,16 @@ class BedpeToVcfConverter(object):
         self.vcf_header = vcf
 
     @staticmethod
-    def adjust_by_cipos(bedpe):
+    def adjust_by_tag(bedpe, info_tag, strand, coordinate):
         '''
-        Undo adjustments to BEDPE coordinates for the VCF POS based on confidence intervals
+        Undo adjustments to BEDPE coordinates based on strand and INFO tag values
         '''
-        position = bedpe.s1
-        if bedpe.o1 == '-' and bedpe.svtype == 'BND':
-            position += 1   #undo left adjust based on strandedness
-        if 'CIPOS=' in bedpe.info1:
-            cipos = re.split('=|,', ''.join(filter(lambda x: 'CIPOS=' in x, bedpe.info1.split(';'))))
-            position -= int(cipos[1])
-        return position
-
-    @staticmethod
-    def adjust_by_ciend(bedpe):
-        '''
-        Undo adjustments to BEDPE coordinates for the VCF END field based on confidence intervals
-        '''
-        end = bedpe.s2
-        if bedpe.o2 == '-' and bedpe.svtype == 'BND':
-            end += 1
-    
-        if 'CIEND=' in bedpe.info1:     
-            ciend = re.split('=|,', ''.join(filter(lambda x: 'CIEND=' in x, bedpe.info1.split(';'))))
-            end -= int(ciend[1])
-        return end
+        if strand == '-' and bedpe.svtype == 'BND':
+            coordinate += 1
+        if info_tag in bedpe.info:
+            value_array = re.split('=|,', ''.join(filter(lambda x: info_tag in x, bedpe.info.split(';'))))
+            coordinate -= int(value_array[1])
+        return coordinate
 
     @staticmethod
     def determine_sep(o2):
@@ -70,7 +55,11 @@ class BedpeToVcfConverter(object):
         '''
         Convert a bedpe object to Vcf object(s). Returns a list of entries.
         '''
-        b1 = self.adjust_by_cipos(bedpe)
+        adjust_tag1, adjust_tag2 = 'CIPOS', 'CIEND'
+        if bedpe.malformedFlag == 1:
+            adjust_tag2, adjust_tag1 = adjust_tag1, adjust_tag2
+
+        b1 = self.adjust_by_tag(bedpe, adjust_tag1, bedpe.o1, bedpe.s1)
         primary_bedpe_list = [
                 bedpe.c1, 
                 b1,
@@ -85,7 +74,7 @@ class BedpeToVcfConverter(object):
         to_return = [var]
 
         if bedpe.svtype == 'BND':
-            b2 = self.adjust_by_ciend(bedpe)
+            b2 = self.adjust_by_tag(bedpe, adjust_tag2, bedpe.o2, bedpe.s2)
             var.var_id += '_1'
             var.alt = self.bnd_alt_string(bedpe.o1, bedpe.o2, bedpe.c2, b2)
             

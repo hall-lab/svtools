@@ -39,24 +39,45 @@ class Bedpe(object):
             return float(score)
         else:
             return score
+    @property
+    def info(self):
+        '''
+        Return the appropriate info field if only one is required. Info from the primary variant is preferred if available.
+        '''
+        if self.info1 == 'MISSING':
+            return self.info2
+        else:
+            return self.info1
+
+    def set_info(self, field, value):
+        '''
+        Add the info field to the BEDPE line info fields. As BEDPE lines don't know about their headers this is not a safe operation.
+        Doesn't add to info field if it is the null character. Probably this is wrong.
+        '''
+        new_tag = ';' + str(field);
+        if value is not None:
+            new_tag += '=' + str(value)
+        if self.malformedFlag != 1:
+            self.info1 = self.info1 + new_tag
+        if self.malformedFlag != 2 and self.info2 != '.':
+            self.info2 = self.info2 + new_tag
 
     def check_malformed(self):
         if self.info1 == 'MISSING':
             self.malformedFlag = 1
-            self.info1 = self.info2
         if self.info2 == 'MISSING':
             self.malformedFlag = 2      
 
     def retrieve_svtype(self):
         try:
-            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.info1.split(';'))))[1]
+            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.info.split(';'))))[1]
         except IndexError:
             raise ValueError
         return svtype
 
     def retrieve_af(self):
         try:
-            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.info1.split(';'))))[1]
+            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.info.split(';'))))[1]
         except IndexError:
             af = None
         return af

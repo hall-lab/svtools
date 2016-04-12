@@ -7,15 +7,12 @@ from svtools.bedpe import Bedpe
 
 def get_var_string(bedpe, cohort_name):
     if len(bedpe.cohort_vars) > 0:
-        bedpe.info1= bedpe.info1 + ';' + cohort_name + '_AF=' + ','.join([value for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
-        bedpe.info1 = bedpe.info1 + ';' + cohort_name + '_VarID=' + ','.join([key for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)])
+        bedpe.set_info(cohort_name + '_AF', ','.join([value for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)]))
+        bedpe.set_info(cohort_name + '_VarID', ','.join([key for (key, value) in sorted(bedpe.cohort_vars.items(), key=itemgetter(1),reverse=True)]))
     else:
-        bedpe.info1 = bedpe.info1 + ';' + cohort_name + '_AF=' + str(0)
-        bedpe.info1 = bedpe.info1 + ';' + cohort_name + '_VarID=' + 'NONE'
-    return '\t'.join([bedpe.c1, str(bedpe.s1), str(bedpe.e1),
-        bedpe.c2, str(bedpe.s2), str(bedpe.e2),
-        bedpe.name, str(bedpe.score), bedpe.o1, bedpe.o2,
-        bedpe.svtype, bedpe.filter, bedpe.info1, bedpe.info2, '\t'.join(bedpe.misc)]) + '\n'
+        bedpe.set_info(cohort_name + '_AF', str(0))
+        bedpe.set_info(cohort_name + '_VarID', 'NONE')
+    return str(bedpe)
 
 def add(a_bedpe, b_bedpe, max_distance):
     if a_bedpe.svtype ==  b_bedpe.svtype:
@@ -122,7 +119,7 @@ def varLookup(aFile, bFile, bedpe_out, max_distance, pass_prefix, cohort_name):
                 sys.exit(1)
             for b in bList:
                 add(a,b,max_distance)
-            bedpe_out.write(get_var_string(a, cohort_name))
+            bedpe_out.write(get_var_string(a, cohort_name) + '\n')
 
 def description():
     return 'look for variants common between two BEDPE files'
