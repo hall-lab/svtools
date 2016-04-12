@@ -16,10 +16,10 @@ You might want to use pyenv virtualenv.
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv> 
 We require python 2.7.X 
 The creation of the pyenv and activation looks like this in our environment
-  <pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
-  pyenv activate</pre></code> 
+<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+pyenv activate svtools_install_instructions-2.7.9</pre></code> 
 Once you have your python environment set up you will want to check out svtools from the hall-lab github repository.
- <pre><code>git clone https://github.com/hall-lab/svtools.git svtools_test</code></pre>
+<pre><code>git clone https://github.com/hall-lab/svtools.git svtools_test</code></pre>
 Now install the dependencies suggested in the requiremnts files
 <pre><code>pip install nose
 pip install coverage
@@ -35,7 +35,21 @@ Finally we can spot check our svtools installation and observe the version numbe
 <pre><code>svtools --version</pre></code>
 
 ### From a conda package TODO
-### Using pip package on pypi TODO
+### Using pip package from pypi TODO
+First you will need to prepare your python environment.
+You might want to use pyenv virtualenv.
+You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
+We require python 2.7.X
+The creation of the pyenv and activation looks like this in our environment
+<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+pyenv activate svtools_install_instructions-2.7.9</pre></code>
+Now you will need to satisfy the pysam dependency
+<pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
+Then you should be able to just install the svtools package
+<pre><code>pip install svtools</pre></code>
+You can spot check your svtools install by running
+<pre><code>svtools --version</pre></code>
+
 ### Downloading a github tarball TODO
 
 ## Releasing a new version
