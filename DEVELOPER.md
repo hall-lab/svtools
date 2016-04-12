@@ -25,7 +25,7 @@ Then you should be able to install the svtools package from pypi
 You can spot check your svtools install by running
 <pre><code>svtools --version</pre></code>
 
-### From the git repo
+<h3> From the git repo</h3>
 First you will need to prepare your python environment.
 You might want to use pyenv virtualenv. 
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv> 
