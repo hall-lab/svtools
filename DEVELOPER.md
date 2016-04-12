@@ -5,10 +5,25 @@ contributing to svtools development.
 
 ## Installing svtools
 
-1. from a repo
-1. from a conda thing
-1. using pip package on pypi
-1. downloading a github tarball
+1. Using pip package from pypi
+1. From the git repo
+1. From a conda package
+1. Downloading a github tarball
+
+### Using pip package from pypi
+First you will need to prepare your python environment.
+You might want to use pyenv virtualenv.
+You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
+We require python 2.7.X
+The creation of the pyenv and activation looks like this in our environment
+<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+pyenv activate svtools_install_instructions-2.7.9</pre></code>
+Now you will need to satisfy the pysam dependency
+<pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
+Then you should be able to just install the svtools package
+<pre><code>pip install svtools</pre></code>
+You can spot check your svtools install by running
+<pre><code>svtools --version</pre></code>
 
 ### From the git repo
 First you will need to prepare your python environment.
@@ -35,21 +50,6 @@ Finally we can spot check our svtools installation and observe the version numbe
 <pre><code>svtools --version</pre></code>
 
 ### From a conda package TODO
-### Using pip package from pypi TODO
-First you will need to prepare your python environment.
-You might want to use pyenv virtualenv.
-You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
-We require python 2.7.X
-The creation of the pyenv and activation looks like this in our environment
-<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
-pyenv activate svtools_install_instructions-2.7.9</pre></code>
-Now you will need to satisfy the pysam dependency
-<pre><code>pip install 'pysam>=0.8.1,<0.9.0'</pre></code>
-Then you should be able to just install the svtools package
-<pre><code>pip install svtools</pre></code>
-You can spot check your svtools install by running
-<pre><code>svtools --version</pre></code>
-
 ### Downloading a github tarball TODO
 
 ## Releasing a new version
