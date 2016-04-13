@@ -10,11 +10,47 @@ class BedpeTests(TestCase):
         entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b1 = Bedpe(entry1)
         self.assertEqual(b1.malformedFlag, 1)
-        self.assertNotEqual(b1.info1, 'MISSING') 
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'MISSING' ]
         b2 = Bedpe(entry2)
         self.assertEqual(b2.malformedFlag, 2)
         self.assertEqual(b2.info1, entry2[12]) 
+
+    def test_info(self):
+        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
+        b1 = Bedpe(entry1)
+        self.assertEqual(b1.info, 'SVTYPE=BND;AF=0.2')
+        
+        entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'MISSING' ]
+        b2 = Bedpe(entry2)
+        self.assertEqual(b2.info, 'SVTYPE=BND;AF=0.2')
+
+        entry3 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'SECONDARY' ]
+        b3 = Bedpe(entry3)
+        self.assertEqual(b3.info, 'SVTYPE=BND;AF=0.2')
+
+    def test_set_info(self):
+        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND' ]
+        b1 = Bedpe(entry1)
+        b1.set_info('AF', '0.2')
+        self.assertEqual(b1.info, 'SVTYPE=BND;AF=0.2')
+        
+        entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND', 'MISSING' ]
+        b2 = Bedpe(entry2)
+        b2.set_info('AF', '0.2')
+        self.assertEqual(b2.info, 'SVTYPE=BND;AF=0.2')
+
+        entry3 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND', 'SECONDARY' ]
+        b3 = Bedpe(entry3)
+        b3.set_info('AF', '0.2')
+        self.assertEqual(b3.info1, 'SVTYPE=BND;AF=0.2')
+        self.assertEqual(b3.info2, 'SECONDARY;AF=0.2')
+
+        entry4 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND', '.' ]
+        b4 = Bedpe(entry4)
+        b4.set_info('PRESENT', None)
+        self.assertEqual(b4.info, 'SVTYPE=BND;PRESENT')
+        self.assertEqual(b4.info2, '.')
+
 
     def test_retrieve_svtype(self):
         entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]

@@ -84,11 +84,11 @@ def vcfToBedpe(vcf_file, bedpe_out):
         del sec_bnds[key]
     if bnds is not None:
         for bnd in bnds:
-            sys.stderr.write('Warning: missing secondary multiline variant at ID:' + unique_name + '\n')
+            sys.stderr.write('Warning: missing secondary multiline variant at ID:' + bnd + '\n')
             bedpe_out.write(str(converter.convert(bnds[bnd], None)) + '\n')
     if sec_bnds is not None:
         for bnd in sec_bnds:
-            sys.stderr.write('Warning: missing primary multiline variant at ID:' + unique_name + '\n')
+            sys.stderr.write('Warning: missing primary multiline variant at ID:' + bnd + '\n')
             bedpe_out.write(str(converter.convert(None, sec_bnds[bnd])) + '\n')
             
     # close the files
