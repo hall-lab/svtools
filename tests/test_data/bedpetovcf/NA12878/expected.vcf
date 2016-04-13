@@ -1,5 +1,5 @@
 ##fileformat=VCFv4.2
-##fileDate=20160411
+##fileDate=20160412
 ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
 ##INFO=<ID=POS,Number=1,Type=Integer,Description="Position of the variant described in this record">
 ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">

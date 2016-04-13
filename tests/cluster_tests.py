@@ -4,7 +4,7 @@ from svtools.cluster import Cluster
 
 class ClusterTests(TestCase):
     def test_can_add(self):
-        bedpe = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
+        bedpe = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b = Bedpe(bedpe)
 
         c = Cluster()
@@ -51,10 +51,10 @@ class ClusterTests(TestCase):
         self.assertFalse(c.can_add(b, 1))
 
     def test_add(self):
-        bedpe1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
+        bedpe1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b1 = Bedpe(bedpe1)
 
-        bedpe2= [ '1', '195', '305', '2', '295', '405', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.3' ]
+        bedpe2= [ '1', '195', '305', '2', '295', '405', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'MISSING', 'SVTYPE=BND;AF=0.3' ]
         b2 = Bedpe(bedpe2)
 
         c = Cluster()
@@ -85,7 +85,7 @@ class ClusterTests(TestCase):
         self.assertEqual(c.strand_b, '-')
 
     def test_get_cluster_string(self):
-        bedpe = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
+        bedpe = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b = Bedpe(bedpe)
 
         c = Cluster()

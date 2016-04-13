@@ -49,6 +49,12 @@ def vcfToBedpe(vcf_file, bedpe_out):
                         'STRAND_B',
                         'TYPE',
                         'FILTER',
+                        'NAME_A',
+                        'REF_A',
+                        'ALT_A',
+                        'NAME_B',
+                        'REF_B',
+                        'ALT_B',
                         'INFO_A',
                         'INFO_B']
 

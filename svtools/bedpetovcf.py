@@ -18,7 +18,7 @@ def bedpeToVcf(bedpe_file, vcf_out):
                 header.append(line)
                 continue
             elif line[0] == '#' and line[1] != '#':    
-                sample_list_str = line.rstrip().split('\t', 14)[-1]
+                sample_list_str = line.rstrip().split('\t', 20)[-1]
                 header.append('\t'.join([
                                     '#CHROM',
                                     'POS',

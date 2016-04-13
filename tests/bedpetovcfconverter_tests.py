@@ -10,7 +10,7 @@ class TestBedpeToVcfConverter(TestCase):
         self.converter = BedpeToVcfConverter(vcf)
 
     def test_adjust_by_tag(self):
-        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]
+        entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]
         b1 = Bedpe(entry1)
         self.assertEqual(self.converter.adjust_by_tag(b1, 'CIPOS', '+', 200), 200)
         self.assertEqual(self.converter.adjust_by_tag(b1, 'CIPOS', '-', 200), 201)
