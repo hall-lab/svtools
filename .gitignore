@@ -2,3 +2,4 @@
 *~
 .travis.yml.old
 .travis.yml.new
+*.old
