@@ -63,9 +63,9 @@ class BedpeToVcfConverter(object):
         primary_bedpe_list = [
                 bedpe.c1, 
                 b1,
-                bedpe.name,
-                'N',
-                '<' + str(bedpe.svtype) + '>', #ALT
+                bedpe.orig_name1,
+                bedpe.orig_ref1,
+                bedpe.orig_alt1,
                 bedpe.score,
                 bedpe.filter,
                 bedpe.info1
@@ -75,15 +75,13 @@ class BedpeToVcfConverter(object):
 
         if bedpe.svtype == 'BND':
             b2 = self.adjust_by_tag(bedpe, adjust_tag2, bedpe.o2, bedpe.s2)
-            var.var_id += '_1'
-            var.alt = self.bnd_alt_string(bedpe.o1, bedpe.o2, bedpe.c2, b2)
             
             secondary_bedpe_list = [
                     bedpe.c2,
                     b2,
-                    bedpe.name + '_2',
-                    'N',
-                    self.bnd_alt_string(bedpe.o2, bedpe.o1, bedpe.c1, b1),
+                    bedpe.orig_name2,
+                    bedpe.orig_ref2,
+                    bedpe.orig_alt2,
                     bedpe.score,
                     bedpe.filter,
                     bedpe.info2

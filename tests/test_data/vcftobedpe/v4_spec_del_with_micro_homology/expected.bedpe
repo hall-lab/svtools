@@ -1,5 +1,5 @@
 ##fileformat=BEDPE
-##fileDate=20160308
+##fileDate=20160412
 ##reference=1000GenomesPilot-NCBI36
 ##assembly=ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/sv/breakpoint_assemblies.fasta
 ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
@@ -11,5 +11,5 @@
 ##ALT=<ID=DEL,Description="Deletion">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">
-#CHROM_A	START_A	END_A	CHROM_B	START_B	END_B	ID	QUAL	STRAND_A	STRAND_B	TYPE	FILTER	INFO_A	INFO_B	FORMAT	NA00001
-1	2827694	2827694	1	2827762	2827762	rs2376870	.	+	-	DEL	PASS	END=2827762;HOMLEN=1;HOMSEQ=G;SVLEN=-68;SVTYPE=DEL;POS=2827694	.	GT:GQ	1/1:13.9
+#CHROM_A	START_A	END_A	CHROM_B	START_B	END_B	ID	QUAL	STRAND_A	STRAND_B	TYPE	FILTER	NAME_A	REF_A	ALT_A	NAME_B	REF_B	ALT_B	INFO_A	INFO_B	FORMAT	NA00001
+1	2827694	2827694	1	2827762	2827762	rs2376870	.	+	-	DEL	PASS	rs2376870	CGTGGATGCGGGGAC	C	.	.	.	END=2827762;HOMLEN=1;HOMSEQ=G;SVLEN=-68;SVTYPE=DEL;POS=2827694	.	GT:GQ	1/1:13.9

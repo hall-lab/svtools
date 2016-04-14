@@ -114,17 +114,25 @@ class VcfToBedpeConverter(object):
         s1, e1 = self.adjust_coordinate(vcf_variant, 'CIPOS', s1, e1)
         s2, e2 = self.adjust_coordinate(vcf_variant, 'CIEND', s2, e2)
 
+        orig_name_a = vcf_variant.var_id
+        orig_ref_a = vcf_variant.ref
+        orig_alt_a = vcf_variant.alt
         info_a = vcf_variant.get_info_string()
         if primary_variant is None:
             info_a = "MISSING"
+            orig_name_a = orig_ref_a = orig_alt_a = '.'
             c1, s1, e1, o1, c2, s2, e2, o2 = c2, s2, e2, o2, c1, s1, e1, o1
 
         info_b = '.'
+        orig_name_b = orig_ref_b = orig_alt_b = '.'
         if sv_type == 'BND':
             if secondary_variant is None:
                 info_b = "MISSING"
             else:
                 info_b = secondary_variant.get_info_string()
+                orig_name_b = secondary_variant.var_id
+                orig_ref_b = secondary_variant.ref
+                orig_alt_b = secondary_variant.alt
 
         # For MANTA single-ended BNDs, EVENT is not present. 
         # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache? 
@@ -146,6 +154,12 @@ class VcfToBedpeConverter(object):
             o2,
             sv_type,
             vcf_variant.filter,
+            orig_name_a,
+            orig_ref_a,
+            orig_alt_a,
+            orig_name_b,
+            orig_ref_b,
+            orig_alt_b,
             info_a,
             info_b,
             vcf_variant.get_format_string(),

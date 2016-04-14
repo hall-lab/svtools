@@ -15,10 +15,16 @@ class Bedpe(object):
         self.o2 = bed_list[9]
         self.svtype = bed_list[10]
         self.filter = bed_list[11]
+        self.orig_name1 = bed_list[12]
+        self.orig_ref1 = bed_list[13]
+        self.orig_alt1 = bed_list[14]
+        self.orig_name2 = bed_list[15]
+        self.orig_ref2 = bed_list[16]
+        self.orig_alt2 = bed_list[17]
         self.malformedFlag = 0
-        self.info1 = bed_list[12]
-        self.info2 = bed_list[13]
-        self.misc = bed_list[14:]
+        self.info1 = bed_list[18]
+        self.info2 = bed_list[19]
+        self.misc = bed_list[20:]
         self.check_malformed()
 
         # FIXME This is only really needed for varlookup. Something more general would be helpful
@@ -99,6 +105,12 @@ class Bedpe(object):
             self.o2,
             self.svtype,
             self.filter,
+            self.orig_name1,
+            self.orig_ref1,
+            self.orig_alt1,
+            self.orig_name2,
+            self.orig_ref2,
+            self.orig_alt2,
             self.info1,
             self.info2] + 
             self.misc

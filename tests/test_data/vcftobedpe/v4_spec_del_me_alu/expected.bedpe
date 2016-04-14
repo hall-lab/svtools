@@ -1,5 +1,5 @@
 ##fileformat=BEDPE
-##fileDate=20160308
+##fileDate=20160412
 ##reference=1000GenomesPilot-NCBI36
 ##assembly=ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/sv/breakpoint_assemblies.fasta
 ##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
@@ -11,5 +11,5 @@
 ##ALT=<ID=DEL:ME:ALU,Description="Deletion of ALU element">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">
-#CHROM_A	START_A	END_A	CHROM_B	START_B	END_B	ID	QUAL	STRAND_A	STRAND_B	TYPE	FILTER	INFO_A	INFO_B	FORMAT	NA00001
-2	14477062	14477102	2	14477369	14477413	.	12.0	+	-	DEL	PASS	CIEND=-12,32;CIPOS=-22,18;END=14477381;SVLEN=-297;SVTYPE=DEL;POS=14477084	.	GT:GQ	0/1:12
+#CHROM_A	START_A	END_A	CHROM_B	START_B	END_B	ID	QUAL	STRAND_A	STRAND_B	TYPE	FILTER	NAME_A	REF_A	ALT_A	NAME_B	REF_B	ALT_B	INFO_A	INFO_B	FORMAT	NA00001
+2	14477062	14477102	2	14477369	14477413	.	12.0	+	-	DEL	PASS	.	C	<DEL:ME:ALU>	.	.	.	CIEND=-12,32;CIPOS=-22,18;END=14477381;SVLEN=-297;SVTYPE=DEL;POS=14477084	.	GT:GQ	0/1:12
