@@ -32,6 +32,7 @@ setup(
     include_package_data=True,
 
     install_requires=['pysam>=0.8.1', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
+    scripts=['scripts/create_coordinates'],
     
     entry_points={
         'console_scripts': [
