@@ -29,7 +29,6 @@ class Variant(object):
         self.gts = dict()
         self.gts_string = None
 
-        
         # fill in empty sample genotypes
         if len(var_list) < 8:
             sys.stderr.write('\nError: VCF file must have at least 8 columns\n')
@@ -37,8 +36,9 @@ class Variant(object):
 
         # make a genotype for each sample at variant
         format_field_tags = var_list[8].split(':')
-        self._parse_genotypes(format_field_tags, var_list[9:])
-        if fixed_genotypes == True:          
+        self.gts = self._parse_genotypes(format_field_tags, var_list[9:])
+        self.update_active_format_list()
+        if fixed_genotypes == True:
             self.gts_string='\t'.join(var_list[9:])
 
         self.info = dict()
@@ -52,17 +52,18 @@ class Variant(object):
         '''
         Parse the genotype strings
         '''
+        gts = dict()
         for index, sample_string in enumerate(genotype_array):
             sample_name = self.sample_list[index]
             try:
                 sample_field = sample_string.split(':')
                 # sample_name HAS to match the same order.
-                self.gts[sample_name] = Genotype(self, sample_field[0])
+                gts[sample_name] = Genotype(self, sample_field[0])
                 # import the existing fmt fields
-                self.gts[sample_name].set_formats(format_field_tags, sample_field)
+                gts[sample_name].set_formats(format_field_tags, sample_field)
             except IndexError:
-                self.gts[sample_name] = Genotype(self, './.')
-        self.update_active_format_list()
+                gts[sample_name] = Genotype(self, './.')
+        return gts
 
     def update_active_format_list(self):
         '''
@@ -115,7 +116,7 @@ class Variant(object):
             if f.id in self.active_formats:
                 f_list.append(f.id)
         return ':'.join(f_list)
-    
+
     def get_gt_string(self):
         '''
         Construct the genotype string. If fixed_genotypes was passed in, the cached string is used.
