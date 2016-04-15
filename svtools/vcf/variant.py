@@ -26,8 +26,7 @@ class Variant(object):
         self.format_set = {i.id for i in vcf.format_list}
         self.active_formats = set()
         self.active_format_list = list()
-        self.gts = dict()
-        self.gts_string = None
+        self.gts = None
 
         # fill in empty sample genotypes
         if len(var_list) < 8:
@@ -35,11 +34,10 @@ class Variant(object):
             exit(1)
 
         # make a genotype for each sample at variant
-        format_field_tags = var_list[8].split(':')
-        self.gts = self._parse_genotypes(format_field_tags, var_list[9:])
+        self.format_string = var_list[8]
+        self.active_formats = { i for i in self.format_string.split(':') }
         self.update_active_format_list()
-        if fixed_genotypes == True:
-            self.gts_string='\t'.join(var_list[9:])
+        self.gts_string = '\t'.join(var_list[9:])
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
@@ -111,26 +109,34 @@ class Variant(object):
         '''
         Construct the FORMAT field containing the names of the fields in the Genotype columns
         '''
-        f_list = list()
-        for f in self.format_list:
-            if f.id in self.active_formats:
-                f_list.append(f.id)
-        return ':'.join(f_list)
-
-    def get_gt_string(self):
-        '''
-        Construct the genotype string. If fixed_genotypes was passed in, the cached string is used.
-        Otherwise it is constructed from the Genotype objects.
-        '''
-        if self.gts_string:
-            return self.gts_string
+        if self.format_string is not None:
+            return self.format_string
         else:
-            return '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
+            f_list = list()
+            for f in self.format_list:
+                if f.id in self.active_formats:
+                    f_list.append(f.id)
+            return ':'.join(f_list)
+
+    def get_gt_string(self, use_cached_gt_string=False):
+        '''
+        Construct the genotype string.
+        '''
+        if self.gts:
+            if use_cached_gt_string:
+                return self.gts_string
+            else:
+                return '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
+        else:
+            return self.gts_string
 
     def genotype(self, sample_name):
         '''
-        Return the Genotype object for the request sample
+        Return the Genotype object for the requested sample
         '''
+        if self.gts is None:
+            self.gts = self._parse_genotypes(self.format_string.split(':'), self.gts_string.split('\t'))
+            self.format_string = None
         try:
             return self.gts[sample_name]
         except KeyError as e:
@@ -141,8 +147,7 @@ class Variant(object):
         '''
         Return the String representation for this line
         '''
-        if len(self.active_formats) == 0:
-            s = '\t'.join(map(str,[
+        fields = [
                 self.chrom,
                 self.pos,
                 self.var_id,
@@ -151,35 +156,16 @@ class Variant(object):
                 self.qual,
                 self.filter,
                 self.get_info_string()
-            ]))
-        elif use_cached_gt_string == False:
-            s = '\t'.join(map(str,[
-                self.chrom,
-                self.pos,
-                self.var_id,
-                self.ref,
-                self.alt,
-                self.qual,
-                self.filter,
-                self.get_info_string(),
-                self.get_format_string(),
-                '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
-            ]))
-        else:
-            if self.gts_string == None :
-                sys.stderr.write("Error no gt_string\n")
-                sys.exit(1);
+                ]
+
+        if not (len(self.active_formats) == 0 and self.format_string is None):
+            gts_string = self.get_gt_string(use_cached_gt_string)
+            if gts_string is None:
+                sys.stderr.write("Unable to construct or retrieve genotype string\n")
+                sys.exit(1)
             else:
-                s = '\t'.join(map(str,[
-                    self.chrom,
-                    self.pos,
-                    self.var_id,
-                    self.ref,
-                    self.alt,
-                    self.qual,
-                    self.filter,
-                    self.get_info_string(),
-                    self.get_format_string(),
-                    self.gts_string
-            ]))
-        return s
+                fields += [
+                        self.get_format_string(),
+                        gts_string
+                    ]
+        return '\t'.join(map(str, fields))
