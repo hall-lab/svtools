@@ -2,7 +2,16 @@ from svtools.vcf.genotype import Genotype
 import sys
 
 class Variant(object):
+    '''
+    Class for storing information stored in a VCF line
+    '''
     def __init__(self, var_list, vcf, fixed_genotypes=False):
+        '''
+        Initialize values.
+
+        If fixed_genotypes is True then a string corresponding to the
+        genotype portion of the line is cached for printing later.
+        '''
         self.chrom = var_list[0]
         self.pos = int(var_list[1])
         self.var_id = var_list[2]
@@ -23,7 +32,6 @@ class Variant(object):
         
         # fill in empty sample genotypes
         if len(var_list) < 8:
-            # FIXME This should be an exception
             sys.stderr.write('\nError: VCF file must have at least 8 columns\n')
             exit(1)
 
@@ -49,6 +57,10 @@ class Variant(object):
             self.info[i[0]] = i[1]
 
     def update_active_format_list(self):
+        '''
+        Update the set of this lines 'active' formats.
+        This tracks which of the listed formats are actually being used.
+        '''
         new_list = list()
         for format in self.format_list:
             if format.id in self.active_formats:
@@ -56,17 +68,26 @@ class Variant(object):
         self.active_format_list = new_list
 
     def set_info(self, field, value):
+        '''
+        Set value of the specified field in the INFO section.
+        The INFO field must exist already.
+        '''
         if field in [i.id for i in self.info_list]:
             self.info[field] = value
         else:
-            # FIXME This should be an exception
             sys.stderr.write('\nError: invalid INFO field, \"' + field + '\"\n')
             exit(1)
 
     def get_info(self, field):
+        '''
+        Get a value for the given INFO field
+        '''
         return self.info[field]
 
     def get_info_string(self):
+        '''
+        Construct the INFO string for printing. Order is matched to the header.
+        '''
         i_list = list()
         for info_field in self.info_list:
             if info_field.id in self.info.keys():
@@ -78,6 +99,9 @@ class Variant(object):
         return ';'.join(i_list)
 
     def get_format_string(self):
+        '''
+        Construct the FORMAT field containing the names of the fields in the Genotype columns
+        '''
         f_list = list()
         for f in self.format_list:
             if f.id in self.active_formats:
@@ -85,12 +109,19 @@ class Variant(object):
         return ':'.join(f_list)
     
     def get_gt_string(self):
+        '''
+        Construct the genotype string. If fixed_genotypes was passed in, the cached string is used.
+        Otherwise it is constructed from the Genotype objects.
+        '''
         if self.gts_string:
             return self.gts_string
         else:
             return '\t'.join(self.genotype(s).get_gt_string() for s in self.sample_list)
 
     def genotype(self, sample_name):
+        '''
+        Return the Genotype object for the request sample
+        '''
         try:
             return self.gts[sample_name]
         except KeyError as e:
@@ -98,6 +129,9 @@ class Variant(object):
             sys.exit(1)
 
     def get_var_string(self, use_cached_gt_string=False):
+        '''
+        Return the String representation for this line
+        '''
         if len(self.active_formats) == 0:
             s = '\t'.join(map(str,[
                 self.chrom,
