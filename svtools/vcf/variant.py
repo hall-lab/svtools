@@ -5,7 +5,7 @@ class Variant(object):
     '''
     Class for storing information stored in a VCF line
     '''
-    def __init__(self, var_list, vcf, fixed_genotypes=False):
+    def __init__(self, var_list, vcf):
         '''
         Initialize values.
 
