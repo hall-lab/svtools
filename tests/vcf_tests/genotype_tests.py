@@ -19,6 +19,13 @@ class TestGenotype(TestCase):
         self.vcf.add_header(header_lines)
         self.variant_line = '1	820915	5838_1	N	]GL000232.1:20940]N	0.00	.	SVTYPE=BND;STRANDS=-+:9;IMAFLAG	GT:SU	0/0:9'
         self.variant = Variant(self.variant_line.split('\t'), self.vcf)
+
+    def test_equal(self):
+        g1 = Genotype(self.variant, '0/1')
+        g1.set_format('INACTIVE', 10)
+        g2 = Genotype(self.variant, '0/1')
+        g2.set_format('INACTIVE', 10)
+        self.assertEqual(g1, g2)
     
     def test_set_format(self):
         g = Genotype(self.variant, '0/1')

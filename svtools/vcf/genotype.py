@@ -11,6 +11,9 @@ class Genotype(object):
         self.format = dict()
         self.variant = variant
         self.set_format('GT', gt)
+
+    def __eq__(self, other):
+        return self.get_gt_string() == other.get_gt_string()
     
     def set_formats(self, fields, values):
         '''
