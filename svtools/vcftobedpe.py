@@ -64,7 +64,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     bedpe_out.write('\t'.join(final_header_line) + '\n')
 
         v = line.rstrip().split('\t')
-        var = svtools.vcf.variant.Variant(v, vcf, fixed_genotypes=True)
+        var = svtools.vcf.variant.Variant(v, vcf)
         var.set_info("POS", var.pos)
         unique_name = var.var_id
         if 'EVENT' in var.info:

@@ -56,7 +56,7 @@ class UpdateInfo(object):
                 continue
 
             v = line.rstrip().split('\t')
-            var = Variant(v, vcf, fixed_genotypes=True)
+            var = Variant(v, vcf)
 
             # extract genotypes from VCF
             num_alt = len(var.alt.split(','))

@@ -1,6 +1,7 @@
 from unittest import TestCase, main
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
+from svtools.vcf.genotype import Genotype
 
 class TestVariant(TestCase):
     def setUp(self):
@@ -18,6 +19,19 @@ class TestVariant(TestCase):
         self.vcf.add_header(header_lines)
         self.variant_line = '1	820915	5838_1	N	]GL000232.1:20940]N	0.00	.	SVTYPE=BND;STRANDS=-+:9;IMAFLAG	GT:SU	0/0:9	1/1:15'
         self.variant = Variant(self.variant_line.split('\t'), self.vcf)
+
+    def test_parse_genotypes(self):
+        format_field_tags = ['GT', 'SU']
+        genotype_field_strings = ['0/1:20', '0/0:15']
+        parsed_dict = self.variant._parse_genotypes(format_field_tags, genotype_field_strings)
+
+        na12878_gt = Genotype(self.variant, '0/1')
+        na12878_gt.set_formats(format_field_tags, genotype_field_strings[0].split(':')) 
+        na0001_gt = Genotype(self.variant, '0/0')
+        na0001_gt.set_formats(format_field_tags, genotype_field_strings[1].split(':'))
+        expected_genotype_dict = { 'NA12878': na12878_gt, 'NA0001': na0001_gt }
+
+        self.assertEqual(parsed_dict, expected_genotype_dict)
 
     def test_set_info(self):
         self.variant.set_info('SVTYPE', 'INV')
@@ -49,6 +63,9 @@ class TestVariant(TestCase):
 
     def test_var_string(self):
         self.assertEqual(self.variant.get_var_string(), self.variant_line)
+        self.variant.genotype('NA12878').set_format('GT', './.')
+        self.assertEqual(self.variant.get_var_string(use_cached_gt_string=True), self.variant_line)
+        self.assertNotEqual(self.variant.get_var_string(), self.variant_line)
 
 if __name__ == "__main__":
     main()

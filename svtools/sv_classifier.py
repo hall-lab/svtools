@@ -448,7 +448,7 @@ def sv_classify(vcf_in, vcf_out, gender_file, exclude_file, ae_dict, f_overlap, 
             vcf_out.write(line)
             continue
         
-        var = Variant(v, vcf, True)
+        var = Variant(v, vcf)
 
         # check intersection with mobile elements
         if ae_dict is not None and var.info['SVTYPE'] in ['DEL']:
