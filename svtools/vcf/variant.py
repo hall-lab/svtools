@@ -155,7 +155,7 @@ class Variant(object):
                 self.get_info_string()
                 ]
 
-        if len(self.active_formats) != 0:
+        if self.active_formats:
             gts_string = self.get_gt_string(use_cached_gt_string)
             if gts_string is None:
                 sys.stderr.write("Unable to construct or retrieve genotype string\n")
