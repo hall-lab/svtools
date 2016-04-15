@@ -37,15 +37,7 @@ class Variant(object):
 
         # make a genotype for each sample at variant
         format_field_tags = var_list[8].split(':')
-        for s in self.sample_list:
-            try:
-                sample_field = var_list[vcf.sample_to_col(s)].split(':')
-                self.gts[s] = Genotype(self, sample_field[0])
-                # import the existing fmt fields
-                self.gts[s].set_formats(format_field_tags, sample_field)
-            except IndexError:
-                self.gts[s] = Genotype(self, './.')
-        self.update_active_format_list()
+        self._parse_genotypes(format_field_tags, var_list[9:])
         if fixed_genotypes == True:          
             self.gts_string='\t'.join(var_list[9:])
 
@@ -55,6 +47,22 @@ class Variant(object):
             if len(i) == 1:
                 i.append(True)
             self.info[i[0]] = i[1]
+
+    def _parse_genotypes(self, format_field_tags, genotype_array):
+        '''
+        Parse the genotype strings
+        '''
+        for index, sample_string in enumerate(genotype_array):
+            sample_name = self.sample_list[index]
+            try:
+                sample_field = sample_string.split(':')
+                # sample_name HAS to match the same order.
+                self.gts[sample_name] = Genotype(self, sample_field[0])
+                # import the existing fmt fields
+                self.gts[sample_name].set_formats(format_field_tags, sample_field)
+            except IndexError:
+                self.gts[sample_name] = Genotype(self, './.')
+        self.update_active_format_list()
 
     def update_active_format_list(self):
         '''
