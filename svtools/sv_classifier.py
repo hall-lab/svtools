@@ -207,10 +207,11 @@ def calc_params(vcf_path):
             var = Variant(v, vcf)
     
             for sample in vcf_samples:
-                if var.gts[sample].get_format('GT') != './.':
-                    log2r = math.log((float(var.gts[sample].get_format('CN'))+ epsilon)/2,2)  #to avoid log(0)
+                sample_genotype = var.genotype(sample)
+                if sample_genotype.get_format('GT') != './.':
+                    log2r = math.log((float(sample_genotype.get_format('CN'))+ epsilon)/2,2)  #to avoid log(0)
                     tSet.append(CN_rec(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-                        var.gts[sample].get_format('GT'),  var.gts[sample].get_format('CN'), var.gts[sample].get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
+                        sample_genotype.get_format('GT'),  sample_genotype.get_format('CN'), sample_genotype.get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
 
     df=pd.DataFrame(tSet, columns=CN_rec._fields)
     #exclude from training data, DELs and DUPs with CN in the tails of the distribution
