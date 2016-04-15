@@ -109,14 +109,11 @@ class Variant(object):
         '''
         Construct the FORMAT field containing the names of the fields in the Genotype columns
         '''
-        if self.format_string is not None:
-            return self.format_string
-        else:
-            f_list = list()
-            for f in self.format_list:
-                if f.id in self.active_formats:
-                    f_list.append(f.id)
-            return ':'.join(f_list)
+        f_list = list()
+        for f in self.format_list:
+            if f.id in self.active_formats:
+                f_list.append(f.id)
+        return ':'.join(f_list)
 
     def get_gt_string(self, use_cached_gt_string=False):
         '''
@@ -158,7 +155,7 @@ class Variant(object):
                 self.get_info_string()
                 ]
 
-        if not (len(self.active_formats) == 0 and self.format_string is None):
+        if len(self.active_formats) != 0:
             gts_string = self.get_gt_string(use_cached_gt_string)
             if gts_string is None:
                 sys.stderr.write("Unable to construct or retrieve genotype string\n")
