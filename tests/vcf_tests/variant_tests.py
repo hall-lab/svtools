@@ -63,6 +63,9 @@ class TestVariant(TestCase):
 
     def test_var_string(self):
         self.assertEqual(self.variant.get_var_string(), self.variant_line)
+        self.variant.genotype('NA12878').set_format('GT', './.')
+        self.assertEqual(self.variant.get_var_string(use_cached_gt_string=True), self.variant_line)
+        self.assertNotEqual(self.variant.get_var_string(), self.variant_line)
 
 if __name__ == "__main__":
     main()
