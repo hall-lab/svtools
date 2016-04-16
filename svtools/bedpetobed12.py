@@ -76,7 +76,7 @@ class BedpetoBlockedBedConverter(object):
         '''
         second_start = self.coordinate_buffer
         if strand == '+':
-           second_start += (stop - start)
+            second_start += (stop - start)
         return (0, second_start)
 
     def convert(self, bedpe):
