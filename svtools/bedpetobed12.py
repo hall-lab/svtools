@@ -43,17 +43,12 @@ def bedpeToBlockedBed(bedpe, dist, output_handle=sys.stdout):
                                 bedpe.s2,bedpe.e2+500,color,'2',','.join(map(str,[bedpe.e2-bedpe.s2,1])), ','.join(map(str,[0, bedpe.e2-bedpe.s2+499]))])))
             
         if bedpe.o2 == "-":
-            output_lines.append(bedpe.c2 + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t"  + bedpe.svtype + "_" + bedpe.name + \
-            "\t" + str(bedpe.score) + "\t" + \
-            "-" + "\t" + str(bedpe.s2-500) + "\t" + str(bedpe.e2) + "\t" + color + "\t" + "2" + "\t" + \
-            "1" + "," + str(bedpe.e2 - bedpe.s2) + "\t" + \
-            "0," + str(500))
             if bedpe.af is not None:
                 output_lines.append('\t'.join(map(str, [bedpe.c2,bedpe.s2-500,bedpe.e2,''.join(map(str,[bedpe.svtype,';ID=',bedpe.name,';AF=',bedpe.af])),bedpe.score,'-',\
-                                bedpe.s2-500,bedpe.e2,color,'2',','.join(map(str,[1,bedpe.e2-bedpe.s2,1])), ','.join(map(str,[0,500]))])))
+                                bedpe.s2-500,bedpe.e2,color,'2',','.join(map(str,[1,bedpe.e2-bedpe.s2])), ','.join(map(str,[0,500]))])))
             else:
                 output_lines.append('\t'.join(map(str, [bedpe.c2,bedpe.s2-500,bedpe.e2,''.join(map(str,[bedpe.svtype,';ID=',bedpe.name])),bedpe.score,'-',\
-                                bedpe.s2-500,bedpe.e2,color,'2',','.join(map(str,[1,bedpe.e2-bedpe.s2,1])), ','.join(map(str,[0,500]))])))
+                                bedpe.s2-500,bedpe.e2,color,'2',','.join(map(str,[1,bedpe.e2-bedpe.s2])), ','.join(map(str,[0,500]))])))
     # BNDS:	
     elif (bedpe.svtype == "BND"):
         if bedpe.af is not None:
