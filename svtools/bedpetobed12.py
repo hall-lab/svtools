@@ -76,7 +76,7 @@ class BedpetoBlockedBedConverter(object):
         '''
         second_start = self.coordinate_buffer
         if strand == '+':
-            second_start += (stop - start)
+            second_start += (stop - start) - 1
         return (0, second_start)
 
     @staticmethod
@@ -141,10 +141,6 @@ class BedpetoBlockedBedConverter(object):
                 s2, e2 = self.distant_coordinates(bedpe.o2, bedpe.s2, bedpe.e2)
                 size_tuple2 = self.distant_block_sizes(bedpe.o2, bedpe.s2, bedpe.e2)
                 start_tuple2 = self.distant_block_starts(bedpe.o2, bedpe.s2, bedpe.e2)
-                if bedpe.o2 == '+':
-                    # Adjust second blockStart for backwards compatibility
-                    # TODO Is this really correct or was it a typo?
-                    start_tuple2 = (start_tuple2[0], start_tuple2[1] - 1)
                 output_lines.append(self.create_line(
                     bedpe.c2,
                     s2,
