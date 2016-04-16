@@ -79,6 +79,30 @@ class BedpetoBlockedBedConverter(object):
             second_start += (stop - start)
         return (0, second_start)
 
+    @staticmethod
+    def create_line(chrom, start, end, name, score, strand, color, size_tuple=None, start_tuple=None):
+        '''
+        Create a blockedBed line
+        '''
+        fields = [
+            chrom, 
+            start, 
+            end, 
+            name, 
+            score, 
+            strand, 
+            start, 
+            end, 
+            color
+            ]
+        if size_tuple is not None and start_tuple is not None:
+            fields += [
+                    '2',
+                    ','.join(map(str, size_tuple)),
+                    ','.join(map(str,start_tuple))
+            ]
+        return '\t'.join(map(str,fields))
+
     def convert(self, bedpe):
         '''
         Convert Bedpe line to a Bed12 line
@@ -87,121 +111,68 @@ class BedpetoBlockedBedConverter(object):
         color = self.get_color(bedpe.svtype, span)
 
         output_lines = list()
-        if (bedpe.svtype != "BND"):
+        if (bedpe.svtype != 'BND'):
             name = self.bed12_name(bedpe.svtype, bedpe.name, bedpe.af)
             if span <= self.max_dist:
-                output_lines.append(
-                        '\t'.join(
-                            map(
-                                str, 
-                                [
-                                    bedpe.c1,
-                                    bedpe.s1,
-                                    bedpe.e2,
-                                    name,
-                                    bedpe.score,
-                                    '+',
-                                    bedpe.s1,
-                                    bedpe.e2,
-                                    color,
-                                    '2',
-                                    ','.join(map(str,[bedpe.e1 - bedpe.s1, bedpe.e2 - bedpe.s2])), 
-                                    ','.join(map(str,['0', bedpe.s2 - bedpe.s1]))
-                                    ]
-                                )
-                            )
-                        )
+                output_lines.append(self.create_line(
+                    bedpe.c1, 
+                    bedpe.s1, 
+                    bedpe.e2, 
+                    name, 
+                    bedpe.score, 
+                    '+',
+                    color, 
+                    (bedpe.e1 - bedpe.s1, bedpe.e2 - bedpe.s2),
+                    (0, bedpe.s2 - bedpe.s1)))
             else:
                 s1, e1 = self.distant_coordinates(bedpe.o1, bedpe.s1, bedpe.e1)
-                size1, size2 = self.distant_block_sizes(bedpe.o1, bedpe.s1, bedpe.e1)
-                start1, start2 = self.distant_block_starts(bedpe.o1, bedpe.s1, bedpe.e1)
-                output_lines.append(
-                        '\t'.join(
-                            map(
-                                str,
-                                [
-                                    bedpe.c1,
-                                    s1,
-                                    e1,
-                                    name,
-                                    bedpe.score,
-                                    bedpe.o1,
-                                    s1,
-                                    e1,
-                                    color,
-                                    '2',
-                                    ','.join(map(str,(size1, size2))),
-                                    ','.join(map(str,(start1, start2))),
-                                    ]
-                                )
-                            )
-                        )
+                size_tuple1 = self.distant_block_sizes(bedpe.o1, bedpe.s1, bedpe.e1)
+                start_tuple1 = self.distant_block_starts(bedpe.o1, bedpe.s1, bedpe.e1)
+                output_lines.append(self.create_line(
+                    bedpe.c1, 
+                    s1, 
+                    e1, 
+                    name, 
+                    bedpe.score, 
+                    bedpe.o1, 
+                    color, 
+                    size_tuple1,
+                    start_tuple1))
                 s2, e2 = self.distant_coordinates(bedpe.o2, bedpe.s2, bedpe.e2)
-                size1_2, size2_2 = self.distant_block_sizes(bedpe.o2, bedpe.s2, bedpe.e2)
-                start1_2, start2_2 = self.distant_block_starts(bedpe.o2, bedpe.s2, bedpe.e2)
+                size_tuple2 = self.distant_block_sizes(bedpe.o2, bedpe.s2, bedpe.e2)
+                start_tuple2 = self.distant_block_starts(bedpe.o2, bedpe.s2, bedpe.e2)
                 if bedpe.o2 == '+':
                     # Adjust second blockStart for backwards compatibility
                     # TODO Is this really correct or was it a typo?
-                    start2_2 -= 1
-                output_lines.append(
-                        '\t'.join(
-                            map(
-                                str,
-                                [
-                                    bedpe.c2,
-                                    s2,
-                                    e2,
-                                    name,
-                                    bedpe.score,
-                                    bedpe.o2,
-                                    s2,
-                                    e2,
-                                    color,
-                                    '2',
-                                    ','.join(map(str,(size1_2, size2_2))),
-                                    ','.join(map(str,(start1_2, start2_2))),
-                                    ]
-                                )
-                            )
-                        )
+                    start_tuple2 = (start_tuple2[0], start_tuple2[1] - 1)
+                output_lines.append(self.create_line(
+                    bedpe.c2,
+                    s2,
+                    e2,
+                    name,
+                    bedpe.score,
+                    bedpe.o2,
+                    color,
+                    size_tuple2,
+                    start_tuple2))
         else:
             name = self.bed12_name(bedpe.svtype, bedpe.name, bedpe.af, (bedpe.o1, bedpe.o2))
-            output_lines.append(
-                    '\t'.join(
-                        map(
-                            str,
-                            [
-                                bedpe.c1,
-                                bedpe.s1,
-                                bedpe.e1,
-                                name, 
-                                bedpe.score,
-                                bedpe.o1,
-                                bedpe.s1,
-                                bedpe.e1,
-                                color
-                                ]
-                            )
-                        )
-                    )
-            output_lines.append(
-                    '\t'.join(
-                        map(
-                            str,
-                            [
-                                bedpe.c2,
-                                bedpe.s2,
-                                bedpe.e2,
-                                name, 
-                                bedpe.score,
-                                bedpe.o2,
-                                bedpe.s2,
-                                bedpe.e2,
-                                color
-                                ]
-                            )
-                        )
-                    )
+            output_lines.append(self.create_line(
+                bedpe.c1,
+                bedpe.s1,
+                bedpe.e1,
+                name, 
+                bedpe.score,
+                bedpe.o1,
+                color))
+            output_lines.append(self.create_line(
+                bedpe.c2,
+                bedpe.s2,
+                bedpe.e2,
+                name, 
+                bedpe.score,
+                bedpe.o2,
+                color))
         return output_lines
 
 def processBEDPE(bedpe_stream, name, dist, output_handle=sys.stdout):
@@ -216,9 +187,6 @@ def processBEDPE(bedpe_stream, name, dist, output_handle=sys.stdout):
         if lineList:
             bedpe = Bedpe(lineList)
             output_handle.write('\n'.join(converter.convert(bedpe)) + '\n')
-
-def writeTrackName(name, output_handle=sys.stdout):
-    output_handle.write("track name=" + name + " itemRgb=On\n")
 
 def description():
     return 'convert a BEDPE file to BED12 format for viewing in IGV or the UCSC browser'
