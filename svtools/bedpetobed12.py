@@ -13,6 +13,7 @@ class BedpetoBlockedBedConverter(object):
         '''
         self.max_dist = max_dist
         self.name = name
+        self.coordinate_buffer = 500
         self.distant_color = '204,204,204' #gray
         self.unknown_close_color = '128,0,128'
         self.color_table = { 
@@ -49,6 +50,35 @@ class BedpetoBlockedBedConverter(object):
             base_string += ';STR={0}'.format(''.join(strands))
         return base_string
 
+    def distant_coordinates(self, strand, start, stop):
+        '''
+        Transform coordinates if SV is too large
+        '''
+        if strand == '+':
+            stop += self.coordinate_buffer
+        else:
+            start -= self.coordinate_buffer
+        return (start, stop)
+
+    def distant_block_sizes(self, strand, start, stop):
+        '''
+        Return tuple of chunk sizes
+        '''
+        rv = (stop - start, 1)
+        if strand == '+':
+            return rv
+        else:
+            return rv[::-1] #reverse
+
+    def distant_block_starts(self, strand, start, stop):
+        '''
+        Return tuple of chunk sizes
+        '''
+        second_start = self.coordinate_buffer
+        if strand == '+':
+           second_start += (stop - start)
+        return (0, second_start)
+
     def convert(self, bedpe):
         '''
         Convert Bedpe line to a Bed12 line
@@ -57,118 +87,84 @@ class BedpetoBlockedBedConverter(object):
         color = self.get_color(bedpe.svtype, span)
 
         output_lines = list()
-        if (bedpe.svtype != "BND") and (span <= self.max_dist):
+        if (bedpe.svtype != "BND"):
             name = self.bed12_name(bedpe.svtype, bedpe.name, bedpe.af)
-            output_lines.append(
-                    '\t'.join(
-                        map(
-                            str, 
-                            [
-                                bedpe.c1,
-                                bedpe.s1,
-                                bedpe.e2,
-                                name,
-                                bedpe.score,
-                                '+',
-                                bedpe.s1,
-                                bedpe.e2,
-                                color,
-                                '2',
-                                ','.join(map(str,[bedpe.e1-bedpe.s1,bedpe.e2-bedpe.s2])), 
-                                ','.join(map(str,['0', bedpe.s2 - bedpe.s1]))
-                                ]
-                            )
-                        )
-                    )
-        # intrachromosomals that exceed dist
-        elif (bedpe.svtype != "BND") and  (span > self.max_dist):
-            name = self.bed12_name(bedpe.svtype, bedpe.name, bedpe.af)
-            if bedpe.o1 == "+":
-                output_lines.append(
-                        '\t'.join(
-                            map(
-                                str,
-                                [
-                                    bedpe.c1,
-                                    bedpe.s1,
-                                    bedpe.e1+500,
-                                    name,
-                                    bedpe.score,
-                                    '+',
-                                    bedpe.s1,
-                                    bedpe.e1+500,
-                                    color,
-                                    '2',
-                                    ','.join(map(str,[bedpe.e1-bedpe.s1,1])),
-                                    ','.join(map(str,[0, bedpe.e1 - bedpe.s1+500]))
-                                    ]
-                                )
-                            )
-                        )
-            if bedpe.o1 == "-":
-                output_lines.append(
-                        '\t'.join(
-                            map(
-                                str,
-                                [
-                                    bedpe.c1,
-                                    bedpe.s1-500,
-                                    bedpe.e1,
-                                    name,
-                                    bedpe.score,
-                                    '-',
-                                    bedpe.s1-500,
-                                    bedpe.e1,
-                                    color,
-                                    '2',
-                                    ','.join(map(str,[1,bedpe.e1-bedpe.s1])),
-                                    ','.join(map(str,[0, 500]))]
-                                )
-                            )
-                        )
-            if bedpe.o2 == "+":
+            if span <= self.max_dist:
                 output_lines.append(
                         '\t'.join(
                             map(
                                 str, 
                                 [
-                                    bedpe.c2,
-                                    bedpe.s2,
-                                    bedpe.e2+500,
+                                    bedpe.c1,
+                                    bedpe.s1,
+                                    bedpe.e2,
                                     name,
                                     bedpe.score,
                                     '+',
-                                    bedpe.s2,
-                                    bedpe.e2+500,
+                                    bedpe.s1,
+                                    bedpe.e2,
                                     color,
                                     '2',
-                                    ','.join(map(str,[bedpe.e2-bedpe.s2,1])), 
-                                    ','.join(map(str,[0, bedpe.e2-bedpe.s2+499]))])))
-            if bedpe.o2 == "-":
+                                    ','.join(map(str,[bedpe.e1 - bedpe.s1, bedpe.e2 - bedpe.s2])), 
+                                    ','.join(map(str,['0', bedpe.s2 - bedpe.s1]))
+                                    ]
+                                )
+                            )
+                        )
+            else:
+                s1, e1 = self.distant_coordinates(bedpe.o1, bedpe.s1, bedpe.e1)
+                size1, size2 = self.distant_block_sizes(bedpe.o1, bedpe.s1, bedpe.e1)
+                start1, start2 = self.distant_block_starts(bedpe.o1, bedpe.s1, bedpe.e1)
+                output_lines.append(
+                        '\t'.join(
+                            map(
+                                str,
+                                [
+                                    bedpe.c1,
+                                    s1,
+                                    e1,
+                                    name,
+                                    bedpe.score,
+                                    bedpe.o1,
+                                    s1,
+                                    e1,
+                                    color,
+                                    '2',
+                                    ','.join(map(str,(size1, size2))),
+                                    ','.join(map(str,(start1, start2))),
+                                    ]
+                                )
+                            )
+                        )
+                s2, e2 = self.distant_coordinates(bedpe.o2, bedpe.s2, bedpe.e2)
+                size1_2, size2_2 = self.distant_block_sizes(bedpe.o2, bedpe.s2, bedpe.e2)
+                start1_2, start2_2 = self.distant_block_starts(bedpe.o2, bedpe.s2, bedpe.e2)
+                if bedpe.o2 == '+':
+                    # Adjust second blockStart for backwards compatibility
+                    # TODO Is this really correct or was it a typo?
+                    start2_2 -= 1
                 output_lines.append(
                         '\t'.join(
                             map(
                                 str,
                                 [
                                     bedpe.c2,
-                                    bedpe.s2-500,
-                                    bedpe.e2,
+                                    s2,
+                                    e2,
                                     name,
                                     bedpe.score,
-                                    '-',
-                                    bedpe.s2-500,
-                                    bedpe.e2,
+                                    bedpe.o2,
+                                    s2,
+                                    e2,
                                     color,
                                     '2',
-                                    ','.join(map(str,[1,bedpe.e2-bedpe.s2])),
-                                    ','.join(map(str,[0,500]))
+                                    ','.join(map(str,(size1_2, size2_2))),
+                                    ','.join(map(str,(start1_2, start2_2))),
                                     ]
                                 )
                             )
                         )
-
-        # BNDS:	
-        elif (bedpe.svtype == "BND"):
+        else:
             name = self.bed12_name(bedpe.svtype, bedpe.name, bedpe.af, (bedpe.o1, bedpe.o2))
             output_lines.append(
                     '\t'.join(
