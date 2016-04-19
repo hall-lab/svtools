@@ -51,14 +51,17 @@ class Variant(object):
         Parse the genotype strings
         '''
         gts = dict()
+        format_field_dict = { key: index for index, key in enumerate(format_field_tags) }
         for index, sample_string in enumerate(genotype_array):
             sample_name = self.sample_list[index]
             try:
                 sample_field = sample_string.split(':')
                 # sample_name HAS to match the same order.
-                gts[sample_name] = Genotype(self, sample_field[0])
+                g = Genotype(self, sample_field[0])
+                gts[sample_name] = g
                 # import the existing fmt fields
-                gts[sample_name].set_formats(format_field_tags, sample_field)
+                #gts[sample_name].set_formats(format_field_tags, sample_field)
+                gts[sample_name].initialize_formats(format_field_dict, sample_field)
             except IndexError:
                 gts[sample_name] = Genotype(self, './.')
         return gts

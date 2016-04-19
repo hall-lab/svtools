@@ -31,7 +31,7 @@ class TestGenotype(TestCase):
         g = Genotype(self.variant, '0/1')
         self.assertFalse('INACTIVE' in self.variant.active_formats)
         g.set_format('INACTIVE', 10)
-        self.assertEqual(g.format['INACTIVE'], 10)
+        self.assertEqual(g.get_format('INACTIVE'), 10)
         self.assertTrue('INACTIVE' in self.variant.active_formats)
 
     def test_get_format(self):

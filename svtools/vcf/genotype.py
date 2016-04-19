@@ -8,38 +8,37 @@ class Genotype(object):
         '''
         Initialize the class. All instances have a GT field.
         '''
-        self.format = dict()
+        self.format_dict = dict()
+        self.value_list = list()
         self.variant = variant
         self.set_format('GT', gt)
 
     def __eq__(self, other):
         return self.get_gt_string() == other.get_gt_string()
     
-    def set_formats(self, fields, values):
+    def initialize_formats(self, field_dict, values):
         '''
-        Set many format fields for this instance.
-        Updates format information in the owning Variant class.
+        Add formats from field_dict to the object
         '''
-        format_set = self.variant.format_set
-        add_to_active = self.variant.active_formats.add
-        active_formats = self.variant.active_formats
-        format_dict = self.format
-
-        for field, value in zip(fields, values):
-            if field in format_set:
-                format_dict[field] = value
-                if field not in active_formats:
-                    add_to_active(field)
-            else:
-                sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
-                sys.exit(1)
+        tmp_fields = self.format_dict
+        tmp_values = self.value_list
+        self.format_dict = field_dict
+        self.value_list = values
+        for key in tmp_fields:
+            if key not in self.format_dict:
+                self.format_dict[key] = len(self.value_list)
+                self.value_list.append(value)
 
     def set_format(self, field, value, update_active=True):
         '''
         Set information for an individual format field.
         '''
         if field in self.variant.format_set:
-            self.format[field] = value
+            if field in self.format_dict:
+                self.value_list[self.format_dict[field]] = value
+            else:
+                self.format_dict[field] = len(self.value_list)
+                self.value_list.append(value)
             if field not in self.variant.active_formats:
                 self.variant.active_formats.add(field)
                 self.variant.update_active_format_list()
@@ -51,7 +50,7 @@ class Genotype(object):
         '''
         Get value of particular field key
         '''
-        return self.format[field]
+        return self.value_list[self.format_dict[field]]
 
     def get_gt_string(self):
         '''
@@ -63,11 +62,12 @@ class Genotype(object):
         '''
         g_list = list()
         for f in self.variant.active_format_list:
-            if f in self.format:
-                if type(self.format[f]) == float:
-                    g_list.append('%0.2f' % self.format[f])
+            if f in self.format_dict:
+                value = self.get_format(f)
+                if type(value) == float:
+                    g_list.append('%0.2f' % value)
                 else:
-                    g_list.append(str(self.format[f]))
+                    g_list.append(str(value))
             else:
                 g_list.append('.')
         return ':'.join(g_list)
