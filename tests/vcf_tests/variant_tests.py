@@ -26,10 +26,8 @@ class TestVariant(TestCase):
         genotype_field_strings = ['0/1:20', '0/0:15']
         parsed_dict = self.variant._parse_genotypes(format_field_tags, genotype_field_strings)
 
-        na12878_gt = Genotype(self.variant, '0/1')
-        na12878_gt.initialize_formats(format_field_dict, genotype_field_strings[0].split(':')) 
-        na0001_gt = Genotype(self.variant, '0/0')
-        na0001_gt.initialize_formats(format_field_dict, genotype_field_strings[1].split(':'))
+        na12878_gt = Genotype(self.variant, genotype_field_strings[0].split(':'))
+        na0001_gt = Genotype(self.variant, genotype_field_strings[1].split(':'))
         expected_genotype_dict = { 'NA12878': na12878_gt, 'NA0001': na0001_gt }
 
         self.assertEqual(parsed_dict, expected_genotype_dict)

@@ -21,26 +21,26 @@ class TestGenotype(TestCase):
         self.variant = Variant(self.variant_line.split('\t'), self.vcf)
 
     def test_equal(self):
-        g1 = Genotype(self.variant, '0/1')
+        g1 = Genotype(self.variant, ['0/1'])
         g1.set_format('INACTIVE', 10)
-        g2 = Genotype(self.variant, '0/1')
+        g2 = Genotype(self.variant, ['0/1'])
         g2.set_format('INACTIVE', 10)
         self.assertEqual(g1, g2)
     
     def test_set_format(self):
-        g = Genotype(self.variant, '0/1')
+        g = Genotype(self.variant, ['0/1'])
         self.assertFalse('INACTIVE' in self.variant.active_formats)
         g.set_format('INACTIVE', 10)
         self.assertEqual(g.get_format('INACTIVE'), 10)
         self.assertTrue('INACTIVE' in self.variant.active_formats)
 
     def test_get_format(self):
-        g = Genotype(self.variant, '0/1')
+        g = Genotype(self.variant, ['0/1'])
         g.set_format('INACTIVE', 10)
         self.assertEqual(g.get_format('INACTIVE'), 10)
 
     def test_get_gt_string(self):
-        g = Genotype(self.variant, '0/1')
+        g = Genotype(self.variant, ['0/1'])
         g.set_format('INACTIVE', 10)
         self.assertEqual(g.get_gt_string(), '0/1:.:10')
 
