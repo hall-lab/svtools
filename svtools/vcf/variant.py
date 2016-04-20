@@ -131,7 +131,7 @@ class Variant(object):
         self._uncache_gts()
         try:
             return self.gts[sample_name]
-        except KeyError as e:
+        except KeyError:
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
             sys.exit(1)
 
