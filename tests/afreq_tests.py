@@ -36,6 +36,13 @@ class AfreqUiTest(TestCase):
         args2 = parser.parse_args(['somefile'])
         self.assertEqual(args2.input_vcf, 'somefile')
 
+class TestUpdateInfo(TestCase):
+    def test_numeric_alleles(self):
+        instance = svtools.afreq.UpdateInfo(None)
+        self.assertEqual(instance.numeric_alleles('0/0'), [0, 0])
+        self.assertEqual(instance.numeric_alleles('0|1'), [0, 1])
+    
+
 if __name__ == "__main__":
     main()
 
