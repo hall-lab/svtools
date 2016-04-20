@@ -127,23 +127,26 @@ class Variant(object):
         else:
             return self.gts_string
 
-    def genotypes(self):
+    def _uncache_gts(self):
         '''
-        Return a generator over all samples currently in the VCF
+        Parse genotypes if they are requested
         '''
         if self.gts is None:
             self.gts = self._parse_genotypes(self.format_string.split(':'), self.gts_string.split('\t'))
             self.format_string = None
-        for s in self.sample_list:
-            yield self.gts[s]
+
+    def genotypes(self):
+        '''
+        Return a list of all genotype data in the Variant line
+        '''
+        self._uncache_gts()
+        return self.gts.values()
 
     def genotype(self, sample_name):
         '''
         Return the Genotype object for the requested sample
         '''
-        if self.gts is None:
-            self.gts = self._parse_genotypes(self.format_string.split(':'), self.gts_string.split('\t'))
-            self.format_string = None
+        self._uncache_gts()
         try:
             return self.gts[sample_name]
         except KeyError as e:
