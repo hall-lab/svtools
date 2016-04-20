@@ -11,24 +11,10 @@ class Genotype(object):
         '''
         self.value_list = value_list
         self.variant = variant
-        #self.set_format('GT', gt)
 
     def __eq__(self, other):
         return self.get_gt_string() == other.get_gt_string()
     
-    #def initialize_formats(self, field_dict, values):
-    #    '''
-    #    Add formats from field_dict to the object
-    #    '''
-    #    tmp_fields = self.format_dict
-    #    tmp_values = self.value_list
-    #    self.format_dict = field_dict
-    #    self.value_list = values
-    #    for key in tmp_fields:
-    #        if key not in self.format_dict:
-    #            self.format_dict[key] = len(self.value_list)
-    #            self.value_list.append(value)
-
     def set_format(self, field, value, update_active=True):
         '''
         Set information for an individual format field.
