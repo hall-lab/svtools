@@ -80,8 +80,8 @@ class UpdateInfo(object):
                     continue
                 gt = self.numeric_alleles(gt_string)
 
-                for i in xrange(len(gt)):
-                    alleles[gt[i]] += 1
+                for i in gt:
+                    alleles[i] += 1
 
                 # iterate the number of non-reference samples
                 if sum(gt) > 0:
