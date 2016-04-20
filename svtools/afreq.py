@@ -7,25 +7,15 @@ class UpdateInfo(object):
     def __init__(self, vcf_stream):
         self.vcf_stream = vcf_stream
 
-    def calc_msq(self, var):
-            # Below is what was in vcfpaste, but what if multiple ALTs?
-            # Do we only expect 1 ALT per line?
-            # NOTE SQ is defined as: 'Phred-scaled probability that this site is variant (non-reference in this sample'
-            # Likely want average sample quality across all non-0/0 genotypes rather than just those containing 1
-            gt = [var.genotype(s).get_format('GT') for s in var.sample_list]
-            positive_gt = filter(lambda x: x == '0/1' or x == '1/1', gt)
-            num_pos = len(positive_gt)
-            sum_sq = 0.0
-            try:
-                sum_sq += sum([float(var.genotype(s).get_format('SQ')) for s in var.sample_list \
-                if var.genotype(s).get_format('GT') == '1/1' or var.genotype(s).get_format('GT') == '0/1'])
-            except ValueError:
-                sum_sq += 0
-            if num_pos > 0:
-                msq = '%0.2f' % (sum_sq / num_pos)
-            else:
-                msq = '.'
-            return msq
+    @staticmethod
+    def numeric_alleles(gt_string):
+        '''
+        Convert a VCF allele string into integers
+        '''
+        gt = gt_string.split('/')
+        if len(gt) == 1:
+            gt = gt_string.split('|')
+        return map(int, gt)
 
     def execute(self, output_handle=sys.stdout):
         in_header = True
@@ -62,23 +52,24 @@ class UpdateInfo(object):
             num_alt = len(var.alt.split(','))
             alleles = [0] * (num_alt + 1)
             num_samp = 0
+            sum_sq = 0.0
 
-            gt = [var.genotype(s).get_format('GT') for s in var.sample_list]
-            for gt_string in gt:
+            for gt in var.genotypes():
+                gt_string = gt.get_format('GT')
 
-                if '.' in  gt_string:
-                    continue
-                gt = gt_string.split('/')
-                if len(gt) == 1:
-                    gt = gt_string.split('|')
-                gt = map(int, gt)
+                if '.' not in gt_string:
+                    indexes = self.numeric_alleles(gt_string)
 
-                for i in xrange(len(gt)):
-                    alleles[gt[i]] += 1
+                    for i in indexes:
+                        alleles[i] += 1
 
-                # iterate the number of non-reference samples
-                if sum(gt) > 0:
-                    num_samp += 1
+                    # iterate the number of non-reference samples
+                    if sum(indexes) > 0:
+                        num_samp += 1
+                    try:
+                        sum_sq += float(gt.get_format('SQ'))
+                    except KeyError:
+                        pass
 
             allele_sum = float(sum(alleles))
             allele_freq = ['.'] * len(alleles)
@@ -93,7 +84,11 @@ class UpdateInfo(object):
             
             # populate NSAMP
             var.info['NSAMP'] = num_samp
-            var.info['MSQ'] = self.calc_msq(var)
+            if num_samp > 0:
+                msq = '%0.2f' % (sum_sq / num_samp)
+            else:
+                msq = '.'
+            var.info['MSQ'] = msq
 
             # after all samples have been processed, write
             vcf_out.write(var.get_var_string(use_cached_gt_string=True) + '\n')

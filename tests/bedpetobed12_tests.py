@@ -5,6 +5,36 @@ import tempfile
 import difflib
 import svtools.bedpetobed12
 
+class TestBedpeToBlockedBedConverter(TestCase):
+
+    def setUp(self):
+        self.converter = svtools.bedpetobed12.BedpetoBlockedBedConverter('TESTCONV', 20)
+
+    def test_track_name(self):
+        self.assertEqual(self.converter.track_name(), 'track name=TESTCONV itemRgb=On\n')
+
+    def test_get_color(self):
+        self.assertEqual(self.converter.get_color('DEL', 10), '153,0,0')
+        self.assertEqual(self.converter.get_color('DEL', 50), self.converter.distant_color)
+        self.assertEqual(self.converter.get_color('ITX', 10), self.converter.unknown_close_color)
+
+    def test_bed12_name(self):
+        self.assertEqual(self.converter.bed12_name('ITX', '22', None), 'ITX;ID=22')
+        self.assertEqual(self.converter.bed12_name('ITX', '22', '0.25'), 'ITX;ID=22;AF=0.25')
+        self.assertEqual(self.converter.bed12_name('ITX', '22', '0.25', ('+', '-')), 'ITX;ID=22;AF=0.25;STR=+-')
+
+    def test_distant_coordinates(self):
+        self.assertEqual(self.converter.distant_coordinates('+', 600, 600), (600, 1100))
+        self.assertEqual(self.converter.distant_coordinates('-', 600, 600), (100, 600))
+
+    def test_distant_block_sizes(self):
+        self.assertEqual(self.converter.distant_block_sizes('+', 600, 800), (200, 1))
+        self.assertEqual(self.converter.distant_block_sizes('-', 600, 800), (1, 200))
+
+    def test_distant_block_starts(self):
+        self.assertEqual(self.converter.distant_block_starts('+', 600, 800), (0, 699))
+        self.assertEqual(self.converter.distant_block_starts('-', 600, 800), (0, 500))
+
 class IntegrationTest_bedpetobed12(TestCase):
     def run_integration_test(self):
         test_directory = os.path.dirname(os.path.abspath(__file__))

@@ -60,6 +60,9 @@ class TestVariant(TestCase):
     def test_genotype(self):
         self.assertEqual(self.variant.genotype('NA12878').get_gt_string(), '0/0:9')
 
+    def test_genotypes(self):
+        self.assertEqual([ x.get_gt_string() for x in self.variant.genotypes() ], ['0/0:9', '1/1:15'])
+
     def test_var_string(self):
         self.assertEqual(self.variant.get_var_string(), self.variant_line)
         self.variant.genotype('NA12878').set_format('GT', './.')
