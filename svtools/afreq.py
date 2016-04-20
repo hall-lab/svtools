@@ -7,6 +7,16 @@ class UpdateInfo(object):
     def __init__(self, vcf_stream):
         self.vcf_stream = vcf_stream
 
+    @staticmethod
+    def numeric_alleles(gt_string):
+        '''
+        Convert a VCF allele string into integers
+        '''
+        gt = gt_string.split('/')
+        if len(gt) == 1:
+            gt = gt_string.split('|')
+        return map(int, gt)
+
     def calc_msq(self, var):
             # Below is what was in vcfpaste, but what if multiple ALTs?
             # Do we only expect 1 ALT per line?
@@ -68,10 +78,7 @@ class UpdateInfo(object):
 
                 if '.' in  gt_string:
                     continue
-                gt = gt_string.split('/')
-                if len(gt) == 1:
-                    gt = gt_string.split('|')
-                gt = map(int, gt)
+                gt = self.numeric_alleles(gt_string)
 
                 for i in xrange(len(gt)):
                     alleles[gt[i]] += 1
