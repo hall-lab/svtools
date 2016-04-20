@@ -73,8 +73,8 @@ class UpdateInfo(object):
             alleles = [0] * (num_alt + 1)
             num_samp = 0
 
-            gt = [var.genotype(s).get_format('GT') for s in var.sample_list]
-            for gt_string in gt:
+            for gt in var.genotypes():
+                gt_string = gt.get_format('GT')
 
                 if '.' in  gt_string:
                     continue
