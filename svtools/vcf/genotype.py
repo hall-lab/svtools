@@ -15,7 +15,7 @@ class Genotype(object):
     def __eq__(self, other):
         return self.get_gt_string() == other.get_gt_string()
     
-    def set_format(self, field, value, update_active=True):
+    def set_format(self, field, value):
         '''
         Set information for an individual format field.
         '''
@@ -27,9 +27,6 @@ class Genotype(object):
                 num_fields = len(self.variant.format_dict)
                 self.variant.format_dict[field] = num_fields
                 self._set_value(num_fields, value)
-            if field not in self.variant.active_formats:
-                self.variant.active_formats.add(field)
-                self.variant.update_active_format_list()
         else:
             sys.stderr.write('\nError: invalid FORMAT field, \"' + field + '\"\n')
             sys.exit(1)
@@ -62,14 +59,12 @@ class Genotype(object):
         are tracked.
         '''
         g_list = list()
-        for f in self.variant.active_format_list:
-            if f in self.variant.format_dict:
-                value = self.get_format(f)
+        for f in self.variant.format_list:
+            if f.id in self.variant.format_dict:
+                value = self.get_format(f.id)
                 if type(value) == float:
                     g_list.append('%0.2f' % value)
                 else:
                     g_list.append(str(value))
-            else:
-                g_list.append('.')
         return ':'.join(g_list)
 

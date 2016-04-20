@@ -29,10 +29,10 @@ class TestGenotype(TestCase):
     
     def test_set_format(self):
         g = Genotype(self.variant, ['0/1'])
-        self.assertFalse('INACTIVE' in self.variant.active_formats)
+        self.assertFalse('INACTIVE' in self.variant.format_dict)
         g.set_format('INACTIVE', 10)
         self.assertEqual(g.get_format('INACTIVE'), 10)
-        self.assertTrue('INACTIVE' in self.variant.active_formats)
+        self.assertTrue('INACTIVE' in self.variant.format_dict)
 
     def test_get_format(self):
         g = Genotype(self.variant, ['0/1'])

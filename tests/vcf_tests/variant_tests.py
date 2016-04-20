@@ -21,10 +21,8 @@ class TestVariant(TestCase):
         self.variant = Variant(self.variant_line.split('\t'), self.vcf)
 
     def test_parse_genotypes(self):
-        format_field_tags = ['GT', 'SU']
-        format_field_dict = { 'GT': 0, 'SU': 1 }
         genotype_field_strings = ['0/1:20', '0/0:15']
-        parsed_dict = self.variant._parse_genotypes(format_field_tags, genotype_field_strings)
+        parsed_dict = self.variant._parse_genotypes(genotype_field_strings)
 
         na12878_gt = Genotype(self.variant, genotype_field_strings[0].split(':'))
         na0001_gt = Genotype(self.variant, genotype_field_strings[1].split(':'))
