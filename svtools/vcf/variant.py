@@ -127,6 +127,16 @@ class Variant(object):
         else:
             return self.gts_string
 
+    def genotypes(self):
+        '''
+        Return a generator over all samples currently in the VCF
+        '''
+        if self.gts is None:
+            self.gts = self._parse_genotypes(self.format_string.split(':'), self.gts_string.split('\t'))
+            self.format_string = None
+        for s in self.sample_list:
+            yield self.gts[s]
+
     def genotype(self, sample_name):
         '''
         Return the Genotype object for the requested sample
