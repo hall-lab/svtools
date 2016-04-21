@@ -1,18 +1,15 @@
-# 2015-10-15
-# =============================================
-# Example Workflow on Illumina Platinum Data
-# =============================================
+#Example Workflow on Illumina Platinum Data
 
-# Install svtools using pip package from pypi
+## Install svtools using pip package from pypi
 First you will need to prepare your python environment.
 You might want to use pyenv virtualenv.
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
 We require python 2.7.X
 The creation of the pyenv and activation looks like this in our environment
-pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
-pyenv activate svtools_install_instructions-2.7.9</pre></code>
+	pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+	pyenv activate svtools_install_instructions-2.7.9</pre></code>
 Now you will need to satisfy the pysam dependency
-pip install pysam>=0.8.1,<0.9.0
+	pip install pysam>=0.8.1,<0.9.0
 Then you should be able to install the svtools package from pypi
 pip install svtools
 You can spot check your svtools install by running
