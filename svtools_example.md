@@ -6,24 +6,24 @@ You might want to use pyenv virtualenv.
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
 We require python 2.7.X
 The creation of the pyenv and activation looks like this in our environment
-	pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
-	pyenv activate svtools_install_instructions-2.7.9</pre></code>
+<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+pyenv activate svtools_install_instructions-2.7.9</pre></code>
 Now you will need to satisfy the pysam dependency
-	pip install pysam>=0.8.1,<0.9.0
+<pre><code>pip install pysam>=0.8.1,<0.9.0</code><pre>
 Then you should be able to install the svtools package from pypi
-pip install svtools
+<pre><code>pip install svtools</pre></code>
 You can spot check your svtools install by running
-svtools --version
+<pre><code>svtools --version</code></pre>
 additional installtion strategies available in DEVELOPER.md
 
-# Download bamfiles for NA12878 pedigrees from http://www.ebi.ac.uk/ena/data/view/ERP001960
-# wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12877_S1.bam
-# that is gonna take a WHILE, a single bam looked to take about 18 hours and the total number of bams suggested by this instruction is 
-# about 14 days worth of downloads from machines like our workstations....perhaps quite a bit shorter from blades
+##Download bamfiles for NA12878 pedigrees from http://www.ebi.ac.uk/ena/data/view/ERP001960
+wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12877_S1.bam
+that is gonna take a WHILE, a single bam looked to take about 18 hours and the total number of bams suggested by this instruction is 
+about 14 days worth of downloads from machines like our workstations....perhaps quite a bit shorter from blades
 
-# Create a bampaths mapping file with original paths to all unaligned NA12878 pedigree bam files
+## Create a bampaths mapping file with original paths to all unaligned NA12878 pedigree bam files
 
-# Alternative directory of realigned BAM files at hall-lab disk to use for analysis
+## Alternative directory of realigned BAM files at hall-lab disk to use for analysis
    # /gscmnt/gc2802/halllab/ceph1463_realign_021815/
    # /gscmnt/gc2802/halllab/ceph1463_realign_021815/notes/sample.path.txt
 
