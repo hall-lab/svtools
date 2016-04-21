@@ -20,7 +20,7 @@ The creation of the pyenv virtual environment and activation looks like this:
     pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
     pyenv activate svtools_install_instructions-2.7.9
 
-Now you will need to satisfy the pysam dependency:
+Now you will need to satisfy the [`pysam`][10] dependency:
 
     pip install pysam>=0.8.1,<0.9.0
 
@@ -65,7 +65,7 @@ Now install the dependencies suggested in the requiremnts files
 
 Installing `statsmodels` can take a few minutes, but it satisfies the requirement for `numpy`, `pandas`, and `scipy`.
 
-In our environment we need to specify `pysam` versions greater than 0.8.1 and less than 0.9.0
+In our environment we need to specify [`pysam`][10] versions greater than 0.8.1 and less than 0.9.0
 
     pip install 'pysam>=0.8.1,<0.9.0'
 
@@ -138,3 +138,4 @@ Next navigate to the github [Releases page][9], draft a release using the tag yo
 [7]: https://xkcd.com/1168/
 [8]: https://github.com/warner/python-versioneer
 [9]: https://github.com/hall-lab/svtools/releases
+[10]: https://github.com/pysam-developers/pysam
