@@ -1,46 +1,28 @@
-# svtools
-*Warning: This suite is under active development and this is not a stable nor well tested version. We are not able to provide user support for this version of svtools.*
-
+# svtools - Comprehensive utilities to explore structural variations in genomes
 
 [![License](https://img.shields.io/github/license/hall-lab/svtools.svg)](LICENSE.txt)
 [![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools) 
 [![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
 
+## Summary
+svtools is a suite of utilities designed to help bioinformaticians construct and explore cohort-level structural variation calls. It is designed to efficiently merge and genotype calls from `speedseq sv` across thousands of genomes.
+
+## Obtaining help
+Please see the documentation on or linked to this page. For additional help or to report a bug, please open an issue on the svtools repository: https://github.com/hall-lab/svtools/issues
+
+## Requirements
+* A Linux-like environment with bash, awk, and sort
+* A working installation of cnvnator-multi
+* Python2.7
+ 
+## Installation
+We recommend you install using pip or conda.
+
+### Installing via pip
 ```
-svtools: comprehensive utilities to explore structural variations in genomes.
-
-	Hall-lab
-	$Revision: 0.0.1 $
-	$Date: 2015-10-14 14:31 $
-
-usage:    svtools <subcommand> [options]
-The svtools sub-commands include:
-[ general utilities ]
-  vcftobedpe      converts vcf file into bedpe.
-  bedpetovcf      converts bedpe file to vcf.
-  bedpetobed12    converts bedpe file to bed12.
-  vcfsort         sorts a vcf file.
-  bedpesort       sorts a bedpe file.
-
-
-[ callset generation ]
-  prune           cluster a BEDPE file by position based on allele frequency.
-  varlookup       look for variants common between two bedpe files.
-  afreq           add allele frequency information to a VCF file.
-  lsort           sorts a vcf file by type.
-  lmerge          merges multiple sorted vcf files.
-  genotype        return a vcf file with genotype information added by svtyper.
-  copynumber      add cn information using cnvnator.
-  vcfpaste        combine multiple vcf files produced by genotype command.
-  classify        classify structural variants
-
-
-[ General help ]
-  --help          print this help menu.
-  --version       what version of svtools are you using?.
-  --contact       feature requests, bugs, mailing lists, etc.
-
+pip install svtools
 ```
-URL <https://github.com/hall-lab/svtools>
 
-Note: For additional information and usage refer to the [svtools_demo.sh](https://github.com/hall-lab/svtools/blob/master/svtools_demo.sh) file.
+## Installing via conda
+TBD
+
