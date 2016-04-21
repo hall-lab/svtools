@@ -9,14 +9,14 @@ You might want to use pyenv virtualenv.
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
 We require python 2.7.X
 The creation of the pyenv and activation looks like this in our environment
-<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
 pyenv activate svtools_install_instructions-2.7.9</pre></code>
 Now you will need to satisfy the pysam dependency
-<pre><code>pip install pysam>=0.8.1,<0.9.0</pre></code>
+pip install pysam>=0.8.1,<0.9.0
 Then you should be able to install the svtools package from pypi
-<pre><code>pip install svtools</pre></code>
+pip install svtools
 You can spot check your svtools install by running
-<pre><code>svtools --version</pre></code>
+svtools --version
 additional installtion strategies available in DEVELOPER.md
 
 # Download bamfiles for NA12878 pedigrees from http://www.ebi.ac.uk/ena/data/view/ERP001960
