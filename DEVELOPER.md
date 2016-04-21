@@ -1,9 +1,9 @@
 # Developer Documentation
 
 This document is intended to provide guidelines for software developers either maintaining or 
-contributing to svtools development.
+contributing to `svtools` development.
 
-## Installing svtools
+## Installing `svtools`
 
 1. From a [conda][1] package <sup>[1](#conda-install)</sup>
 2. Using the [pip][2] package from [pypi][3] <sup>[2](#pip-install)</sup>
@@ -24,11 +24,11 @@ Now you will need to satisfy the pysam dependency:
 
     pip install pysam>=0.8.1,<0.9.0
 
-Then you should be able to install the svtools package from pypi:
+Then you should be able to install the `svtools` package from pypi:
 
     pip install svtools
 
-You can spot check your svtools install by running:
+You can spot check your `svtools` install by running:
 
     svtools --version
 
@@ -69,14 +69,15 @@ In our environment we need to specify `pysam` versions greater than 0.8.1 and le
 
     pip install 'pysam>=0.8.1,<0.9.0'
 
-Now we can use pip to install svtools from within the repo. If you are not already in the directory
+Now we can use `pip` to install `svtools` from within the repo. If you are not already in the directory
 
     cd svtools_test
 
 or just
 
     pip install .
-Finally we can spot check our svtools installation and observe the version number.
+
+Finally we can spot check our `svtools` installation and observe the version number.
 
     svtools --version
 
@@ -108,18 +109,18 @@ Now install the dependencies suggested in the requiremnts files:
 
 Installing `statsmodel` can take a few minutes, but it satisfies the requirement for `numpy`, `pandas`, and `scipy`.
 
-In our environment we need to specify `pysam` versions greater than 0.8.1 and less than 0.9.0:
+In our environment we need to specify [`pysam`][10] versions greater than 0.8.1 and less than 0.9.0:
 
     pip install 'pysam>=0.8.1,<0.9.0'
     pip install .
 
-Finally we can spot check our svtools installation and observe the version number with the following command:
+Finally we can spot check our `svtools` installation and observe the version number with the following command:
 
     svtools --version
 
 ## Releasing a new version
 
-svtools manages its versions using [python-versioneer][8].  New versions are derived and generated from the names of tags in git. To release a new version, all that is needed is to tag the correct commit with an annotated tag. We do not prepend versions with a 'v' character.
+`svtools` manages its versions using [python-versioneer][8].  New versions are derived and generated from the names of tags in git. To release a new version, all that is needed is to tag the correct commit with an annotated tag. We do not prepend versions with a 'v' character.
 
 For example, to release version 0.0.1 from the current commit:
 
