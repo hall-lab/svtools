@@ -32,7 +32,7 @@ You can spot check your svtools install by running:
 
     svtools --version
 
-### <a name="pip-install"></a> From the git repo
+### <a name="git-install"></a> From the git repo
 
 `svtools` is based on `python 2.7`.  First you will need to prepare your python environment.  You might want to use [pyenv virtualenv][4].
 The creation of the pyenv virtual environment and activation looks like this:
