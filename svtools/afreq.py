@@ -66,10 +66,10 @@ class UpdateInfo(object):
                     # iterate the number of non-reference samples
                     if sum(indexes) > 0:
                         num_samp += 1
-                    try:
-                        sum_sq += float(gt.get_format('SQ'))
-                    except KeyError:
-                        pass
+                        try:
+                            sum_sq += float(gt.get_format('SQ'))
+                        except KeyError:
+                            pass
 
             allele_sum = float(sum(alleles))
             allele_freq = ['.'] * len(alleles)
