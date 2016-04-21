@@ -5,9 +5,9 @@ contributing to svtools development.
 
 ## Installing svtools
 
+1. From a conda package
 1. Using pip package from pypi
 1. From the git repo
-1. From a conda package
 1. Downloading a github tarball
 
 ### From a conda package TODO
