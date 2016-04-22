@@ -17,7 +17,7 @@
 
 ## Requirements
 * A Linux-like environment with bash, awk, and sort
-* A working installation of [`cnvnator-multi`](https://github.com/hall-lab/speedseq#cnvnator) (a component of `speedseq sv`)
+* A working installation of [`cnvnator-multi`](https://github.com/hall-lab/speedseq#cnvnator) (a component of [`speedseq sv`](https://github.com/hall-lab/speedseq))
 * [Python2.7](https://www.python.org/)
    * [Numpy](http://www.numpy.org/)
    * [Scipy](https://www.scipy.org/)
