@@ -57,7 +57,7 @@ These instructions assume you have committed no additional changes after tagging
     ```
     conda skeleton pypi svtools
     ```
-  2. Edit the tests section of the resulting `svtools/meta.yml` file to look like the following line:
+  2. Edit the tests section of the resulting `svtools/meta.yml` file to look like the following section:
     ```YAML
     test:
       # Python imports
