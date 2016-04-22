@@ -26,15 +26,18 @@ Now that you have a new release, upload the package to [PyPI](https://pypi.pytho
 These instructions assume you have committed no additional changes after tagging the new release.
 
 1. Build the new release and test by uploading to the PyPI test server.
+  
   ```
   python setup.py sdist bdist_wheel upload -r pypitest
   ```
 2. Verify that the package appears and information looks correct at https://testpypi.python.org/pypi
 3. Build and upload the package to PyPI itself.
+  
   ```
   python setup.py sdist bdist_wheel upload
   ```
 4. In a fresh virtual environment, verify that the new package installs.
+  
   ```
   pyenv virtualenv 2.7.9 test_new_package
   pyenv activate test_new_package
