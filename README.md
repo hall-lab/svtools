@@ -40,7 +40,7 @@ TBD
 Please see the documentation on, or linked to, this page. For additional help or to report a bug, please open an issue in the `svtools` repository: https://github.com/hall-lab/svtools/issues
 
 ## Usage
-`svtools` consists of several subcommands for processing VCF or BEDPE files of structural variants and one accessory script (`create_coordinates`).
+`svtools` consists of subcommands for processing VCF or BEDPE files of structural variants and one accessory script (`create_coordinates`).
 
 ```
 usage: svtools [-h] [--version] [--support] subcommand ...
