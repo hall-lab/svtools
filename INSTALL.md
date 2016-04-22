@@ -1,35 +1,32 @@
 ## Installing `svtools`
 
-1. Prepare [python][1] environment <sup>[1](#python-env)</sup>
+1. Prepare [Python][1] environment <sup>[1](#python-env)</sup>
 2. From a [conda][2] package <sup>[2](#conda-install)</sup>
 3. Using the [pip][3] package from [pypi][3] <sup>[3](#pip-install)</sup>
 4. From the git repo <sup>[4](#git-install)</sup>
 5. Downloading a github tarball <sup>[5](#tarball-install)</sup>
 
-### <a name="python-env"></a> Prepare `python` environment
-`svtools` is based on `python 2.7`.  First you will need to prepare your python environment.  You might want to use [pyenv virtualenv][4].
+### <a name="python-env"></a> Prepare Python environment
+`svtools` is based on Python 2.7.  First you will need to prepare your python environment.  You might want to use [pyenv virtualenv][4].
 The creation of the pyenv virtual environment and activation looks like this:
 
-    pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
-    pyenv activate svtools_install_instructions-2.7.9
+    pyenv virtualenv 2.7.9 svtools-2.7.9
+    pyenv activate svtools-2.7.9
 
 ### <a name="conda-install"></a> From a conda package TODO 
 
 ### <a name="pip-install"></a> Using pip package from pypi
-Once you have your python environment set up you will need to satisfy the [`pysam`][10] dependency:
-
-    pip install pysam>='0.8.1,<0.9.0'
-
-Then you should be able to install the `svtools` package from pypi:
+Once you have your python environment set up you should be able to install the `svtools` package from pypi:
 
     pip install svtools
+_note:_ on older systems you may need to specify a version of [`pysam`][10] greater than 0.8.1 and less than 0.9.0 `pip install 'pysam>=0.8.1,<0.9.0'`
 
 You can spot check your `svtools` install by running:
 
     svtools --version
 
 ### <a name="git-install"></a> From the git repo
-Once you have your python environment set up you will want to check out `svtools` from the [hall-lab github repository][5].  The master branch contains the bleeding edge version.
+Once you have your python environment set up you will want to clone `svtools` from the [hall-lab github repository][5].  
 
     git clone https://github.com/hall-lab/svtools.git svtools_test
     cd svtools_test
