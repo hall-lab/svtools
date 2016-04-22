@@ -7,7 +7,7 @@
 5. Downloading a github tarball <sup>[5](#tarball-install)</sup>
 
 ### <a name="python-env"></a> Prepare Python environment
-`svtools` is based on Python 2.7.  First you will need to prepare your python environment.  You might want to use [pyenv virtualenv][4].
+`svtools` is based on Python 2.7.  First you will need to prepare your Python environment.  You might want to use [pyenv virtualenv][4].
 The creation of the pyenv virtual environment and activation looks like this:
 
     pyenv virtualenv 2.7.9 svtools-2.7.9
@@ -16,17 +16,18 @@ The creation of the pyenv virtual environment and activation looks like this:
 ### <a name="conda-install"></a> From a conda package TODO 
 
 ### <a name="pip-install"></a> Using pip package from pypi
-Once you have your python environment set up you should be able to install the `svtools` package from pypi:
+Once you have your Python environment set up you should be able to install the `svtools` package from pypi:
 
     pip install svtools
-_note:_ on older systems you may need to specify a version of [`pysam`][10] greater than 0.8.1 and less than 0.9.0 `pip install 'pysam>=0.8.1,<0.9.0'`
+_note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
+    pip install 'pysam>=0.8.1,<0.9.0'
 
 You can spot check your `svtools` install by running:
 
     svtools --version
 
 ### <a name="git-install"></a> From the git repo
-Once you have your python environment set up you will want to clone `svtools` from the [hall-lab github repository][5].  
+Once you have your Python environment set up you will want to clone `svtools` from the [hall-lab github repository][5].  
 
     git clone https://github.com/hall-lab/svtools.git svtools_test
     cd svtools_test
@@ -47,13 +48,11 @@ Now install the dependencies suggested in the requiremnts files
 
     pip install statsmodels
 
-Installing `statsmodels` can take a few minutes, but it satisfies the requirement for `numpy`, `pandas`, and `scipy`.
-
-In our environment we need to specify [`pysam`][10] versions greater than 0.8.1 and less than 0.9.0
-
+Installing statsmodels can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
+_note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
     pip install 'pysam>=0.8.1,<0.9.0'
 
-Now we can use `pip` to install `svtools` from within the repo. If you are not already in the directory
+Now we can use pip to install `svtools` from within the repo. If you are not already in the directory
 
     cd svtools_test
 
@@ -69,11 +68,11 @@ Finally we can spot check our `svtools` installation and observe the version num
 
 Once you have your python environment set up, visit the [svtools releases github page][6].  Select the latest release and use the `Source code (tar.gz)` link to download a tarball of the source.
 
-Navigate to the download location on your filesystem and use the `tar` command:
+Navigate to the download location on your filesystem and use the tar command:
 
     tar -xvzf svtools-0.2.0b1.tar.gz
     
-to expand the archive.  [While you wait enjoy this cartoon from xkcd][7]. 
+to expand the archive.  [While you wait, enjoy this cartoon from xkcd][7]. 
 
 Now enter the directory that has been created.
 
@@ -81,13 +80,11 @@ Now enter the directory that has been created.
 
 Now install the dependencies suggested in the requiremnts files:
 
-    pip install nose
-    pip install coverage
     pip install statsmodels
 
-Installing `statsmodel` can take a few minutes, but it satisfies the requirement for `numpy`, `pandas`, and `scipy`.
+Installing statsmodel can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
 
-In our environment we need to specify [`pysam`][10] versions greater than 0.8.1 and less than 0.9.0:
+In our environment we need to specify [pysam][10] versions greater than 0.8.1 and less than 0.9.0:
 
     pip install 'pysam>=0.8.1,<0.9.0'
     pip install .
