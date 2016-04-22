@@ -7,6 +7,14 @@
 ## Summary
 `svtools` is a suite of utilities designed to help bioinformaticians construct and explore cohort-level structural variation calls. It is designed to efficiently merge and genotype calls from [`speedseq sv`](https://github.com/hall-lab/speedseq) across thousands to tens of thousands of genomes.
 
+## Table of Contents
+1. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [Obtaining help](#obtaining-help)
+4. [Usage](#usage)
+5. [Citing `svtools`](#citing-svtools)
+6. [Troubleshooting](#troubleshooting)
+
 ## Requirements
 * A Linux-like environment with bash, awk, and sort
 * A working installation of [`cnvnator-multi`](https://github.com/hall-lab/speedseq#cnvnator) (a component of `speedseq sv`)
@@ -62,5 +70,8 @@ optional arguments:
     varlookup    look for variants common between two BEDPE files
 ```
 
-## Citations
+## Citing svtools
 Until `svtools` is published, please cite using its DOI: http://dx.doi.org/10.5281/zenodo.49712.
+
+## Troubleshooting
+As issues arise and common problems are identified, we will list them here.
