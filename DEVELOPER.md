@@ -79,7 +79,7 @@ These instructions assume you have committed no additional changes after tagging
   ```
   conda build -c bioconda svtools
   ```
-5. Test your recipe by installing it into a new conda environment. The bioconda channel is needed to pull in `pysam`.
+5. Test your recipe by installing it into a new conda environment. The bioconda channel is needed to pull in pysam.
   
   ```
   conda install -c bioconda -n svtools_install_test --use-local svtools
