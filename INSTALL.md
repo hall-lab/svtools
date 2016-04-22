@@ -19,7 +19,8 @@ The creation of the pyenv virtual environment and activation looks like this:
 Once you have your Python environment set up you should be able to install the `svtools` package from pypi:
 
     pip install svtools
-_note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
+_note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0
+
     pip install 'pysam>=0.8.1,<0.9.0'
 
 You can spot check your `svtools` install by running:
@@ -50,6 +51,7 @@ Now install the dependencies suggested in the requiremnts files
 
 Installing statsmodels can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
 _note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
+
     pip install 'pysam>=0.8.1,<0.9.0'
 
 Now we can use pip to install `svtools` from within the repo. If you are not already in the directory
