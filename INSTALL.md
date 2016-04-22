@@ -1,8 +1,8 @@
 ## Installing `svtools`
 
-1. Prepare [Python][1] environment <sup>[1](#python-env)</sup>
-2. From a [conda][2] package <sup>[2](#conda-install)</sup>
-3. Using the [pip][3] package from [pypi][3] <sup>[3](#pip-install)</sup>
+1. Prepare Python environment <sup>[1](#python-env)</sup>
+2. From a [conda][1] package <sup>[2](#conda-install)</sup>
+3. Using the [pip][2] package from [pypi][3] <sup>[3](#pip-install)</sup>
 4. From the git repo <sup>[4](#git-install)</sup>
 5. Downloading a github tarball <sup>[5](#tarball-install)</sup>
 
