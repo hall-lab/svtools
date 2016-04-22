@@ -43,3 +43,52 @@ These instructions assume you have committed no additional changes after tagging
   pyenv activate test_new_package
   pip install svtools
   ```
+
+### Build a conda package
+1. Obtain and install a [Miniconda](http://conda.pydata.org/miniconda.html) version appropriate for your platform.
+2. Install `conda-build`:
+  
+  ```
+  conda install conda-build
+  ```
+3. Create the conda recipe skeleton
+  1. Run `conda skeleton`
+  
+    ```
+    conda skeleton pypi svtools
+    ```
+  2. Edit the tests section of the resulting `svtools/meta.yml` file to look like the following line:
+    ```YAML
+    test:
+      # Python imports
+      imports:
+      - svtools
+      - svtools.vcf
+      
+    commands:
+      # You can put test commands to be run here.  Use this to test that the
+      # entry points work.
+    
+      - svtools --help
+      - create_coordinates --help
+    ```
+
+
+4. Build the conda recipe
+  
+  ```
+  conda build -c bioconda svtools
+  ```
+5. Test your recipe by installing it into a new `conda` environment. The bioconda channel is needed to pull in `pysam`.
+  
+  ```
+  conda install -c bioconda -n svtools_install_test --use-local svtools
+  ```
+6. Verify the install was successful.
+  
+  ```
+  source activate svtools_install_test
+  svtools --version
+  create_coordinates --version
+  ```
+7. Upload to location TBD
