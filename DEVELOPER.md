@@ -44,15 +44,15 @@ These instructions assume you have committed no additional changes after tagging
   pip install svtools
   ```
 
-### Build a `conda` package
+### Build a conda package
 1. Obtain and install a [Miniconda](http://conda.pydata.org/miniconda.html) version appropriate for your platform.
-2. Install `conda-build`:
+2. Install conda-build:
   
   ```
   conda install conda-build
   ```
-3. Create the `conda` recipe skeleton
-  1. Run `conda skeleton`
+3. Create the conda recipe skeleton
+  1. Run conda skeleton
   
     ```
     conda skeleton pypi svtools
@@ -74,12 +74,12 @@ These instructions assume you have committed no additional changes after tagging
     ```
 
 
-4. Build the `conda` recipe
+4. Build the conda recipe
   
   ```
   conda build -c bioconda svtools
   ```
-5. Test your recipe by installing it into a new `conda` environment. The bioconda channel is needed to pull in `pysam`.
+5. Test your recipe by installing it into a new conda environment. The bioconda channel is needed to pull in `pysam`.
   
   ```
   conda install -c bioconda -n svtools_install_test --use-local svtools
