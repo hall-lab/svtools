@@ -5,24 +5,62 @@
 [![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
 
 ## Summary
-svtools is a suite of utilities designed to help bioinformaticians construct and explore cohort-level structural variation calls. It is designed to efficiently merge and genotype calls from `speedseq sv` across thousands of genomes.
-
-## Obtaining help
-Please see the documentation on or linked to this page. For additional help or to report a bug, please open an issue on the svtools repository: https://github.com/hall-lab/svtools/issues
+`svtools` is a suite of utilities designed to help bioinformaticians construct and explore cohort-level structural variation calls. It is designed to efficiently merge and genotype calls from [`speedseq sv`](https://github.com/hall-lab/speedseq) across thousands to tens of thousands of genomes.
 
 ## Requirements
 * A Linux-like environment with bash, awk, and sort
-* A working installation of cnvnator-multi
-* Python2.7
+* A working installation of [`cnvnator-multi`](https://github.com/hall-lab/speedseq#cnvnator) (a component of `speedseq sv`)
+* [Python2.7](https://www.python.org/)
+   * [Numpy](http://www.numpy.org/)
+   * [Scipy](https://www.scipy.org/)
+   * [Pandas](http://pandas.pydata.org/)
+   * [Statsmodels](http://statsmodels.sourceforge.net/)
+   * [Pysam](https://github.com/pysam-developers/pysam) (≥0.8.1)
  
 ## Installation
-We recommend you install using pip or conda.
+We recommend you install using `pip` or `conda`. For more detailed instructions, see our Installation guide.
 
 ### Installing via pip
 ```
 pip install svtools
 ```
 
-## Installing via conda
+### Installing via conda
 TBD
 
+## Obtaining help
+Please see the documentation on, or linked to, this page. For additional help or to report a bug, please open an issue in the `svtools` repository: https://github.com/hall-lab/svtools/issues
+
+## Usage
+`svtools` consists of several subcommands for processing VCF or BEDPE files of structural variants and one accessory script (`create_coordinates`).
+
+```
+usage: svtools [-h] [--version] [--support] subcommand ...
+
+Comprehensive utilities to explore structural variation in genomes
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --version      show program's version number and exit
+  --support      information on obtaining support
+
+  subcommand     description
+    lsort        sort N LUMPY VCF files into a single file
+    lmerge       merge LUMPY calls inside a single file from svtools lsort
+    vcfpaste     paste VCFs from multiple samples
+    copynumber   add copynumber information using cnvnator-multi
+    genotype     compute genotype of structural variants based on breakpoint depth
+    afreq        add allele frequency information to a VCF file
+    bedpetobed12 convert a BEDPE file to BED12 format for viewing in IGV or the
+                 UCSC browser
+    bedpetovcf   convert a BEDPE file to VCF
+    vcftobedpe   convert a VCF file to a BEDPE file
+    vcfsort      sort a VCF file
+    bedpesort    sort a BEDPE file
+    prune        cluster and prune a BEDPE file by position based on allele
+                 frequency
+    varlookup    look for variants common between two BEDPE files
+```
+
+## Citations
+Until `svtools` is published, please cite using its DOI: http://dx.doi.org/10.5281/zenodo.49712.
