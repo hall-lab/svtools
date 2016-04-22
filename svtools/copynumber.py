@@ -72,7 +72,7 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
     return
 
 def description():
-    return 'compute genotype of structural variants based on breakpoint depth'
+    return 'add copynumber information using cnvnator-multi'
 
 def epilog():
     return '''As this program runs cnvnator-multi you must provide its location and must remember to have the ROOT package installed and properly configured. The input VCF file may be gzipped. If the input VCF file is omitted then the tool reads from stdin. Note that the coordinates file must end with a line containing the word exit.'''
