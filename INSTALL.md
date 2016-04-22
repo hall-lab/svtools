@@ -1,25 +1,28 @@
 ## Installing `svtools`
 
-1. Prepare Python environment <sup>[1](#python-env)</sup>
-2. From a [conda][1] package <sup>[2](#conda-install)</sup>
-3. Using the [pip][2] package from [pypi][3] <sup>[3](#pip-install)</sup>
-4. From the git repo <sup>[4](#git-install)</sup>
-5. Downloading a github tarball <sup>[5](#tarball-install)</sup>
+### Table of Contents
+1. [Preparing your Python environment](#python-env)
+2. [Installing from a conda package](#conda-install)
+3. [Installing from PyPI using pip](#pip-install)
+4. [Installing directly from the git repo](#git-install)
+5. [Installing from a github release tarball](#tarball-install)
 
-### <a name="python-env"></a> Prepare Python environment
-`svtools` is based on Python 2.7.  First you will need to prepare your Python environment.  You might want to use [pyenv virtualenv][4].
+### <a name="python-env"></a> Preparing your Python environment
+`svtools` requires Python 2.7.  Before proceeding you need to prepare your Python environment.  We highly recommend that you manage your installation of `svtools` with the [pip][2] package manager as shown below.  pip is installed by pyenv by default.  Using pip will allow you to uninstall `svtools` easily.  You might want to use [pyenv virtualenv][4] to create a virtual environment.
 The creation of the pyenv virtual environment and activation looks like this:
 
     pyenv virtualenv 2.7.9 svtools-2.7.9
     pyenv activate svtools-2.7.9
 
-### <a name="conda-install"></a> From a conda package TODO 
+### <a name="conda-install"></a> Installing using a conda[1] package
+We will eventually have a conda package available for install, but this version doesn't currently have one. 
 
-### <a name="pip-install"></a> Using pip package from pypi
-Once you have your Python environment set up you should be able to install the `svtools` package from pypi:
+### <a name="pip-install"></a> Installing from PyPI[3] using pip[2]
+Once you have your Python environment set up you should be able to install the `svtools` package from PyPI:
 
     pip install svtools
-_note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0
+
+_note:_ On older systems you may encounter an [error during pysam installation](https://github.com/pysam-developers/pysam/issues/262). This can be solved by specifying a version of [pysam][10] greater than 0.8.1 and less than 0.9.0
 
     pip install 'pysam>=0.8.1,<0.9.0'
 
@@ -27,7 +30,7 @@ You can spot check your `svtools` install by running:
 
     svtools --version
 
-### <a name="git-install"></a> From the git repo
+### <a name="git-install"></a> Installing directly from the git repo
 Once you have your Python environment set up you will want to clone `svtools` from the [hall-lab github repository][5].  
 
     git clone https://github.com/hall-lab/svtools.git svtools_test
@@ -45,12 +48,12 @@ _note:_ you can ignore the warning about "You are in 'detached HEAD' state."
 
 OR, you can just proceed to install from master.
 
-Now install the dependencies suggested in the requiremnts files
+Now install the dependencies suggested in the requirements file
 
     pip install statsmodels
 
 Installing statsmodels can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
-_note:_ on older systems you may need to specify a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
+_note:_ On older systems you may encounter an [error during pysam installation](https://github.com/pysam-developers/pysam/issues/262). This can be solved by specifying a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
 
     pip install 'pysam>=0.8.1,<0.9.0'
 
@@ -66,7 +69,7 @@ Finally we can spot check our `svtools` installation and observe the version num
 
     svtools --version
 
-### <a name="tarball-install"></a> Downloading a github tarball
+### <a name="tarball-install"></a> Installing from a github release tarball
 
 Once you have your python environment set up, visit the [svtools releases github page][6].  Select the latest release and use the `Source code (tar.gz)` link to download a tarball of the source.
 
