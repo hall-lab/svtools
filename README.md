@@ -4,6 +4,9 @@
 [![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools) 
 [![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
 
+[![PyPI](https://img.shields.io/pypi/v/svtools.svg)](https://pypi.python.org/pypi/svtools)
+[![DOI](https://zenodo.org/badge/16104/hall-lab/svtools.svg)](https://zenodo.org/badge/latestdoi/16104/hall-lab/svtools)
+
 ## Summary
 `svtools` is a suite of utilities designed to help bioinformaticians construct and explore cohort-level structural variation calls. It is designed to efficiently merge and genotype calls from [`speedseq sv`](https://github.com/hall-lab/speedseq) across thousands to tens of thousands of genomes.
 
