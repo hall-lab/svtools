@@ -71,7 +71,7 @@ optional arguments:
 ```
 
 ## Citing svtools
-Until `svtools` is published, please cite using its DOI: http://dx.doi.org/10.5281/zenodo.49712.
+Until `svtools` is published, please cite using its DOI: [![DOI](https://zenodo.org/badge/16104/hall-lab/svtools.svg)](https://zenodo.org/badge/latestdoi/16104/hall-lab/svtools). Note that this link corresponds to the latest version. If you used an earlier version then your DOI may be different and you can find it on [Zenodo](https://zenodo.org/search?ln=en&cc=software&p=svtools&action_search=).
 
 ## Troubleshooting
 As issues arise and common problems are identified, we will list them here.
