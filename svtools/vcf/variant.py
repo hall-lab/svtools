@@ -24,8 +24,6 @@ class Variant(object):
         self.info = dict()
         self.format_list = vcf.format_list
         self.format_set = {i.id for i in vcf.format_list}
-        self.active_formats = set()
-        self.active_format_list = list()
         self.gts = None
 
         # fill in empty sample genotypes
@@ -35,8 +33,8 @@ class Variant(object):
 
         # make a genotype for each sample at variant
         self.format_string = var_list[8]
-        self.active_formats = { i for i in self.format_string.split(':') }
-        self.update_active_format_list()
+        self.format_dict = { key: index for index, key in enumerate(self.format_string.split(':')) }
+        self.format_dict.setdefault('GT', len(self.format_dict)) #add GT if it doesn't exist
         self.gts_string = '\t'.join(var_list[9:])
 
         self.info = dict()
@@ -46,33 +44,17 @@ class Variant(object):
                 i.append(True)
             self.info[i[0]] = i[1]
 
-    def _parse_genotypes(self, format_field_tags, genotype_array):
+    def _parse_genotypes(self, genotype_array):
         '''
         Parse the genotype strings
         '''
         gts = dict()
         for index, sample_string in enumerate(genotype_array):
             sample_name = self.sample_list[index]
-            try:
-                sample_field = sample_string.split(':')
-                # sample_name HAS to match the same order.
-                gts[sample_name] = Genotype(self, sample_field[0])
-                # import the existing fmt fields
-                gts[sample_name].set_formats(format_field_tags, sample_field)
-            except IndexError:
-                gts[sample_name] = Genotype(self, './.')
+            sample_field = sample_string.split(':')
+            g = Genotype(self, sample_field)
+            gts[sample_name] = g
         return gts
-
-    def update_active_format_list(self):
-        '''
-        Update the set of this lines 'active' formats.
-        This tracks which of the listed formats are actually being used.
-        '''
-        new_list = list()
-        for format in self.format_list:
-            if format.id in self.active_formats:
-                new_list.append(format.id)
-        self.active_format_list = new_list
 
     def set_info(self, field, value):
         '''
@@ -111,7 +93,7 @@ class Variant(object):
         '''
         f_list = list()
         for f in self.format_list:
-            if f.id in self.active_formats:
+            if f.id in self.format_dict:
                 f_list.append(f.id)
         return ':'.join(f_list)
 
@@ -132,7 +114,7 @@ class Variant(object):
         Parse genotypes if they are requested
         '''
         if self.gts is None:
-            self.gts = self._parse_genotypes(self.format_string.split(':'), self.gts_string.split('\t'))
+            self.gts = self._parse_genotypes(self.gts_string.split('\t'))
             self.format_string = None
 
     def genotypes(self):
@@ -149,7 +131,7 @@ class Variant(object):
         self._uncache_gts()
         try:
             return self.gts[sample_name]
-        except KeyError as e:
+        except KeyError:
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
             sys.exit(1)
 
@@ -168,7 +150,7 @@ class Variant(object):
                 self.get_info_string()
                 ]
 
-        if self.active_formats:
+        if self.format_dict:
             gts_string = self.get_gt_string(use_cached_gt_string)
             if gts_string is None:
                 sys.stderr.write("Unable to construct or retrieve genotype string\n")
