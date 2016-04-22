@@ -17,7 +17,7 @@ git tag -a v0.0.1 -m 'v0.0.1'
 git push --tags
 ```
 
-Next navigate to the github [Releases page](https://github.com/hall-lab/svtools/releases), draft a 
+Next navigate to the github [Releases page](https://github.com/hall-lab/svtools/releases), draft a new 
 release using the tag you just generated and add release information (a description of changes made since the last release). This will create an entry on the Github Releases page and upload the release to Zenodo.
 
 ### Build a pip package and upload to PyPI
@@ -44,14 +44,14 @@ These instructions assume you have committed no additional changes after tagging
   pip install svtools
   ```
 
-### Build a conda package
+### Build a `conda` package
 1. Obtain and install a [Miniconda](http://conda.pydata.org/miniconda.html) version appropriate for your platform.
 2. Install `conda-build`:
   
   ```
   conda install conda-build
   ```
-3. Create the conda recipe skeleton
+3. Create the `conda` recipe skeleton
   1. Run `conda skeleton`
   
     ```
@@ -74,7 +74,7 @@ These instructions assume you have committed no additional changes after tagging
     ```
 
 
-4. Build the conda recipe
+4. Build the `conda` recipe
   
   ```
   conda build -c bioconda svtools
