@@ -6,14 +6,22 @@ You might want to use pyenv virtualenv.
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
 We require python 2.7.X
 The creation of the pyenv and activation looks like this in our environment
+
     pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
     pyenv activate svtools_install_instructions-2.7.9
+
 Now you will need to satisfy the pysam dependency
+
     pip install pysam>=0.8.1,<0.9.0
+
 Then you should be able to install the svtools package from pypi
+
     pip install svtools
+
 You can spot check your svtools install by running
+
     svtools --version
+
 additional installtion strategies available in INSTALL.md
 
 ##Download bamfiles for NA12878 pedigrees from http://www.ebi.ac.uk/ena/data/view/ERP001960
@@ -24,13 +32,9 @@ about 14 days worth of downloads from machines like our workstations....perhaps 
 ## Create a bampaths mapping file with original paths to all unaligned NA12878 pedigree bam files
 
 ## Alternative directory of realigned BAM files at hall-lab disk to use for analysis
-   # /gscmt $DIR/lumpy/$SAMPLE/$SAMPLE.sv.vcf.gz \
-| vawk -v S=$SAMPLE 'BEGIN {DEL=0; DUP=0; INV=0; BND=0} { if (I$SVTYPE=="DEL") DEL+=1; \
-else if (I$SVTYPE=="DUP") DUP+=1; else if (I$SVTYPE=="INV") INV+=1; \
-else if (I$SVTYPE=="BND" && ! I$SECONDARY) BND+=1 } END { print S,DEL,DUP,INV,BND }'
-done >> $DIR/notes/svtype_counts.txt
-nt/gc2802/halllab/ceph1463_realign_021815/
-   # /gscmnt/gc2802/halllab/ceph1463_realign_021815/notes/sample.path.txt
+
+    /gscmnt/gc2802/halllab/ceph1463_realign_021815/
+    /gscmnt/gc2802/halllab/ceph1463_realign_021815/notes/sample.path.txt
 
 Get SpeedSeq aligned bams and run lumpy on them....
 see some other tutorial to do that
@@ -38,12 +42,12 @@ see some other tutorial to do that
 
 1. Count SVs after lumpy
 1. Genotyping the SV Callset using genotype
-    *Using lsort we want to sort and concatenate VCF files
-    *Collapse the variants into merged VCF
-    *Genotype merged VCF with genotype
-    *Annotate read-depth of VCF variants
-    *To accurately count SVs we need to further prune 
-    *Compare SV counts for pre- and post-merged VCFs
+*Using lsort we want to sort and concatenate VCF files
+*Collapse the variants into merged VCF
+*Genotype merged VCF with genotype
+*Annotate read-depth of VCF variants
+*To accurately count SVs we need to further prune 
+*Compare SV counts for pre- and post-merged VCFs
 1. VarLookup: To compare multiple subsets and discover variants common(overlapping at min distance) between them. 
 1. Classify: Classify structural variants based on an 
 
@@ -68,32 +72,19 @@ else if (I$SVTYPE=="BND" && ! I$SECONDARY) BND+=1 } END { print S,DEL,DUP,INV,BN
 Lumpy outputs compressed vcf output files which need to be extracted  for running genotype.
 Following command extracts bunch of compressed(.gz) vcf files into raw vcf format
 
-zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12877/NA12877.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/NA12877.sv.vcf.gz
-zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12878/NA12878.sv.vcf.gz
-zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12879/NA12879.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12879/NA12879.sv.vcf.gz
+extract_vcf.sh
 
- 
-for SAMPLE in `cat $DIR/notes/batch.txt | cut -f 1`
-do
-    echo $SAMPLE
-    zcat $DIR/lumpy/$SAMPLE/$SAMPLE.sv.vcf.gz > $DIR/lumpy/$SAMPLE/$SAMPLE.sv.vcf
-done
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12877/NA12877.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/NA12877.sv.vcf
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12878/NA12878.sv.vcf
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12879/NA12879.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12879/NA12879.sv.vcf
 
 
-# -----------------------------------------------------------
-# 6b. Using lsort we want to sort and concatenate VCF files
-# ----------------------------------------------------------
+###Using lsort we want to sort and concatenate VCF files
 
-# ----------------------------------------
-# lsort  
-# ----------------------------------------
-# Program: lsort
-# Author: Ryan Layer and Ira Hall
-# Path: /gscmnt/gc2719/halllab/bin/lsort
-# Version: 0.01 
-# Description: sort N VCF files into a single file
-# Usage: %prog <VCF file 1> <VCF file 2> ... <VCF file N>
-# 
+lsort_vcf.sh
+
+bsub -M 25000000 -R 'select[mem>25000] rusage[mem=25000]' -J lsort_svtools_demo -q long -u jeldred\@genome.wustl.edu 'svtools lsort /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/NA12877.sv.vcf | bgzip -c > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/sorted.sv.vcf.gz'
+
 echo -n svtools lsort > $DIR/sort_cmd.sh
 for SAMPLE in `cat $DIR/notes/batch.txt | cut -f 1`
 do
