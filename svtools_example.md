@@ -6,15 +6,15 @@ You might want to use pyenv virtualenv.
 You can learn about that here <https://github.com/yyuu/pyenv-virtualenv>
 We require python 2.7.X
 The creation of the pyenv and activation looks like this in our environment
-<pre><code>pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
-pyenv activate svtools_install_instructions-2.7.9</pre></code>
+    pyenv virtualenv 2.7.9 svtools_install_instructions-2.7.9
+    pyenv activate svtools_install_instructions-2.7.9
 Now you will need to satisfy the pysam dependency
-<pre><code>pip install pysam>=0.8.1,<0.9.0</code><pre>
+    pip install pysam>=0.8.1,<0.9.0
 Then you should be able to install the svtools package from pypi
-<pre><code>pip install svtools</pre></code>
+    pip install svtools
 You can spot check your svtools install by running
-<pre><code>svtools --version</code></pre>
-additional installtion strategies available in DEVELOPER.md
+    svtools --version
+additional installtion strategies available in INSTALL.md
 
 ##Download bamfiles for NA12878 pedigrees from http://www.ebi.ac.uk/ena/data/view/ERP001960
 wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12877_S1.bam
@@ -24,208 +24,55 @@ about 14 days worth of downloads from machines like our workstations....perhaps 
 ## Create a bampaths mapping file with original paths to all unaligned NA12878 pedigree bam files
 
 ## Alternative directory of realigned BAM files at hall-lab disk to use for analysis
-   # /gscmnt/gc2802/halllab/ceph1463_realign_021815/
-   # /gscmnt/gc2802/halllab/ceph1463_realign_021815/notes/sample.path.txt
-
-# (1) make the directories
-for SAMPLE in `cat $SAMPLEMAP | awk '{print $1}'` ; do mkdir -p $WORKDIR/$SAMPLE/log; \
-	 mkdir -p $WORKDIR/$SAMPLE/qc; done
-
-#speedseq realign allows alignment from one or more BAM files, rather than FASTQ inputs. It automatically read group information from the BAM header to mark duplicates by library.
-
-# ----------------------------------------
-# 1. speedseq
-# ----------------------------------------
-# Program: speedseq
-# Local Path : /gscmnt/gc2719/halllab/bin/speedseq
-# Version: 0.0.3
-# Author: Colby Chiang
-# usage:   speedseq <command> [options]
-# command: align    align FASTQ files with BWA-MEM 
-#          var      call SNV and indel variants with FreeBayes
-#          somatic  call somatic SNV and indel variants in a tumor/normal pair with FreeBayes
-#          sv       call SVs with LUMPY
-#          realign  realign from a coordinate sorted BAM file 
-#
-# Dependencies on other software/packages:
-# 1. BWA: speedseq uses bwa mem to   
-	# Program   : bwa mem:
-	# Local Path			: /gscmnt/gc2719/halllab/bin/bwa
-	# Description	: alignment via Burrows-Wheeler transformation
-	# Version		: 0.7.8-r455
-	# Author			: Heng Li <lh3@sanger.ac.uk>
-	# Usage			: speedseq realign $BAM
-	# Command		: index	index sequences in the FASTA format
-	#          		  mem	BWA-MEM algorithm
-# 2. SAMBLASTER
-	# Program 		: samblaster
-	# Local Path			: /gscmnt/gc2719/halllab/bin/samblaster
-	# Version		: 0.1.21
-	# Author			: Greg Faust (gf4ea@virginia.edu)
-	# Summary		: Tool to mark duplicates and optionally output split reads and/or discordant pairs.
-	# Usage			: e.g. 1. bwa mem index samp.r1.fq samp.r2.fq | samblaster [-e] [-d samp.disc.sam] [-s samp.split.sam] | samtools view -Sb - > samp.out.bam
-	# 	     			  		 2. samtools view -h samp.bam | samblaster [-a] [-e] [-d samp.disc.sam] [-s samp.split.sam] [-u samp.umc.fasta] -o /dev/null
-# 3. SAMBAMBA 
-	# Program 		: sambamba
-	# Local Path			: /gscmnt/gc2719/halllab/bin/sambamba
-	# Version		: v0.5.4
-	# Author			: Artem Sarasov
-	# Summary		: Faster and parallel implementation to work with SAM and BAM files
-	# Usage			: available commands : 'view', 'index', 'merge', 'sort', 'flagstat', 'slice', 'markdup', 'depth', 'mpileup' 
-# 4  NUMPY and Scipy
-	# Package 		: Numpy version 1.8.1; Scipy version 0.14
-	# Python fundamental packages for scientific computing with Python
-# 5  pysam 
-		# Package	: pysam version 0.8.0+ 
-		# Python package for working with alignment files in SAM/BAM format 	
-# 6. ROOT 
-	# Program 		: ROOT
-	# Author			: CERN
-	# Summary		: ROOT is a framework for data processing: saving, mining, accessing data, and enables publishing results in graphs
-# 7. Variant Effect Predictor 
-	# Program 		: VEP
-	# Author			: ENSEMBL
-	# Summary		: VEP determines the effect of variants (SNPs, insertions, deletions, CNVs or structural variants) on genes, transcripts, and protein sequence, as well as regulatory regions
-# 8. VAWK:
-	# Program 		: vawk
-	# Local Path			: /gscmnt/gc2719/halllab/bin/vawk
-	# Version		: 0.0.2
-	# Author			: Colby Chiang
-	# Summary		: An awk-like VCF parser
-	# Usage			: usage: vawk [-h] [-v VAR] [-c INFO_COL] [--header] [--debug] cmd [vcf]
-	
-# 9. MBUFFER:
-	# Program		: mbuffer
-	# Summary		: mbuffer is a tool for buffering data streams over TCP based network targets, paralleling stream, etc
-	# Usage 			: mbuffer -b<num> -s<size> -m<size> -i<file> -o<file>
-# 10. GNU Parallel
-	# Program		: parallel
-	# Summary 		: a shell tool for executing jobs in parallel
- 
-
-#NOTE: All dependencies need to be installed before speedseq is installed. 
-#Detailed instructions for speedseq installation and dependencies at: https://github.com/hall-lab/speedseq
-# (2) construct the alignment command
-for SAMPLE in `cat $SAMPLEMAP | awk '{ print $1 }'`
-do
-    ORIG_BAM=`cat $SAMPLEMAP | awk -v SAMPLE=$SAMPLE '{FS="\t"; if ($1==SAMPLE) print $2 }'`
-    echo "mkdir -p $WORKDIR/notes/$BATCH/log && \
-        mkdir -p $WORKDIR/$SAMPLE && \
-        bomb -q hall-lab -m 48 -t 8 -J $SAMPLE \
-        -o $WORKDIR/notes/$BATCH/log/$SAMPLE.align.%J.log \
-        -e $WORKDIR/notes/$BATCH/log/$SAMPLE.align.%J.log \
-         \"speedseq realign \
-            -o $WORKDIR/$SAMPLE/$SAMPLE \
-            -T $WORKDIR/$SAMPLE/temp \
-            -M 8 \
-            -t 8 \
-            -v \
-            /gscmnt/gc2719/halllab/genomes/human/GRCh37/hs37_ebv/hs37_ebv.fasta \
-            $ORIG_BAM\""
-done > $WORKDIR/notes/realign_command.sh
-
-
-# ----------------------------------------
-# 3. run alignment
-# ----------------------------------------
-cat $WORKDIR/notes/realign_command.sh | bash
-
-# ----------------------------------------
-# 4. Flagstat the realigned BAM files
-# ----------------------------------------
-for SAMPLE in `cat $BATCH | cut -f 1`
-do
-    bomb \
-        -m 1 \
-        -J $SAMPLE.flag \
-        -o $WORKDIR/$SAMPLE/log/$SAMPLE.realign.flagstat.%J.log \
-        -e $WORKDIR/$SAMPLE/log/$SAMPLE.realign.flagstat.%J.log \
-        "sambamba flagstat $WORKDIR/$SAMPLE/$SAMPLE.bam > $WORKDIR/$SAMPLE/$SAMPLE.bam.flagstat"
-done
-
-#SET DIRECTORY HERE:
-DIR="/gscmnt/gc2802/halllab/users/abadve/projects/illumina_platinum/"
-mkdir $DIR/notes/
-
-# create a delimited batch file with sample and bam paths 
-# e.g. NA12877	/gscmnt/gc2802/halllab/ceph1463_realign_021815/NA12877/NA12877.bam
-
-for SAMPLE in `cat $DIR/notes/batch.txt | cut -f 1`
-do
-    mkdir -p $DIR/lumpy/$SAMPLE/log
-done
-
-# ---------------------------------------------------------------------
-# 5a. Run LUMPY through Speedseq SV to call structural variants
-# ---------------------------------------------------------------------
-# ----------------------------------------
-# speedseq
-# ----------------------------------------
-# Program: speedseq
-# Path : /gscmnt/gc2719/halllab/bin/speedseq
-# Version: 0.0.3
-# Author: Colby Chiang
-# usage:   speedseq <command> [options]
-# command: align    align FASTQ files with BWA-MEM 
-#          var      call SNV and indel variants with FreeBayes
-#          somatic  call somatic SNV and indel variants in a tumor/normal pair with FreeBayes
-#          sv       call SVs with LUMPY
-#          realign  realign from a coordinate sorted BAM file 
-#
-# LUMPY    
-	# Program   	: lumpy
-	# Path			: /gscmnt/gc2719/halllab/bin/lumpy
-	# Version		: v 0.2.11
-	# Summary		: Find structural variations in various signals.
-	# Author			: Ryan Layer
-	# 	Usage	   	: speedseq sv [options]
-
-while read SAMPLE BAM PROJECT 
-do 
-SPL="${BAM%.*}.splitters.bam"
-DCD="${BAM%.*}.discordants.bam"
-bomb \
--g /abadve/lumpy \
--m 30 \
--J $SAMPLE.lumpy \
--o $DIR/lumpy/$SAMPLE/log/$SAMPLE.lumpy.log \
--e $DIR/lumpy/$SAMPLE/log/$SAMPLE.lumpy.log \
-"speedseq sv \
--o $DIR/lumpy/$SAMPLE/$SAMPLE \
--T $DIR/lumpy/$SAMPLE/temp \
--R /gscmnt/gc2719/halllab/genomes/human/GRCh37/hs37_ebv/hs37_ebv.fasta \
--B $BAM \
--S $SPL \
--D $DCD \
--v \
--x /gscmnt/gc2719/halllab/src/speedseq/annotations/ceph18.b37.lumpy.exclude.2014-01-15.bed \
--d \
--P \
--g \
--k"
-done < $DIR/notes/batch.txt
-
-# ------------------------------------------------------------
-# 5b. Count SVs after lumpy
-# ------------------------------------------------------------
-#After running lumpy to detect structural variants, 
-#run following command to count various SV types
-#tandem duplications, deletions,inversions and break-ends
-
-for SAMPLE in `cat $DIR/notes/batch.txt | cut -f 1` 
-do
-zcat $DIR/lumpy/$SAMPLE/$SAMPLE.sv.vcf.gz \
+   # /gscmt $DIR/lumpy/$SAMPLE/$SAMPLE.sv.vcf.gz \
 | vawk -v S=$SAMPLE 'BEGIN {DEL=0; DUP=0; INV=0; BND=0} { if (I$SVTYPE=="DEL") DEL+=1; \
 else if (I$SVTYPE=="DUP") DUP+=1; else if (I$SVTYPE=="INV") INV+=1; \
 else if (I$SVTYPE=="BND" && ! I$SECONDARY) BND+=1 } END { print S,DEL,DUP,INV,BND }'
 done >> $DIR/notes/svtype_counts.txt
+nt/gc2802/halllab/ceph1463_realign_021815/
+   # /gscmnt/gc2802/halllab/ceph1463_realign_021815/notes/sample.path.txt
 
-# ---------------------------------------------
-# 6a. Genotyping the SV Callset using genotype
-# ---------------------------------------------
-# Lumpy outputs compressed vcf output files which need to be extracted 
-# for running genotype.
-# Following command extracts bunch of compressed(.gz) vcf files into raw vcf format
+Get SpeedSeq aligned bams and run lumpy on them....
+see some other tutorial to do that
+<https://github.com/hall-lab/speedseq>
+
+1. Count SVs after lumpy
+1. Genotyping the SV Callset using genotype
+    *Using lsort we want to sort and concatenate VCF files
+    *Collapse the variants into merged VCF
+    *Genotype merged VCF with genotype
+    *Annotate read-depth of VCF variants
+    *To accurately count SVs we need to further prune 
+    *Compare SV counts for pre- and post-merged VCFs
+1. VarLookup: To compare multiple subsets and discover variants common(overlapping at min distance) between them. 
+1. Classify: Classify structural variants based on an 
+
+
+##Count SVs after lumpy
+After running lumpy to detect structural variants, run following command to count various SV typestandem duplications, deletions,inversions and break-ends
+
+/gscmnt/gc2801/analytics/jeldred/svtools_demo/count_sv.sh
+
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12877/NA12877.sv.vcf.gz | /gscmnt/gc2719/halllab/bin/vawk -v S=NA12877 'BEGIN {DEL=0; DUP=0; INV=0; BND=0} { if (I$SVTYPE=="DEL") DEL+=1; \
+else if (I$SVTYPE=="DUP") DUP+=1; else if (I$SVTYPE=="INV") INV+=1; \
+else if (I$SVTYPE=="BND" && ! I$SECONDARY) BND+=1 } END { print S,DEL,DUP,INV,BND }' >> /gscmnt/gc2801/analytics/jeldred/svtools_demo/svtype_counts.txt 
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz | /gscmnt/gc2719/halllab/bin/vawk -v S=NA12878 'BEGIN {DEL=0; DUP=0; INV=0; BND=0} { if (I$SVTYPE=="DEL") DEL+=1; \
+else if (I$SVTYPE=="DUP") DUP+=1; else if (I$SVTYPE=="INV") INV+=1; \
+else if (I$SVTYPE=="BND" && ! I$SECONDARY) BND+=1 } END { print S,DEL,DUP,INV,BND }' >> /gscmnt/gc2801/analytics/jeldred/svtools_demo/svtype_counts.txt 
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12879/NA12879.sv.vcf.gz | /gscmnt/gc2719/halllab/bin/vawk -v S=NA12879 'BEGIN {DEL=0; DUP=0; INV=0; BND=0} { if (I$SVTYPE=="DEL") DEL+=1; \
+else if (I$SVTYPE=="DUP") DUP+=1; else if (I$SVTYPE=="INV") INV+=1; \
+else if (I$SVTYPE=="BND" && ! I$SECONDARY) BND+=1 } END { print S,DEL,DUP,INV,BND }' >> /gscmnt/gc2801/analytics/jeldred/svtools_demo/svtype_counts.txt 
+
+
+##Genotyping the SV Callset using genotype
+Lumpy outputs compressed vcf output files which need to be extracted  for running genotype.
+Following command extracts bunch of compressed(.gz) vcf files into raw vcf format
+
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12877/NA12877.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/NA12877.sv.vcf.gz
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12878/NA12878.sv.vcf.gz
+zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12879/NA12879.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12879/NA12879.sv.vcf.gz
+
+ 
 for SAMPLE in `cat $DIR/notes/batch.txt | cut -f 1`
 do
     echo $SAMPLE
@@ -459,8 +306,7 @@ cat sv_count/*.count.q100.txt \
     > post-merged.sv_counts.q100.txt
 	
 # ----------------------------------------------------------
-# 10. VarLookup: To compare multiple subsets and discover
-#variants common(overlapping at min distance) between them. 
+# 10. VarLookup: To compare multiple subsets and discover variants common(overlapping at min distance) between them. 
 # ----------------------------------------------------------
 # ----------------------------------------
 # varlookup 
