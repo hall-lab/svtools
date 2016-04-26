@@ -8,7 +8,7 @@
 5. [Installing from a github release tarball](#tarball-install)
 
 ### <a name="python-env"></a> Preparing your Python environment
-`svtools` requires Python 2.7.  Before proceeding you need to prepare your Python environment.  We highly recommend that you manage your installation of `svtools` with the [pip][2] package manager as shown below.  pip is installed by pyenv by default.  Using pip will allow you to uninstall `svtools` easily.  You might want to use [pyenv virtualenv][4] to create a virtual environment.
+`svtools` requires Python 2.7.  Before proceeding you need to prepare your Python environment.  We highly recommend that you manage your installation of `svtools` with the [pip][2] package manager as shown below.  pip is installed by pyenv by default.  Using pip will allow you to uninstall `svtools` easily.  You might want to use [pyenv virtualenv][4] to create a virtual environment. There are instructions for setting up a virtualenv on the [pyenv github site](https://github.com/yyuu/pyenv/blob/master/README.md)
 The creation of the pyenv virtual environment and activation looks like this:
 
     pyenv virtualenv 2.7.9 svtools-2.7.9
