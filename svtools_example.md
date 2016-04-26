@@ -42,12 +42,12 @@ see some other tutorial to do that
 
 1. Count SVs after lumpy
 1. Genotyping the SV Callset using genotype
-*Using lsort we want to sort and concatenate VCF files
-*Collapse the variants into merged VCF
-*Genotype merged VCF with genotype
-*Annotate read-depth of VCF variants
-*To accurately count SVs we need to further prune 
-*Compare SV counts for pre- and post-merged VCFs
+    *Using lsort we want to sort and concatenate VCF files
+    *Collapse the variants into merged VCF
+    *Genotype merged VCF with genotype
+1. Annotate read-depth of VCF variants
+    *To accurately count SVs we need to further prune 
+    *Compare SV counts for pre- and post-merged VCFs
 1. VarLookup: To compare multiple subsets and discover variants common(overlapping at min distance) between them. 
 1. Classify: Classify structural variants based on an 
 
@@ -79,64 +79,34 @@ zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz > 
 zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12879/NA12879.sv.vcf.gz > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12879/NA12879.sv.vcf
 
 
-###Using lsort we want to sort and concatenate VCF files
+###Using lsort we want to sort and concatenate VCF files (this will strip out SECONDARY variants)
 
 lsort_vcf.sh
 
-bsub -M 25000000 -R 'select[mem>25000] rusage[mem=25000]' -J lsort_svtools_demo -q long -u jeldred\@genome.wustl.edu 'svtools lsort /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/NA12877.sv.vcf | bgzip -c > /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/sorted.sv.vcf.gz'
+bsub -M 25000000 -R 'select[mem>25000] rusage[mem=25000]' -J lsort_svtools_demo -q long -u jeldred\@genome.wustl.edu 'svtools lsort /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12877/NA12877.sv.vcf /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12878/NA12878.sv.vcf /gscmnt/gc2801/analytics/jeldred/svtools_demo/NA12879/NA12879.sv.vcf | bgzip -c > /gscmnt/gc2801/analytics/jeldred/svtools_demo/sorted.sv.vcf.gz'
 
-echo -n svtools lsort > $DIR/sort_cmd.sh
-for SAMPLE in `cat $DIR/notes/batch.txt | cut -f 1`
-do
-    echo -ne " \\\\\n\t$DIR/lumpy/$SAMPLE/$SAMPLE.sv.vcf"
-done >> $DIR/sort_cmd.sh
-bomb -m 25 -J lsort "bash $DIR/sort_cmd.sh | bgzip -c > $DIR/sorted.sv.vcf.gz"
+### Collapse the variants into merged VCF (this will add back in SECONDARY variants)
 
-# -----------------------------------------------------------
-# 6c. Collapse the variants into merged VCF
-# ----------------------------------------------------------
-
-# ----------------------------------------
-# lmerge  
-# ----------------------------------------
-# Program: lmerge
-# Author: Ryan Layer and Ira Hall
-# Path: /gscmnt/gc2719/halllab/bin/lmerge
-# Version: ira_7 
-# Description:merge lumpy calls.
-# Usage: lmerge -i <file>
-# Dependencies on other software:
 # 1. l_bp.py: Implementation to decide which variants can be merged 
 
-bomb -m 20 -J lmerge.$SLOP \
-    "zcat $DIR/sorted.sv.vcf.gz \
-        |svtools lmerge -i /dev/stdin -f 20 \
-        | bedtools sort -header \
-        | bgzip -c \
-        > $DIR/merged.sv.vcf.gz"
+lmerge_sorted_vcf.sh
 
-# ----------------------------------------
-# 6d. Genotype merged VCF with genotype
-# ----------------------------------------
+bsub -M 20000000 -R 'select[mem>20000] rusage[mem=20000]' -J lmerge_svtools_demo -q long -u jeldred\@genome.wustl.edu 'zcat /gscmnt/gc2801/analytics/jeldred/svtools_demo/sorted.sv.vcf.gz \
+| svtools lmerge -i /dev/stdin -f 20 \
+| bedtools sort -header \
+| bgzip -c \
+> /gscmnt/gc2801/analytics/jeldred/svtools_demo/merged.sv.vcf.gz'
+
+
+###Genotype merged VCF with genotype
+
 # To speed things up, generate a separate VCF for each sample and
 # join them afterwards.
 
-# ----------------------------------------
-# Genotype (earlier called SVTYPER)
-# ----------------------------------------
-# Program: genotype
-# Author: Colby Chiang 
-# Path: /gscmnt/gc2719/halllab/bin/genotype
-# Version: 0.0.2 
 # Description: Compute genotype of structural variants based on breakpoint depth
 # Usage:  genotype [-h] -B BAM -S SPLIT_BAM [-i INPUT_VCF] [-o OUTPUT_VCF] [-f SPLFLANK] [-F DISCFLANK] [--split_weight SPLIT_WEIGHT][--disc_weight DISC_WEIGHT] [-n NUM_SAMP] [--debug]
 
-#Dependencies:
-#  pysam 
-		# Package	: pysam version 0.8.0+ 
-		# Python package for working with alignment files in SAM/BAM format 	
 
-mkdir -p gt
 while read SAMPLE BAM 
 do 
     echo $SAMPLE
@@ -150,6 +120,20 @@ do
             | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
             > gt/$SAMPLE.vcf"
 done < $DIR/notes/batch.txt
+
+%J is a magic LSF variable that hold the lsf job id as the job is being submittd
+
+genotype_merged_vcf.sh
+
+bsub -M 20000000 -R 'select[mem>20000] rusage[mem=20000]' -J gt_NA12877_demo -q long -u jeldred\@genome.wustl.edu -o log/NA12877.gt.%J.log -e log/NA12877.gt.%J.log \
+'zcat merged.sv.vcf.gz \
+| /gscmnt/gc2719/halllab/bin/vawk --header '{  \$6=\".\"; print }' \
+| svtools genotype \
+ -B /gscmnt/gc2802/halllab/sv_aggregate/MISC/realigned_BAMs/NA12877/NA12877.bam
+ -S /gscmnt/gc2802/halllab/sv_aggregate/MISC/realigned_BAMs/NA12877/NA12877.splitters.bam
+| sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
+> gt/NA12877.vcf'
+
 
 # ----------------------------------------
 # 6e. paste the samples into a single VCF
