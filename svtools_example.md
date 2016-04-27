@@ -106,21 +106,6 @@ bsub -M 20000000 -R 'select[mem>20000] rusage[mem=20000]' -J lmerge_svtools_demo
 # Description: Compute genotype of structural variants based on breakpoint depth
 # Usage:  genotype [-h] -B BAM -S SPLIT_BAM [-i INPUT_VCF] [-o OUTPUT_VCF] [-f SPLFLANK] [-F DISCFLANK] [--split_weight SPLIT_WEIGHT][--disc_weight DISC_WEIGHT] [-n NUM_SAMP] [--debug]
 
-
-while read SAMPLE BAM 
-do 
-    echo $SAMPLE
-    SPL=${BAM%.*}.splitters.bam
-    bomb -m 18 -J $SAMPLE.gt -o log/$SAMPLE.gt.%J.log -e log/$SAMPLE.gt.%J.log \
-         "zcat merged.sv.vcf.gz \
-            | vawk --header '{  \$6=\".\"; print }' \
-            | svtools genotype \
-                -B $BAM \
-                -S $SPL \
-            | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
-            > gt/$SAMPLE.vcf"
-done < $DIR/notes/batch.txt
-
 %J is a magic LSF variable that hold the lsf job id as the job is being submittd
 
 genotype_merged_vcf.sh
@@ -135,18 +120,7 @@ bsub -M 20000000 -R 'select[mem>20000] rusage[mem=20000]' -J gt_NA12877_demo -q 
 > gt/NA12877.vcf'
 
 
-# ----------------------------------------
-# 6e. paste the samples into a single VCF
-# ----------------------------------------
-# ----------------------------------------
-# Vcfpaste  
-# ----------------------------------------
-# Program: vcfpaste
-# Author: Colby Chiang / Abhijit Badve
-# Path: /gscmnt/gc2719/halllab/bin/vcfpaste
-# Version: 0.0.2 
-# Description:Paste VCFs from multiple samples
-# Usage: vcfpaste [-h] [-m MASTER] [vcf [vcf ...]]
+###Paste the samples into a single VCF
 
 bomb -m 20 -J paste.gt -o log/paste.gt.%J.log -e log/paste.gt.%J.log \
     "zcat merged.sv.vcf.gz \
@@ -157,7 +131,15 @@ bomb -m 20 -J paste.gt -o log/paste.gt.%J.log -e log/paste.gt.%J.log \
         | bedtools sort -header \
         > merged.sv.gt.vcf"
 
+vcfpaste_merged_vcfs.sh
 
+bsub -M 20000000 -R 'select[mem>20000] rusage[mem=20000]' -J vcfpaste_demo -q long -u jeldred\@genome.wustl.edu \
+"zcat merged.sv.vcf.gz \
+| vcf_group_multiline.py \
+| svtools vcfpaste -m - gt/*.vcf \
+| bedtools sort -header \
+> merged.sv.gt.vcf"
+ 
 
 # ---------------------------------------------------------
 # 7. Annotate read-depth of VCF variants
