@@ -55,6 +55,7 @@ The cn.list file has a single column that contains the path to the vcf files out
 
 ###Use vawk to remove 'REF' variants from SpeedSeq SV vcf
 This step will remove variants that have been detected but then determined to be homozygous reference.
+This command will need to be run once per sample and ouput one non_ref vcf file per sample.
 ```
   zcat SAMPLE1.sv.vcf.gz \
   | vawk --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
@@ -62,6 +63,8 @@ This step will remove variants that have been detected but then determined to be
 ```
 
 ### Use svtools lsort to combine and sort variants from multiple samples
+svtools lsort takes the space sorted list of all of your non_ref vcf files as arguments.
+The example shows us combining three samples.  The output of this step is one sorted and compressed vcf file.
 ```
 svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.vcf \
 | bgzip -c > sorted.vcf.gz
@@ -90,7 +93,7 @@ zcat merged.vcf.gz \
 
 ### Use svtools genotype to force genotypes for variant positions discovered in other samples
 svtools genotype will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
-It requires the aligned bam and splitters file for each sample.
+It requires the aligned bam and splitters file for each sample. This step will output a fully genotyped vcf file for each sample. 
 ```
     "zcat merged.no_EBV.vcf.gz \
      | vawk --header '{  \$6=\".\"; print }' \
