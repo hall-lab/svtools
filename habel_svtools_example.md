@@ -52,40 +52,28 @@ The cn.list file has a single column that contains the path to the vcf files out
 10. Classification (exclude?)
 
 ###Use vawk to remove 'REF' variants from SpeedSeq SV vcf
+This step will remove variants that have been detected but then determined to be homozygous reference.
 ```
-while read SAMPLE BAM
-do
-  echo $SAMPLE
-  echo $BAM
-  speedseq_project_dir=/gscmnt/gc2802/halllab/sv_aggregate/MISC/
-  project_dir=/gscmnt/gc2801/analytics/jeldred/svtools_demo/
-  #prepare output directory path
-  mkdir -p $project_dir/lumpy/$SAMPLE
-  # create non_ref vcf based on full vcf 
-  zcat $speedseq_project_dir/lumpy/$SAMPLE/$SAMPLE.sv.vcf.gz \
-  | $VAWK --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
-  > $project_dir/lumpy/$SAMPLE/$SAMPLE.sv.non_ref.vcf
-done < sample.map
+  zcat SAMPLE1.sv.vcf.gz \
+  | vawk --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
+  > SAMPLE1.sv.non_ref.vcf
 ```
 
-### Build and execute a shell command to concatenate and sort the variants
+### Use svtools lsort to concatenate and sort variants
 ```
-echo -n "svtools lsort " > sort_cmd.sh
-while read SAMPLE BAM
-do
-  echo -ne " \\\\\n\t$project_dir/lumpy/$SAMPLE/$SAMPLE.sv.non_ref.vcf"
-done >> sort_cmd.sh < sample.map
+svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.vcf \
+| bgzip -c > sorted.vcf.gz
+```
+:note svtools lsort will remove variants with the SECONDARY tag in the INFO field.  This will cause the sorted vcf to have fewer variant lines than the input.
 
-bash sort_cmd.sh | bgzip -c > sorted.vcf.gz
+### Use svtools lmerge to merge variants deemed to be identical in the sorted vcf
 ```
-
-### lmerge sorted vcf
-```
-bsub -M 8000000 -q long -R 'select[mem>8000] rusage[mem=8000]' -e merge.err -o merge.out "zcat sorted.vcf.gz \
+zcat sorted.vcf.gz \
   | svtools lmerge -i /dev/stdin --product -f 20 \
   | bgzip -c > merged.vcf.gz "
 
 ```
+:note svtools lmerge will return variant lines for SECONDARY break ends in addition to merging variants.  This will sometimes cause the merged vcf to have more variant lines than the input.
 
 ### remove EBV (Epstein-Barr Virus) variants
 ```
