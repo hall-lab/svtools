@@ -3,7 +3,9 @@ This tutorial will help you begin to explore the use of svtools to analyze an SV
 This tutorial includes example commands that you can alter to refer to your sample names.
 ```
 :note A shell script that implements this tutorial for a small set of samples has also been included
+```
 [lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
+```
 Creating a sample.map file and running lumpy_pipeline.sh is another way to investigate the usage 
 of svtools for creating a callset.
 ```
