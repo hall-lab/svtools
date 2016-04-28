@@ -9,11 +9,11 @@ EXCLUDE=/gscmnt/gc2802/halllab/sv_aggregate/exclusion/exclude.cnvnator_100bp.112
 2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
 3. thisroot.sh
 
-##Install svtools (and Python)
+###Install svtools (and Python)
 [Installation instructions][https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md]
-##Acquire vawk
+###Acquire vawk
 clone from the repo (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk)
-##Acquire thisroot.sh
+###Acquire thisroot.sh
 for use with cnvnator, can we change this to link them out to generally prepare to run cnvnator?  and then maybe just note the need to source thisroot.sh below somewhere
 
 ##Gather genomic data and generate needed helper files
@@ -38,9 +38,9 @@ a sample map file has two columns
 4. remove EBV (Epstein-Barr Virus) reads 2016-03-31 jeldred
 5. bsub force genotypes with svtyper 2016-04-27 jeldred 
 6. ROOT libraries path 
-
-
-
+6.1. prepare environemnt for cnvnator
+6.2. make uncompressed copy 
+6.3. make coordinate file
 
 ###Use vawk to remove 'REF' variants from SpeedSeq SV 2016-04-27 jeldred
 <pre>
