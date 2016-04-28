@@ -19,29 +19,34 @@ for use with cnvnator, can we change this to link them out to generally prepare 
 ##Gather genomic data and generate needed helper files
 
 1. Prepare sample map file 
-2. Get or Create SpeedSeq SV vcf files
-3. Get or Create aligned bams and spliiter files
-4. 
+2. Get or Create SpeedSeq/lumpy SV vcf files
+3. Get or Create SpeedSeq aligned bams and spliiter files
+4. Refernce FASTA 
+5. cn.list file
 
-###Prepare sample map file 
+### Prepare sample map file 
 a sample map file has two columns
     
     sample_name,bam_path
 
-###Get or Create SpeedSeq SV vcf files
-###Get or Create aligned bams and splitter files
+### Get or Create SpeedSeq/lumpy SV vcf files
+### Get or Create aligned bams and splitter files
+### Reference FASTA
+### cn.list file
+The cn.list file has a single column that contains the path to the vcf files output in the Copy Number Annotation step of this tutorial.
 
 ##Use svtools to "process" data FIXME
 1. Use vawk to remove 'REF' variants from SpeedSeq SV vcf
 2. Build and execute a shell command to concatenate and sort variants using lsort
-3. bsub lmerge sorted vcf
-4. remove EBV (Epstein-Barr Virus) variants
-5. bsub force genotypes with svtyper 
+3. Use svtools lmerge to 'FIXME' the sorted vcf
+4. Remove EBV (Epstein-Barr Virus) variants
+5. Use svtools genotype to force genotypes for variant positions discovered in other samples.
 6. Copy Number annotation - ROOT libraries path 
     1. prepare environemnt for cnvnator
     2. make uncompressed copy 
     3. make coordinate file
-7. VCF paste
+    4. Annotate variants with copy number from cnvnator using FIXME
+7. Use svtools vcfpaste to FIXME
 8. Prune pipeline 
 9. Training (exclude?)
 10. Classification (exclude?)
@@ -174,23 +179,20 @@ bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.g
 ```
 
 ### Training
-
+```
 zcat merged.sv.new_pruned.vcf.gz \
  | svtools vcftobedpe  \
  | svtools varlookup -a stdin -b /gscmnt/gc2802/halllab/sv_aggregate/reclass/finmetseq.training_vars.bedpe.gz -c FINMETSEQ_HQ -d 50 \
  | svtools bedpetovcf \
  | $VAWK --header '{if(I$FINMETSEQ_HQ_AF>0) print $0}' \
  | bgzip -c > training.vars.vcf.gz
+```
 
-exit 0
-##END
-
-## Reclassify
-svtools --version
+## Reclassify THIS SECTION WELL OUT OF DATE FIXME
+```
 zcat merged.sv.new_pruned.vcf.gz \
  | python /gscmnt/gc2802/halllab/sv_aggregate/dev/svtools/svtools/reclass_combined.py -g /gscmnt/gc2802/halllab/sv_aggregate/ceph_ped/ceph.sex.txt  -t <(zcat training.vars.vcf.gz)  -a /gscmnt/gc2719/halllab/users/cchiang/projects/g#tex/annotations/repeatMasker.recent.lt200millidiv.b37.sorted.bed.gz  -d class.diags.0313.txt  | bgzip -c > reclass.0313.all.vcf.gz
 
-exit 0
 
 
 #zcat reclass.0313.all.vcf.gz \
@@ -209,6 +211,5 @@ exit 0
 #  }
 #}' | bgzip -c > reclassed.filtered.vcf.gz
 
-
-exit 0
+```
 
