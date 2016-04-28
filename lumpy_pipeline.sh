@@ -17,6 +17,8 @@ echo before comment
 # 1. Python
 # 2. svtools
 # 3. vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
+# 4. CNVnator
+# 5. Platform LSF
 
 # #Prepare sample map file
 # a sample map file has two columns
