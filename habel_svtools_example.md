@@ -4,16 +4,23 @@ REF=/gscmnt/gc2802/halllab/sv_aggregate/refs/all_sequences.fa
 EXCLUDE=/gscmnt/gc2802/halllab/sv_aggregate/exclusion/exclude.cnvnator_100bp.112015.bed
 
 
-##Satisfy computing environment requirements
-1. Python
-2. svtools
-3. vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
+##Satisfy computing environment requirementsi
+1. Install svtools (and Python)
+2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
+3. thisroot.sh
+
+##Install svtools (and Python)
+[Installation instructions][https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md]
+##Acquire vawk
+clone from the repo (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk)
+##Acquire thisroot.sh
+for use with cnvnator, can we change this to link them out to generally prepare to run cnvnator?  and then maybe just note the need to source thisroot.sh below somewhere
 
 ##Gather genomic data and generate needed helper files
 
 1. Prepare sample map file 
-2. Determine Location of SpeedSeq SV vcf files for the samples in your analysis
-3. Determine location of aligned bam files and 'spliiter' files
+2. Get or Create SpeedSeq SV vcf files
+3. Get or Create aligned bams and spliiter files
 4. 
 
 ###Prepare sample map file 
@@ -21,8 +28,22 @@ a sample map file has two columns
     
     sample_name,bam_path
 
-##Use vawk to remove REF variants from full VCF 2016-04-27 jeldred
-'''
+###Get or Create SpeedSeq SV vcf files
+###Get or Create aligned bams and splitter files
+
+##Use svtools to "process" data
+1. Use vawk to remove 'REF' variants from SpeedSeq
+2. Build and execute a shell command to concatenate and sort variants
+3. bsub lmerge sorted vcf 2016-04-27 jeldred
+4. remove EBV (Epstein-Barr Virus) reads 2016-03-31 jeldred
+5. bsub force genotypes with svtyper 2016-04-27 jeldred 
+6. ROOT libraries path 
+
+
+
+
+###Use vawk to remove 'REF' variants from SpeedSeq SV 2016-04-27 jeldred
+<pre>
 while read SAMPLE BAM
 do
   echo $SAMPLE
@@ -36,8 +57,9 @@ do
   | $VAWK --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
   > $project_dir/lumpy/$SAMPLE/$SAMPLE.sv.non_ref.vcf
 done < sample.map
-'''
-## Build and execute a shell command to concatenate and sort the variants 2016-04-27 jeldred
+</pre>
+
+### Build and execute a shell command to concatenate and sort the variants 2016-04-27 jeldred
 
 echo -n "svtools lsort " > sort_cmd.sh
 while read SAMPLE BAM
@@ -48,7 +70,7 @@ done >> sort_cmd.sh < sample.map
 bash sort_cmd.sh | bgzip -c > sorted.vcf.gz
 
 
-## bsub lmerge sorted vcf 2016-04-27 jeldred
+### bsub lmerge sorted vcf 2016-04-27 jeldred
 bsub -M 8000000 -q long -R 'select[mem>8000] rusage[mem=8000]' -e merge.err -o merge.out "zcat sorted.vcf.gz \
   | svtools lmerge -i /dev/stdin --product -f 20 \
   | bgzip -c > merged.vcf.gz "
@@ -56,14 +78,14 @@ bsub -M 8000000 -q long -R 'select[mem>8000] rusage[mem=8000]' -e merge.err -o m
 
 read  -n 1 -p "Wait for job to complete and enter C to continue"
 
-## remove EBV (Epstein-Barr Virus) reads 2016-03-31 jeldred
+### remove EBV (Epstein-Barr Virus) reads 2016-03-31 jeldred
 zcat merged.vcf.gz \
 | $VAWK --header '{if($0 !~ /NC_007605/) print $0}' \
 | bgzip -c > merged.no_EBV.vcf.gz
 
 
-## bsub force genotypes with svtyper 2016-04-27 jeldred 
-#this took about an hour in the long queue for most samples....one outlier NA12891 at 70 minutes
+### bsub force genotypes with svtools genotype 
+this took about an hour in the long queue for most samples....one outlier NA12891 at 70 minutes
 
 
 while read SAMPLE BAM 
@@ -84,21 +106,16 @@ done < sample.map
 
 read  -n 1 -p "Wait for job to complete and enter C to continue"
 
-#exit 0
-##END
-
-echo after comment
-
-#ROOT libraries path 
+###ROOT libraries path 
 #prepare directory structure
 mkdir -p cn/logs/MISC
 mkdir -p cn/MISC
-# prepare environemnt for cnvnator
+#### prepare environemnt for cnvnator
 source /gsc/pkg/root/root/bin/thisroot.sh
-# make uncompressed copy 
+#### make uncompressed copy 
 zcat merged.no_EBV.vcf.gz > merged.no_EBV.vcf
 VCF=merged.no_EBV.vcf
-# make coordinate file
+#### make coordinate file
 create_coordinates -i $VCF -o coordinates
 
 while read SAMPLE BAM
