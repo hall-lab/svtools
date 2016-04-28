@@ -1,9 +1,11 @@
 #Example Analysis using svtools
-
-REF=/gscmnt/gc2802/halllab/sv_aggregate/refs/all_sequences.fa
-EXCLUDE=/gscmnt/gc2802/halllab/sv_aggregate/exclusion/exclude.cnvnator_100bp.112015.bed
-
-
+This tutorial will help you begin to explore the use of svtools to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using svtools.
+This tutorial includes example commands that you can alter to refer to your sample names.
+```
+:note A shell script that implements this tutorial for a small set of samples has also been included
+[lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
+Creating a sample.map file and running lumpy_pipeline.sh is another way to investigate the usage of svtools for creating a callset.
+```
 ##Satisfy computing environment requirements
 1. Install svtools (and Python)
 2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
@@ -64,8 +66,9 @@ This step will remove variants that have been detected but then determined to be
 svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.vcf \
 | bgzip -c > sorted.vcf.gz
 ```
+```
 :note svtools lsort will remove variants with the SECONDARY tag in the INFO field.  This will cause the sorted vcf to have fewer variant lines than the input.
-
+```
 ### Use svtools lmerge to merge variants deemed to be identical in the sorted vcf
 ```
 zcat sorted.vcf.gz \
@@ -73,8 +76,9 @@ zcat sorted.vcf.gz \
   | bgzip -c > merged.vcf.gz "
 
 ```
+```
 :note svtools lmerge will return variant lines for SECONDARY break ends in addition to merging variants.  This will sometimes cause the merged vcf to have more variant lines than the input.
-
+```
 ### remove EBV (Epstein-Barr Virus) variants
 ```
 zcat merged.vcf.gz \
@@ -200,4 +204,3 @@ zcat merged.sv.new_pruned.vcf.gz \
 #}' | bgzip -c > reclassed.filtered.vcf.gz
 
 ```
-
