@@ -26,16 +26,10 @@ note: thisroot.sh is required for the Copy Number Annotation step in this tutori
 
 ##Gather genomic data and generate needed helper files
 
-1. Prepare sample map file 
 2. Get or Create SpeedSeq/lumpy SV vcf files
 3. Get or Create SpeedSeq aligned bams and spliiter files
 4. Refernce FASTA 
 5. cn.list file
-
-### Prepare sample map file 
-a sample map file has two columns
-    
-    sample_name,bam_path
 
 ### Get or Create SpeedSeq/lumpy SV vcf files
 ### Get or Create aligned bams and splitter files
@@ -45,8 +39,8 @@ The cn.list file has a single column that contains the path to the vcf files out
 
 ##Use svtools to "process" data FIXME
 1. Use vawk to remove 'REF' variants from SpeedSeq SV vcf
-2. Build and execute a shell command to concatenate and sort variants using lsort
-3. Use svtools lmerge to 'FIXME' the sorted vcf
+2. Use svtools lsort to combine and sort variants from multiple samples
+3. Use svtools lmerge to merge variants deemed to be identical in the sorted vcf
 4. Remove EBV (Epstein-Barr Virus) variants
 5. Use svtools genotype to force genotypes for variant positions discovered in other samples.
 6. Copy Number annotation - ROOT libraries path 
@@ -67,7 +61,7 @@ This step will remove variants that have been detected but then determined to be
   > SAMPLE1.sv.non_ref.vcf
 ```
 
-### Use svtools lsort to concatenate and sort variants
+### Use svtools lsort to combine and sort variants from multiple samples
 ```
 svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.vcf \
 | bgzip -c > sorted.vcf.gz
@@ -87,32 +81,24 @@ zcat sorted.vcf.gz \
 :note svtools lmerge will return variant lines for SECONDARY break ends in addition to merging variants.
 This will sometimes cause the merged vcf to have more variant lines than the input.
 ```
-### remove EBV (Epstein-Barr Virus) variants
+### Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
 ```
 zcat merged.vcf.gz \
 | $VAWK --header '{if($0 !~ /NC_007605/) print $0}' \
 | bgzip -c > merged.no_EBV.vcf.gz
 ```
 
-### bsub force genotypes with svtools genotype 
-this took about an hour in the long queue for most samples....one outlier NA12891 at 70 minutes
-
+### Use svtools genotype to force genotypes for variant positions discovered in other samples
+svtools genotype will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
+It requires the aligned bam and splitters file for each sample.
 ```
-while read SAMPLE BAM 
-do 
-  echo $SAMPLE
-  mkdir -p gt/
-  mkdir -p gt/logs/
-  SPL=${BAM%.*}.splitters.bam
-  bsub -M 30000000 -q long -R 'select[mem>30000] rusage[mem=30000]' -u jeldred@genome.wustl.edu -J $SAMPLE.gt -o gt/logs/$SAMPLE.gt.%J.log -e gt/logs/$SAMPLE.gt.%J.log \
     "zcat merged.no_EBV.vcf.gz \
-     | $VAWK --header '{  \$6=\".\"; print }' \
+     | vawk --header '{  \$6=\".\"; print }' \
      | svtools genotype \
-       -B $BAM \
-       -S $SPL \
+       -B SAMPLE1.bam \
+       -S SAMPLE1.splitters.bam \
      | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
-     > gt/$SAMPLE.vcf"
-done < sample.map
+     > SAMPLE1.vcf"
 ```
 
 ###Copy Number annotation - ROOT libraries path 
