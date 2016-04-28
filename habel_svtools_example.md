@@ -4,13 +4,13 @@ REF=/gscmnt/gc2802/halllab/sv_aggregate/refs/all_sequences.fa
 EXCLUDE=/gscmnt/gc2802/halllab/sv_aggregate/exclusion/exclude.cnvnator_100bp.112015.bed
 
 
-##Satisfy computing environment requirementsi
+##Satisfy computing environment requirements
 1. Install svtools (and Python)
 2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
 3. thisroot.sh
 
 ###Install svtools (and Python)
-[Installation instructions][https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md]
+[Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md)
 ###Acquire vawk
 clone from the repo (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk)
 ###Acquire thisroot.sh
@@ -31,19 +31,21 @@ a sample map file has two columns
 ###Get or Create SpeedSeq SV vcf files
 ###Get or Create aligned bams and splitter files
 
-##Use svtools to "process" data
+##Use svtools to "process" data FIXME
 1. Use vawk to remove 'REF' variants from SpeedSeq
-2. Build and execute a shell command to concatenate and sort variants
-3. bsub lmerge sorted vcf 2016-04-27 jeldred
-4. remove EBV (Epstein-Barr Virus) reads 2016-03-31 jeldred
-5. bsub force genotypes with svtyper 2016-04-27 jeldred 
-6. ROOT libraries path 
-6.1. prepare environemnt for cnvnator
-6.2. make uncompressed copy 
-6.3. make coordinate file
+2. Build and execute a shell command to concatenate and sort variants using lsort
+3. bsub lmerge sorted vcf
+4. remove EBV (Epstein-Barr Virus) variants
+5. bsub force genotypes with svtyper 
+6. ROOT libraries path FIXME
+    1. prepare environemnt for cnvnator
+    2. make uncompressed copy 
+    3. make coordinate file
+7. VCF paste
+8. Prune pipeline 
 
 ###Use vawk to remove 'REF' variants from SpeedSeq SV 2016-04-27 jeldred
-<pre>
+```
 while read SAMPLE BAM
 do
   echo $SAMPLE
@@ -57,10 +59,10 @@ do
   | $VAWK --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
   > $project_dir/lumpy/$SAMPLE/$SAMPLE.sv.non_ref.vcf
 done < sample.map
-</pre>
+```
 
 ### Build and execute a shell command to concatenate and sort the variants 2016-04-27 jeldred
-
+```
 echo -n "svtools lsort " > sort_cmd.sh
 while read SAMPLE BAM
 do
@@ -68,26 +70,27 @@ do
 done >> sort_cmd.sh < sample.map
 
 bash sort_cmd.sh | bgzip -c > sorted.vcf.gz
+```
 
-
-### bsub lmerge sorted vcf 2016-04-27 jeldred
+### lmerge sorted vcf
+```
 bsub -M 8000000 -q long -R 'select[mem>8000] rusage[mem=8000]' -e merge.err -o merge.out "zcat sorted.vcf.gz \
   | svtools lmerge -i /dev/stdin --product -f 20 \
   | bgzip -c > merged.vcf.gz "
 
+```
 
-read  -n 1 -p "Wait for job to complete and enter C to continue"
-
-### remove EBV (Epstein-Barr Virus) reads 2016-03-31 jeldred
+### remove EBV (Epstein-Barr Virus) variants
+```
 zcat merged.vcf.gz \
 | $VAWK --header '{if($0 !~ /NC_007605/) print $0}' \
 | bgzip -c > merged.no_EBV.vcf.gz
-
+```
 
 ### bsub force genotypes with svtools genotype 
 this took about an hour in the long queue for most samples....one outlier NA12891 at 70 minutes
 
-
+```
 while read SAMPLE BAM 
 do 
   echo $SAMPLE
@@ -103,8 +106,7 @@ do
      | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
      > gt/$SAMPLE.vcf"
 done < sample.map
-
-read  -n 1 -p "Wait for job to complete and enter C to continue"
+```
 
 ###ROOT libraries path 
 #prepare directory structure
