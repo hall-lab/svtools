@@ -12,14 +12,17 @@ of svtools for creating a callset.
 ##Satisfy computing environment requirements
 1. Install svtools (and Python)
 2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
-3. thisroot.sh
+3. Install CNVnator
 
 ###Install svtools (and Python)
-[Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md)
+[Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) have been provided in the INSTALL.md and DEVELOPER.MD of this repo.
 ###Acquire vawk
-clone from the repo (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk)
-###Acquire thisroot.sh
-for use with cnvnator, can we change this to link them out to generally prepare to run cnvnator?  and then maybe just note the need to source thisroot.sh below somewhere
+clone from the repo? (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk) [vawk](https://github.com/cc2qe/vawk) is an awk-like VCF parser that is used to manipulate vcf files in this tutorial.
+###Install CNVnator(?)
+for use with cnvnator, can we change this to link them out to generally prepare to run cnvnator?  and then maybe just note the need to source thisroot.sh below somewhere [CNVnator](https://github.com/abyzovlab/CNVnator/releases)
+```
+note: thisroot.sh is required for the Copy Number Annotation step in this tutorial.
+```
 
 ##Gather genomic data and generate needed helper files
 
