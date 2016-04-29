@@ -18,10 +18,10 @@ This tutorial includes example commands that you can alter to refer to your samp
 
 ##Gather genomic data and generate needed helper files
 
-2. Get or Create SpeedSeq/lumpy SV vcf files
-3. Get or Create SpeedSeq aligned bams and spliiter files
-4. Refernce FASTA 
-5. cn.list file
+1. Get or Create SpeedSeq/lumpy SV vcf files
+2. Get or Create SpeedSeq aligned bams and spliiter files
+3. Get Refernce FASTA 
+4. Create cn.list file
 
 ### Get or Create SpeedSeq/lumpy SV vcf files
 ### Get or Create aligned bams and splitter files
