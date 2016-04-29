@@ -9,13 +9,13 @@ This tutorial includes example commands that you can alter to refer to your samp
 
 ##Satisfy computing environment requirements
 1. Install `svtools` (and Python)
-2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
+2. Acquire vawk
 3. Install CNVnator (cnvnator-multi)
 
 ###Install `svtools` (and Python)
 [Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) have been provided in the INSTALL.md and DEVELOPER.MD of this repo.
 ###Acquire vawk
-clone from the repo? (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk) [vawk](https://github.com/cc2qe/vawk) is an awk-like VCF parser that is used to manipulate vcf files in this tutorial.
+[vawk](https://github.com/cc2qe/vawk) is an awk-like VCF parser that is used to manipulate vcf files in this tutorial.  vawk is a python script that is available at https://github.com/cc2qe/vawk
 ###Install CNVnator(?)
 for use with cnvnator, can we change this to link them out to generally prepare to run cnvnator?  and then maybe just note the need to source thisroot.sh below somewhere [CNVnator](https://github.com/abyzovlab/CNVnator/releases)
 ```
