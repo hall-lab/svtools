@@ -6,23 +6,26 @@ This tutorial includes example commands that you can alter to refer to your samp
 1. Satisfy computing environment requirements
 2. Gather genomic data and generate needed helper files
 3. Use `svtools` to create a callset
-4. Other Tutorial Resources
+    1. Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
+    2. Use `svtools lsort` to combine and sort variants from multiple samples
+    3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
+    4. (Optional) Remove EBV (Epstein-Barr Virus) variants
+    5. Use `svtools genotype` to force genotypes for variant positions discovered in other samples
+    6. Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
+        1. Prepare environment for CNVnator
+        2. Make an uncompressed copy 
+        3. Make coordinate file
+        4. Annotate variants with copy number from CNVnator using `svtools copynumber`
+    7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
+    8. Use `svtools prune` to filter out additional variants deemed to be identical  
 
 ## 1) Satisfy computing environment requirements
-1. Install SpeedSeq and dependencies 
-2. Install `svtools`
-
 ### 1) Install SpeedSeq and dependencies
 Installation instructions have been provided in the [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
 ### 2) Install `svtools`
 Installation instructions have been provided in the [INSTALL.md](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) and DEVELOPER.md of this repo.
 
 ## 2) Gather genomic data and generate needed helper files
-
-1. Get or Create SpeedSeq/lumpy aligned BAMs, splitter files and SV VCF files
-2. Get Reference FASTA 
-3. Create cn.list file
-
 ### 1) Get or Create SpeedSeq aligned BAMs, splitter files, and SV VCF files
 To get a small set of bam files suitable for this tutorial. I recommend getting 3 bams from http://www.ebi.ac.uk/ena/data/view/ERP001960 in the NA12878 pedigree. A simple command line to achieve this is listed below. Or you could try the [Aspera client.](http://downloads.asperasoft.com/connect2/)
 ```
@@ -171,9 +174,3 @@ bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.g
 | bgzip -c > merged.sv.new_pruned.vcf.gz"
 ```
 
-##Other Tutorial Resources
-###Example Bash Script
-Creating a sample.map file and running lumpy_pipeline.sh is another way to investigate the usage 
-of svtools for creating a callset.  It has some additional requirements that are documented by comments in the script.  
-
-[lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
