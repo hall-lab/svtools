@@ -1,5 +1,3 @@
-# Developer Documentation
-
 This document is intended to provide guidelines for software developers either maintaining or 
 contributing to `svtools` development.
 
@@ -139,3 +137,4 @@ Next navigate to the github [Releases page][9], draft a release using the tag yo
 [8]: https://github.com/warner/python-versioneer
 [9]: https://github.com/hall-lab/svtools/releases
 [10]: https://github.com/pysam-developers/pysam
+
