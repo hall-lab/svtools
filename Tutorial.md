@@ -61,16 +61,16 @@ The cn.list file has a single column that contains the path to the VCF files out
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
 This command will need to be run once per sample and ouputs one non_ref VCF file per sample.
 ```
-  zcat SAMPLE1.sv.vcf.gz \
+  zcat NA12877.sv.vcf.gz \
   | vawk --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
-  > SAMPLE1.sv.non_ref.vcf
+  > NA12877.sv.non_ref.vcf
 ```
 
 ### 2) Use `svtools lsort` to combine and sort variants from multiple samples
 `svtools lsort` takes a space separated list of all of your non_ref vcf files as arguments.
 The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.
 ```
-svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.vcf \
+svtools lsort NA12877.sv.non_ref.vcf NA12878.sv.non_ref.vcf NA12879.sv.non_ref.vcf \
 | bgzip -c > sorted.vcf.gz
 ```
 ```
@@ -106,11 +106,12 @@ mkdir -p gt
 "zcat merged.no_EBV.vcf.gz \
 | vawk --header '{  \$6=\".\"; print }' \
 | svtools genotype \
-  -B SAMPLE1.bam \
-  -S SAMPLE1.splitters.bam \
+  -B NA12877.bam \
+  -S NA12877.splitters.bam \
 | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
-> gt/SAMPLE1.vcf"
+> gt/NA12877.vcf"
 ```
+You will need to repeat the `svtools genotype` command above for the other two samples (NA12878,NA12879) as well.
 
 ### 6) Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
 #### 1) Prepare environment for CNVnator
@@ -130,7 +131,7 @@ create_coordinates -i merged.no_EBV.vcf -o coordinates
 
 #### 4) Annotate variants with copy number from CNVnator using `svtools copynumber`
 This step assumes you have already run CNVnator and that the output required for this step is stored in your analysis directory at 
-`/temp/cnvnator-temp/SAMPLE1.bam.hist.root`. If you have installed SpeedSeq, CNVnator is run as part of `speedseq sv`. More details about `speedseq sv` are [here](https://github.com/hall-lab/speedseq#speedseq-sv)
+`/temp/cnvnator-temp/NA12877.bam.hist.root`. If you have installed SpeedSeq, CNVnator is run as part of `speedseq sv`. More details about `speedseq sv` are [here](https://github.com/hall-lab/speedseq#speedseq-sv)
 
 You will also need to prepare a subdirectory to hold the Copy Number(cn) vcf files 
 ```
@@ -141,12 +142,12 @@ Then run `svtools copynumber` to add in copynumber values to non-BND variants.
 ```
 svtools copynumber \
 --cnvnator cnvnator-multi \
--s SAMPLE1 \
+-s NA12877 \
 -w 100 \
--r /temp/cnvnator-temp/SAMPLE1.bam.hist.root \
+-r /temp/cnvnator-temp/NA12877.bam.hist.root \
  -c coordinates \
- -v gt/SAMPLE1.vcf \
-> cn/SAMPLE.vcf
+ -v gt/NA12877.vcf \
+> cn/NA12877.vcf
 ```
 
 ### 7) Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
