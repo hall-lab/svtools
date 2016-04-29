@@ -1,12 +1,10 @@
 #Example analysis using `svtools`
 This tutorial will help you begin to explore the use of `svtools` to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
-
-```
-Creating a sample.map file and running lumpy_pipeline.sh is another way to investigate the usage 
-of svtools for creating a callset.  It has some additional requirements that are documented by comments in the script.  
-```
-[lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
+1.Satisfy computing environment requirements
+2.Gather genomic data and generate needed helper files
+3.Use `svtools` to create a callset
+4.Other Tutorial Resources
 
 ##Satisfy computing environment requirements
 1. Install `svtools` (and Python)
@@ -36,7 +34,7 @@ note: thisroot.sh is required for the Copy Number Annotation step in this tutori
 ### cn.list file
 The cn.list file has a single column that contains the path to the vcf files output in the Copy Number Annotation step of this tutorial.
 
-##Use `svtools` to "process" data FIXME
+##Use `svtools` to create a callset
 1. Use vawk to remove 'REF' variants from SpeedSeq SV vcf
 2. Use `svtools lsort` to combine and sort variants from multiple samples
 3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted vcf
@@ -198,3 +196,10 @@ zcat merged.sv.new_pruned.vcf.gz \
 #}' | bgzip -c > reclassed.filtered.vcf.gz
 
 ```
+
+##Other Tutorial Resources
+###Example Bash Script
+Creating a sample.map file and running lumpy_pipeline.sh is another way to investigate the usage 
+of svtools for creating a callset.  It has some additional requirements that are documented by comments in the script.  
+
+[lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
