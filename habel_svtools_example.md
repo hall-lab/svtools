@@ -12,7 +12,7 @@ This tutorial includes example commands that you can alter to refer to your samp
 2. Install `svtools`
 
 ###Install SpeedSeq and dependencies
-[Installation instructions](https://github.com/hall-lab/speedseq/blob/master) have been provided in SpeedSeq github repository.
+[Installation instructions](https://github.com/hall-lab/speedseq) have been provided in SpeedSeq github repository.
 ###Install `svtools`
 [Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) have been provided in the INSTALL.md and DEVELOPER.MD of this repo.
 
