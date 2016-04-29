@@ -45,20 +45,6 @@ The genome FASTA file should be unzipped and indexed with BWA before running Spe
 The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
 
 ## 3) Use `svtools` to create a callset
-1. Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
-2. Use `svtools lsort` to combine and sort variants from multiple samples
-3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
-4. (Optional) Remove EBV (Epstein-Barr Virus) variants
-5. Use `svtools genotype` to force genotypes for variant positions discovered in other samples
-6. Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
-    1. Prepare environment for CNVnator
-    2. Make an uncompressed copy 
-    3. Make coordinate file
-    4. Annotate variants with copy number from CNVnator using `svtools copynumber`
-7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
-8. Use `svtools prune` to filter out additional variants deemed to be identical  
-
-
 ### 1) Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
 This command will need to be run once per sample and ouputs one non_ref VCF file per sample.
