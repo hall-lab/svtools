@@ -8,29 +8,29 @@ This tutorial includes example commands that you can alter to refer to your samp
 3. Use `svtools` to create a callset
 4. Other Tutorial Resources
 
-##Satisfy computing environment requirements
+## 1) Satisfy computing environment requirements
 1. Install SpeedSeq and dependencies 
 2. Install `svtools`
 
-###Install SpeedSeq and dependencies
+### 1) Install SpeedSeq and dependencies
 Installation instructions have been provided in the [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
-###Install `svtools`
+### 2) Install `svtools`
 Installation instructions have been provided in the [INSTALL.md](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) and DEVELOPER.md of this repo.
 
-##Gather genomic data and generate needed helper files
+## 2) Gather genomic data and generate needed helper files
 
 1. Get or Create SpeedSeq/lumpy SV VCF files
 2. Get or Create SpeedSeq aligned BAMs and splitter files
 3. Get Reference FASTA 
 4. Create cn.list file
 
-### Get or Create SpeedSeq/lumpy SV VCF files
-### Get or Create aligned BAMs and splitter files
-### Get Reference FASTA
-### Create cn.list file
+### 1) Get or Create SpeedSeq/lumpy SV VCF files
+### 2) Get or Create aligned BAMs and splitter files
+### 3) Get Reference FASTA
+### 4) Create cn.list file
 The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
 
-##Use `svtools` to create a callset
+## 3) Use `svtools` to create a callset
 1. Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 2. Use `svtools lsort` to combine and sort variants from multiple samples
 3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
@@ -46,7 +46,7 @@ The cn.list file has a single column that contains the path to the VCF files out
 9. Training (exclude?) with `svtools varlookup`
 10. Classification (exclude?)
 
-###Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
+### 1) Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
 This command will need to be run once per sample and ouputs one non_ref VCF file per sample.
 ```
@@ -55,7 +55,7 @@ This command will need to be run once per sample and ouputs one non_ref VCF file
   > SAMPLE1.sv.non_ref.vcf
 ```
 
-### Use `svtools lsort` to combine and sort variants from multiple samples
+### 2) Use `svtools lsort` to combine and sort variants from multiple samples
 `svtools lsort` takes a space separated list of all of your non_ref vcf files as arguments.
 The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.
 ```
@@ -66,7 +66,7 @@ svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.v
 :note svtools lsort will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
 ```
-### Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
+### 3) Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin --product -f 20 \
@@ -77,7 +77,7 @@ zcat sorted.vcf.gz \
 :note svtools lmerge will return variant lines for SECONDARY break ends in addition to merging variants.
 This will sometimes cause the merged VCF to have more variant lines than the input.
 ```
-### (Optional) Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
+### 4) (Optional) Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
 If your reference contains a contig representing EBV then you may wish to remove SVs involved with this sequence.
 ```
 zcat merged.vcf.gz \
@@ -85,7 +85,7 @@ zcat merged.vcf.gz \
 | bgzip -c > merged.no_EBV.vcf.gz
 ```
 
-### Use `svtools genotype` to force genotypes for variant positions discovered in other samples
+### 5) Use `svtools genotype` to force genotypes for variant positions discovered in other samples
 `svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
 It requires the aligned BAM and a splitters BAM file for each sample. This step will output a fully genotyped VCF file for each sample.
 You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copy number output.
@@ -101,23 +101,23 @@ mkdir -p gt
 > gt/SAMPLE1.vcf"
 ```
 
-###Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
-#### Prepare environment for CNVnator
+### 6) Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
+#### 1) Prepare environment for CNVnator
 CNVnator require the ROOT package to function. This file must be sourced before running CNVnator.
 ```
 source /gsc/pkg/root/root/bin/thisroot.sh
 ```
-#### Make an uncompressed copy 
+#### 2) Make an uncompressed copy 
 ```
 zcat merged.no_EBV.vcf.gz > merged.no_EBV.vcf
 ```
-#### Make coordinate file
+#### 3) Make coordinate file
 CNVnator will return the copynumber for a list of coordinates. This script will create such a list and is deployed upon installation of `svtools`.
 ```
 create_coordinates -i merged.no_EBV.vcf -o coordinates
 ```
 
-#### Annotate variants with copy number from CNVnator using `svtools copynumber`
+#### 4) Annotate variants with copy number from CNVnator using `svtools copynumber`
 This step assumes you have already run CNVnator and that the output required for this step is stored in your analysis directory at 
 `/temp/cnvnator-temp/SAMPLE1.bam.hist.root`. If you have installed SpeedSeq, CNVnator is run as part of `speedseq sv`. More details about `speedseq sv` are [here](https://github.com/hall-lab/speedseq#speedseq-sv)
 
@@ -138,7 +138,7 @@ svtools copynumber \
 > cn/SAMPLE.vcf
 ```
 
-### Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
+### 7) Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
 ```
 svtools vcfpaste \
@@ -149,10 +149,7 @@ svtools vcfpaste \
 > merged.sv.gt.cn.vcf.gz
 ```
 
-### Use `svtools prune` to filter out additional variants deemed to be identical
-```
-:note Future improvements to svtools lmerge may make svtools prune unnecessary
-```
+### 8) Use `svtools prune` to filter out additional variants deemed to be identical
 ```
 bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.gt.cn.vcf.gz \
 | svtools afreq \
@@ -163,7 +160,7 @@ bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.g
 | bgzip -c > merged.sv.new_pruned.vcf.gz"
 ```
 
-### Training
+### 9) Training with `svtools varlookup`
 ```
 zcat merged.sv.new_pruned.vcf.gz \
  | svtools vcftobedpe  \
@@ -173,7 +170,7 @@ zcat merged.sv.new_pruned.vcf.gz \
  | bgzip -c > training.vars.vcf.gz
 ```
 
-## Reclassify THIS SECTION WELL OUT OF DATE FIXME
+## 10) Reclassify (THIS SECTION WELL OUT OF DATE) FIXME
 ```
 zcat merged.sv.new_pruned.vcf.gz \
  | python /gscmnt/gc2802/halllab/sv_aggregate/dev/svtools/svtools/reclass_combined.py -g /gscmnt/gc2802/halllab/sv_aggregate/ceph_ped/ceph.sex.txt  -t <(zcat training.vars.vcf.gz)  -a /gscmnt/gc2719/halllab/users/cchiang/projects/g#tex/annotations/repeatMasker.recent.lt200millidiv.b37.sorted.bed.gz  -d class.diags.0313.txt  | bgzip -c > reclass.0313.all.vcf.gz
