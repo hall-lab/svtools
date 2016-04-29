@@ -54,8 +54,7 @@ The cn.list file has a single column that contains the path to the VCF files out
     4. Annotate variants with copy number from CNVnator using `svtools copynumber`
 7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
 8. Use `svtools prune` to filter out additional variants deemed to be identical  
-9. Training (exclude?) with `svtools varlookup`
-10. Classification (exclude?)
+
 
 ### 1) Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
@@ -170,41 +169,6 @@ bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.g
 | svtools prune -s -d 100 -e \"AF\" \
 | svtools bedpetovcf \
 | bgzip -c > merged.sv.new_pruned.vcf.gz"
-```
-
-### 9) Training with `svtools varlookup`
-```
-zcat merged.sv.new_pruned.vcf.gz \
- | svtools vcftobedpe  \
- | svtools varlookup -a stdin -b /gscmnt/gc2802/halllab/sv_aggregate/reclass/finmetseq.training_vars.bedpe.gz -c FINMETSEQ_HQ -d 50 \
- | svtools bedpetovcf \
- | vawk --header '{if(I$FINMETSEQ_HQ_AF>0) print $0}' \
- | bgzip -c > training.vars.vcf.gz
-```
-
-## 10) Reclassify (THIS SECTION WELL OUT OF DATE) FIXME
-```
-zcat merged.sv.new_pruned.vcf.gz \
- | python /gscmnt/gc2802/halllab/sv_aggregate/dev/svtools/svtools/reclass_combined.py -g /gscmnt/gc2802/halllab/sv_aggregate/ceph_ped/ceph.sex.txt  -t <(zcat training.vars.vcf.gz)  -a /gscmnt/gc2719/halllab/users/cchiang/projects/g#tex/annotations/repeatMasker.recent.lt200millidiv.b37.sorted.bed.gz  -d class.diags.0313.txt  | bgzip -c > reclass.0313.all.vcf.gz
-
-
-
-#zcat reclass.0313.all.vcf.gz \
-#| vawk --header '{
-#  split(I$STRANDS,x,",");
-#  split(x[1],y,":");
-#  split(x[2],z,":");
-#  if (I$SVTYPE=="DEL" || I$SVTYPE=="DUP" || I$SVTYPE=="MEI"){
-#   $7="PASS"; print $0;
-#  }  else if ( I$SVTYPE=="INV" && $8>=100 && (I$SR/I$SU)>=0.1 && (I$PE/I$SU)>=0.1 && (y[2]/I$SU)>0.1 && (z[2]/I$SU)>0.1){
-#   $7="PASS"; print $0;
-#  } else if ( I$SVTYPE=="BND" && $8>=100 && (I$SR/I$SU)>=0.25 && (I$PE/I$SU)>=0.25){
-#   $7="PASS"; print $0;
-#  } else {
-#   $7="LOW"; print $0;
-#  }
-#}' | bgzip -c > reclassed.filtered.vcf.gz
-
 ```
 
 ##Other Tutorial Resources
