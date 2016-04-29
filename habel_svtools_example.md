@@ -8,19 +8,13 @@ This tutorial includes example commands that you can alter to refer to your samp
 4. Other Tutorial Resources
 
 ##Satisfy computing environment requirements
-1. Install `svtools` (and Python)
-2. Acquire vawk
-3. Install CNVnator (cnvnator-multi)
+1. Install SpeedSeq and dependencies 
+2. Install `svtools`
 
-###Install `svtools` (and Python)
+###Install SpeedSeq and dependencies
+[Installation instructions](https://github.com/hall-lab/speedseq/blob/master) have been provided in SpeedSeq github repository.
+###Install `svtools`
 [Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) have been provided in the INSTALL.md and DEVELOPER.MD of this repo.
-###Acquire vawk
-[vawk](https://github.com/cc2qe/vawk) is an awk-like VCF parser that is used to manipulate vcf files in this tutorial.  vawk is a python script that is available at https://github.com/cc2qe/vawk
-###Install CNVnator(?)
-for use with cnvnator, can we change this to link them out to generally prepare to run cnvnator?  and then maybe just note the need to source thisroot.sh below somewhere [CNVnator](https://github.com/abyzovlab/CNVnator/releases)
-```
-note: thisroot.sh is required for the Copy Number Annotation step in this tutorial.
-```
 
 ##Gather genomic data and generate needed helper files
 
