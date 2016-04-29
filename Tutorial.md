@@ -23,7 +23,7 @@ Installation instructions have been provided in the [INSTALL.md](https://github.
 2. Get Reference FASTA 
 3. Create cn.list file
 
-### 1) Get or Create SpeedSeq/lumpy aligned BAMs, splitter files and SV VCF files
+### 1) Get or Create SpeedSeq aligned BAMs, splitter files, and SV VCF files
 To get a small set of bam files suitable for this tutorial. I recommend getting 3 bams from http://www.ebi.ac.uk/ena/data/view/ERP001960 in the NA12878 pedigree. A simple command line to achieve this is listed below. Or you could try the [Aspera client.](http://downloads.asperasoft.com/connect2/)
 ```
 wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12877_S1.bam
@@ -34,6 +34,10 @@ Downloading these bams will consume a significant amount of time, bandwidth and 
 These three files sum to 317GB.
 Use documentation on the SpeedSeq github page to produce the required files for the rest of this tutorial at [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
 ### 2) Get Reference FASTA
+We recommend using the GRCh37 human genome for SpeedSeq, available here:
+ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz
+ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.fai
+The genome FASTA file should be unzipped and indexed with BWA before running SpeedSeq.
 ### 3) Create cn.list file
 The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
 
