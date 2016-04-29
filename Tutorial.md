@@ -19,15 +19,22 @@ Installation instructions have been provided in the [INSTALL.md](https://github.
 
 ## 2) Gather genomic data and generate needed helper files
 
-1. Get or Create SpeedSeq/lumpy SV VCF files
-2. Get or Create SpeedSeq aligned BAMs and splitter files
-3. Get Reference FASTA 
-4. Create cn.list file
+1. Get or Create SpeedSeq/lumpy aligned BAMs, splitter files and SV VCF files
+2. Get Reference FASTA 
+3. Create cn.list file
 
-### 1) Get or Create SpeedSeq/lumpy SV VCF files
-### 2) Get or Create aligned BAMs and splitter files
-### 3) Get Reference FASTA
-### 4) Create cn.list file
+### 1) Get or Create SpeedSeq/lumpy aligned BAMs, splitter files and SV VCF files
+To get a small set of bam files suitable for this tutorial. I recommend getting 3 bams from http://www.ebi.ac.uk/ena/data/view/ERP001960 in the NA12878 pedigree. A simple command line to achieve this is listed below. Or you could try the [Aspera client.](http://downloads.asperasoft.com/connect2/)
+```
+wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12877_S1.bam
+wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12878_S1.bam
+wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12879_S1.bam
+```
+Downloading these bams will consume a significant amount of time, bandwidth and disk space.
+These three files sum to 317GB.
+
+### 2) Get Reference FASTA
+### 3) Create cn.list file
 The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
 
 ## 3) Use `svtools` to create a callset
