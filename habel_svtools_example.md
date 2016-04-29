@@ -2,10 +2,10 @@
 This tutorial will help you begin to explore the use of `svtools` to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
 
-1.Satisfy computing environment requirements
-2.Gather genomic data and generate needed helper files
-3.Use `svtools` to create a callset
-4.Other Tutorial Resources
+1. Satisfy computing environment requirements
+2. Gather genomic data and generate needed helper files
+3. Use `svtools` to create a callset
+4. Other Tutorial Resources
 
 ##Satisfy computing environment requirements
 1. Install `svtools` (and Python)
