@@ -1,5 +1,5 @@
-#Example analysis using svtools
-This tutorial will help you begin to explore the use of `svtools` to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using svtools.
+#Example analysis using `svtools`
+This tutorial will help you begin to explore the use of `svtools` to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
 ```
 :note A shell script that implements this tutorial for a small set of samples has also been included
@@ -37,19 +37,19 @@ note: thisroot.sh is required for the Copy Number Annotation step in this tutori
 ### cn.list file
 The cn.list file has a single column that contains the path to the vcf files output in the Copy Number Annotation step of this tutorial.
 
-##Use svtools to "process" data FIXME
+##Use `svtools` to "process" data FIXME
 1. Use vawk to remove 'REF' variants from SpeedSeq SV vcf
-2. Use svtools lsort to combine and sort variants from multiple samples
-3. Use svtools lmerge to merge variants deemed to be identical in the sorted vcf
+2. Use `svtools lsort` to combine and sort variants from multiple samples
+3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted vcf
 4. Remove EBV (Epstein-Barr Virus) variants
-5. Use svtools genotype to force genotypes for variant positions discovered in other samples.
-6. Use svtools copynumber to create per sample copy number annotations based on CNVnator histograms 
+5. Use `svtools genotype` to force genotypes for variant positions discovered in other samples.
+6. Use `svtools copynumber` to create per sample copy number annotations based on CNVnator histograms 
     1. prepare environemnt for cnvnator
     2. make uncompressed copy 
     3. make coordinate file
-    4. Annotate variants with copy number from cnvnator using svtools copynumber
-7. Use svtools vcfpaste to construct a bam that pastes in genotype and copy number information
-8. Use svtools prune to filter out additional variants deemed to be identical  
+    4. Annotate variants with copy number from cnvnator using `svtools copynumber`
+7. Use `svtools vcfpaste` to construct a bam that pastes in genotype and copy number information
+8. Use `svtools prune` to filter out additional variants deemed to be identical  
 9. Training (exclude?)
 10. Classification (exclude?)
 
@@ -62,8 +62,8 @@ This command will need to be run once per sample and ouput one non_ref vcf file 
   > SAMPLE1.sv.non_ref.vcf
 ```
 
-### Use svtools lsort to combine and sort variants from multiple samples
-svtools lsort takes the space sorted list of all of your non_ref vcf files as arguments.
+### Use `svtools lsort` to combine and sort variants from multiple samples
+`svtools lsort` takes the space sorted list of all of your non_ref vcf files as arguments.
 The example shows us combining three samples.  The output of this step is one sorted and compressed vcf file.
 ```
 svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.vcf \
@@ -73,7 +73,7 @@ svtools lsort SAMPLE1.sv.non_ref.vcf SAMPLE2.sv.non_ref.vcf SAMPLE3.sv.non_ref.v
 :note svtools lsort will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted vcf to have fewer variant lines than the input.
 ```
-### Use svtools lmerge to merge variants deemed to be identical in the sorted vcf
+### Use `svtools lmerge` to merge variants deemed to be identical in the sorted vcf
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin --product -f 20 \
@@ -87,12 +87,12 @@ This will sometimes cause the merged vcf to have more variant lines than the inp
 ### Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
 ```
 zcat merged.vcf.gz \
-| $VAWK --header '{if($0 !~ /NC_007605/) print $0}' \
+| vawk --header '{if($0 !~ /NC_007605/) print $0}' \
 | bgzip -c > merged.no_EBV.vcf.gz
 ```
 
-### Use svtools genotype to force genotypes for variant positions discovered in other samples
-svtools genotype will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
+### Use `svtools genotype` to force genotypes for variant positions discovered in other samples
+`svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
 It requires the aligned bam and splitters file for each sample. This step will output a fully genotyped vcf file for each sample.
 You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copy number output.
 ```
@@ -107,7 +107,7 @@ mkdir -p gt
 > gt/SAMPLE1.vcf"
 ```
 
-###Use svtools copynumber to create per sample copy number annotations based on CNVnator histograms 
+###Use `svtools copynumber` to create per sample copy number annotations based on CNVnator histograms 
 #### prepare environemnt for cnvnator
 ```
 source /gsc/pkg/root/root/bin/thisroot.sh
@@ -140,8 +140,8 @@ mkdir -p cn
 > cn/SAMPLE.vcf"
 ```
 
-### Use svtools vcfpaste to construct a bam that pastes in genotype and copy number information
-svtools vcfpaste takes the list of the cn vcfs that contain the information that we now want to paste to the end of variant lines that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to those cn vcf files.
+### Use `svtools vcfpaste` to construct a bam that pastes in genotype and copy number information
+`svtools vcfpaste` takes the list of the cn vcfs that contain the information that we now want to paste to the end of variant lines that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to those cn vcf files.
 ```
 "svtools vcfpaste \
 -m merged.no_EBV.vcf \
@@ -151,7 +151,10 @@ svtools vcfpaste takes the list of the cn vcfs that contain the information that
 > merged.sv.gt.cn.vcf.gz"
 ```
 
-### Use svtools prune to filter out additional variants deemed to be identical 
+### Use `svtools prune` to filter out additional variants deemed to be identical
+```
+:note Future improvements to svtools lmerge may make svtools prune unnecessary
+```
 ```
 bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.gt.cn.vcf.gz \
 | svtools afreq \
@@ -168,7 +171,7 @@ zcat merged.sv.new_pruned.vcf.gz \
  | svtools vcftobedpe  \
  | svtools varlookup -a stdin -b /gscmnt/gc2802/halllab/sv_aggregate/reclass/finmetseq.training_vars.bedpe.gz -c FINMETSEQ_HQ -d 50 \
  | svtools bedpetovcf \
- | $VAWK --header '{if(I$FINMETSEQ_HQ_AF>0) print $0}' \
+ | vawk --header '{if(I$FINMETSEQ_HQ_AF>0) print $0}' \
  | bgzip -c > training.vars.vcf.gz
 ```
 
