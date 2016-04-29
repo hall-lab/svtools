@@ -1,14 +1,13 @@
 #Example analysis using `svtools`
 This tutorial will help you begin to explore the use of `svtools` to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
-```
-:note A shell script that implements this tutorial for a small set of samples has also been included
-```
-[lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
+
 ```
 Creating a sample.map file and running lumpy_pipeline.sh is another way to investigate the usage 
-of svtools for creating a callset.
+of svtools for creating a callset.  It has some additional requirements that are documented by comments in the script.  
 ```
+[lumpy_pipeline.sh](https://github.com/jeldred/svtools/edit/install_documentation/lumpy_pipeline.sh)
+
 ##Satisfy computing environment requirements
 1. Install `svtools` (and Python)
 2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
