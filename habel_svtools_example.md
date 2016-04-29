@@ -1,5 +1,5 @@
 #Example analysis using svtools
-This tutorial will help you begin to explore the use of svtools to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using svtools.
+This tutorial will help you begin to explore the use of `svtools` to analyze an SV vcf.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and try basic analysis using svtools.
 This tutorial includes example commands that you can alter to refer to your sample names.
 ```
 :note A shell script that implements this tutorial for a small set of samples has also been included
@@ -10,11 +10,11 @@ Creating a sample.map file and running lumpy_pipeline.sh is another way to inves
 of svtools for creating a callset.
 ```
 ##Satisfy computing environment requirements
-1. Install svtools (and Python)
+1. Install `svtools` (and Python)
 2. Acquire vawk - copy vawk into demo directory or  (/usr/bin/vawk)?
 3. Install CNVnator (cnvnator-multi)
 
-###Install svtools (and Python)
+###Install `svtools` (and Python)
 [Installation instructions](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) have been provided in the INSTALL.md and DEVELOPER.MD of this repo.
 ###Acquire vawk
 clone from the repo? (how should we recommend people get this in their path and test to make sure it is falling through to the right gawk) [vawk](https://github.com/cc2qe/vawk) is an awk-like VCF parser that is used to manipulate vcf files in this tutorial.
@@ -43,13 +43,13 @@ The cn.list file has a single column that contains the path to the vcf files out
 3. Use svtools lmerge to merge variants deemed to be identical in the sorted vcf
 4. Remove EBV (Epstein-Barr Virus) variants
 5. Use svtools genotype to force genotypes for variant positions discovered in other samples.
-6. Copy Number annotation
+6. Use svtools copynumber to create per sample copy number annotations based on CNVnator histograms 
     1. prepare environemnt for cnvnator
     2. make uncompressed copy 
     3. make coordinate file
-    4. Annotate variants with copy number from cnvnator using FIXME
-7. Use svtools vcfpaste to FIXME
-8. Prune pipeline 
+    4. Annotate variants with copy number from cnvnator using svtools copynumber
+7. Use svtools vcfpaste to construct a bam that pastes in genotype and copy number information
+8. Use svtools prune to filter out additional variants deemed to be identical  
 9. Training (exclude?)
 10. Classification (exclude?)
 
@@ -107,7 +107,7 @@ mkdir -p gt
 > gt/SAMPLE1.vcf"
 ```
 
-###Copy Number annotation 
+###Use svtools copynumber to create per sample copy number annotations based on CNVnator histograms 
 #### prepare environemnt for cnvnator
 ```
 source /gsc/pkg/root/root/bin/thisroot.sh
@@ -125,7 +125,11 @@ This step assumes you have already run CNVnator and that the output required for
 /temp/cnvnator-temp/SAMPLE1.bam.hist.root
 ```
 more details about running CNVnator are [not actually here](http://some_link.gsc.wustl.edu)
+
+You will also need to prepare a subdirectory to hold the Copy Number(cn) vcf files 
 ```
+mkdir -p cn
+
 "svtools copynumber \
 --cnvnator cnvnator-multi \
 -s SAMPLE1 \
@@ -136,7 +140,8 @@ more details about running CNVnator are [not actually here](http://some_link.gsc
 > cn/SAMPLE.vcf"
 ```
 
-### svtools vcfpaste
+### Use svtools vcfpaste to construct a bam that pastes in genotype and copy number information
+svtools vcfpaste takes the list of the cn vcfs that contain the information that we now want to paste to the end of variant lines that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to those cn vcf files.
 ```
 "svtools vcfpaste \
 -m merged.no_EBV.vcf \
@@ -146,7 +151,7 @@ more details about running CNVnator are [not actually here](http://some_link.gsc
 > merged.sv.gt.cn.vcf.gz"
 ```
 
-### Prune pipeline 
+### Use svtools prune to filter out additional variants deemed to be identical 
 ```
 bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.gt.cn.vcf.gz \
 | svtools afreq \
