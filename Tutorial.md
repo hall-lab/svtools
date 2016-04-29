@@ -43,7 +43,7 @@ The cn.list file has a single column that contains the path to the VCF files out
     4. Annotate variants with copy number from CNVnator using `svtools copynumber`
 7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
 8. Use `svtools prune` to filter out additional variants deemed to be identical  
-9. Training (exclude?)
+9. Training (exclude?) with `svtools varlookup`
 10. Classification (exclude?)
 
 ###Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
