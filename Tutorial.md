@@ -32,7 +32,7 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12879_S1.bam
 ```
 Downloading these bams will consume a significant amount of time, bandwidth and disk space.
 These three files sum to 317GB.
-
+Use documentation on the SpeedSeq github page to produce the required files for the rest of this tutorial at [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
 ### 2) Get Reference FASTA
 ### 3) Create cn.list file
 The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
