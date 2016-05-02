@@ -78,3 +78,5 @@ Until `svtools` is published, please cite using its [DOI](https://zenodo.org/bad
 
 ## Troubleshooting
 As issues arise and common problems are identified, we will list them here.
+
+Note: For additional information and usage refer to the [Tutorial.md](https://github.com/hall-lab/svtools/blob/master/Tutorial.md) file.
