@@ -44,9 +44,6 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12879_S1.bam
 Downloading these BAMs will consume a significant amount of time, bandwidth and disk space (~317GB).
 Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-lab/speedseq) to run `speedseq realign` and `speedseq sv` on these BAMs. This will produce the required files for the rest of this tutorial.
 
-### Create cn.list file
-The cn.list file has a single column that contains the path to the VCF files output in the Copynumber Annotation step of this tutorial.
-
 ## Use `svtools` to create a callset
 ### Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
@@ -143,10 +140,17 @@ svtools copynumber \
  -v gt/NA12877.vcf \
 > cn/NA12877.vcf
 ```
-**Note:** The cnvnator option to `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
+**Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
 
 ### Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copynumber information
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
+
+To generate the cn.list file:
+```
+ls -1 cn/*vcf > cn.list
+```
+
+Then run `svtools vcfpaste` to re-assemble a cohort-level VCF file
 ```
 svtools vcfpaste \
 -m merged.no_EBV.vcf \
