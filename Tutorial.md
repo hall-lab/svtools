@@ -81,7 +81,7 @@ zcat sorted.vcf.gz \
 This will sometimes cause the merged VCF to have more variant lines than the input.
 
 ### (Optional) Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
-If your reference contains a contig representing EBV then you may wish to remove SVs involved with this sequence.
+If you used the recommended reference sequence, this step is unnecessary. However, if your reference contains a contig representing EBV then you may wish to remove SVs involved with this sequence.
 ```
 zcat merged.vcf.gz \
 | vawk --header '{if($0 !~ /NC_007605/) print $0}' \
