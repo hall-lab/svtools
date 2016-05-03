@@ -76,10 +76,10 @@ zcat sorted.vcf.gz \
 | bgzip -c > merged.vcf.gz "
 
 ```
-```
-:note svtools lmerge will return variant lines for SECONDARY break ends in addition to merging variants.
+
+**Note:** `svtools lmerge` will return variant lines for SECONDARY breakends in addition to merging variants.
 This will sometimes cause the merged VCF to have more variant lines than the input.
-```
+
 ### (Optional) Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
 If your reference contains a contig representing EBV then you may wish to remove SVs involved with this sequence.
 ```
