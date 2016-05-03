@@ -11,12 +11,12 @@ This tutorial includes example commands that you can alter to refer to your samp
     3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
     4. (Optional) Remove EBV (Epstein-Barr Virus) variants
     5. Use `svtools genotype` to force genotypes for variant positions discovered in other samples
-    6. Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
+    6. Use `svtools copynumber` to create per-sample copynumber annotations based on CNVnator histograms 
         1. Prepare environment for CNVnator
         2. Make an uncompressed copy 
         3. Make coordinate file
-        4. Annotate variants with copy number from CNVnator using `svtools copynumber`
-    7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
+        4. Annotate variants with copynumber from CNVnator using `svtools copynumber`
+    7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copynumber information
     8. Use `svtools prune` to filter out additional variants deemed to be identical  
 
 ## Satisfy computing environment requirements
@@ -45,7 +45,7 @@ Downloading these BAMs will consume a significant amount of time, bandwidth and 
 Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-lab/speedseq) to run `speedseq realign` and `speedseq sv` on these BAMs. This will produce the required files for the rest of this tutorial.
 
 ### Create cn.list file
-The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
+The cn.list file has a single column that contains the path to the VCF files output in the Copynumber Annotation step of this tutorial.
 
 ## Use `svtools` to create a callset
 ### Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
@@ -91,7 +91,7 @@ zcat merged.vcf.gz \
 ### Use `svtools genotype` to force genotypes for variant positions discovered in other samples
 `svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
 It requires the aligned BAM and a splitters BAM file for each sample. This step will output a fully genotyped VCF file for each sample.
-You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copy number output.
+You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copynumber output.
 ```
 mkdir -p gt
 
@@ -103,15 +103,16 @@ mkdir -p gt
 | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
 > gt/NA12877.vcf"
 ```
-You will need to repeat the `svtools genotype` command above for the other two samples (NA12878,NA12879) as well.
+You will need to repeat the `svtools genotype` command above for the other two samples (NA12878, NA12879) as well.
 
-### Use `svtools copynumber` to create per-sample copy number annotations based on CNVnator histograms 
+### Use `svtools copynumber` to create per-sample copynumber annotations based on CNVnator histograms 
 #### Prepare environment for CNVnator
-CNVnator require the ROOT package to function. This file must be sourced before running CNVnator.
+CNVnator requires the ROOT package to function. This file must be sourced before running CNVnator.
 ```
 source /gsc/pkg/root/root/bin/thisroot.sh
 ```
-#### Make an uncompressed copy 
+#### Make an uncompressed copy
+This will be used to create the coordinate file in the next step.
 ```
 zcat merged.no_EBV.vcf.gz > merged.no_EBV.vcf
 ```
@@ -120,12 +121,13 @@ CNVnator will return the copynumber for a list of coordinates. This script will 
 ```
 create_coordinates -i merged.no_EBV.vcf -o coordinates
 ```
-
-#### Annotate variants with copy number from CNVnator using `svtools copynumber`
+**Note:** The last line of this file should be the word "exit". This is intentional and [required by CNVnator](https://github.com/abyzovlab/CNVnator).
+.
+#### Annotate variants with copynumber from CNVnator using `svtools copynumber`
 This step assumes you have already run CNVnator and that the output required for this step is stored in your analysis directory at 
 `/temp/cnvnator-temp/NA12877.bam.hist.root`. If you have installed SpeedSeq, CNVnator is run as part of `speedseq sv`. More details about `speedseq sv` are [here](https://github.com/hall-lab/speedseq#speedseq-sv)
 
-You will also need to prepare a subdirectory to hold the Copy Number(cn) vcf files 
+You will also need to prepare a subdirectory to hold the Copynumber(cn) VCF files 
 ```
 mkdir -p cn
 ```
@@ -141,8 +143,9 @@ svtools copynumber \
  -v gt/NA12877.vcf \
 > cn/NA12877.vcf
 ```
+**Note:** The cnvnator option to `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
 
-### Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copy number information
+### Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copynumber information
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
 ```
 svtools vcfpaste \
