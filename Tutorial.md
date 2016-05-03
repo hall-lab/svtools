@@ -56,18 +56,19 @@ This command will need to be run once per sample and ouputs one non_ref VCF file
   | vawk --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
   > NA12877.sv.non_ref.vcf
 ```
+**Note:** vawk is included as part of SpeedSeq.
 
 ### Use `svtools lsort` to combine and sort variants from multiple samples
-`svtools lsort` takes a space separated list of all of your non_ref vcf files as arguments.
+`svtools lsort` takes a space separated list of all of the non_ref VCF files generated in the previous step as arguments.
 The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.
 ```
 svtools lsort NA12877.sv.non_ref.vcf NA12878.sv.non_ref.vcf NA12879.sv.non_ref.vcf \
 | bgzip -c > sorted.vcf.gz
 ```
-```
-:note svtools lsort will remove variants with the SECONDARY tag in the INFO field.
+
+**Note:** `svtools lsort` will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
-```
+
 ### Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
 ```
 zcat sorted.vcf.gz \
