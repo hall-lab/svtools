@@ -21,26 +21,29 @@ This tutorial includes example commands that you can alter to refer to your samp
 
 ## Satisfy computing environment requirements
 ### Install SpeedSeq and dependencies
-Installation instructions have been provided in the [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
+Installation instructions for SpeedSeq are available in the [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
 ### Install `svtools`
-Installation instructions have been provided in the [INSTALL.md](https://github.com/jeldred/svtools/blob/install_documentation/INSTALL.md) and DEVELOPER.md of this repo.
+Installation instructions have been provided in the [INSTALL.md](INSTALL.md) and [DEVELOPER.md](DEVELOPER.md) of this repo.
 
 ## Gather genomic data and generate needed helper files
-### Get or Create SpeedSeq aligned BAMs, splitter files, and SV VCF files
-To get a small set of bam files suitable for this tutorial. I recommend getting 3 bams from http://www.ebi.ac.uk/ena/data/view/ERP001960 in the NA12878 pedigree. A simple command line to achieve this is listed below. Or you could try the [Aspera client.](http://downloads.asperasoft.com/connect2/)
+
+### Get a Reference FASTA
+We recommend using the GRCh37 human genome for SpeedSeq, available here:
+* ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz
+* ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.fai
+
+**Note:** The genome FASTA file should be unzipped and indexed with BWA before running SpeedSeq.
+
+### Get or Create SpeedSeq aligned BAMs, splitter BAM files, and SV VCF files
+To get a small set of BAM files suitable for this tutorial, we recommend getting 3 BAMs from http://www.ebi.ac.uk/ena/data/view/ERP001960 in the NA12878 pedigree. A simple command line to achieve this is listed below. Or you could try the [Aspera client.](http://downloads.asperasoft.com/connect2/)
 ```
 wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12877_S1.bam
 wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12878_S1.bam
 wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12879_S1.bam
 ```
-Downloading these bams will consume a significant amount of time, bandwidth and disk space.
-These three files sum to 317GB.
-Use documentation on the SpeedSeq github page to produce the required files for the rest of this tutorial at [SpeedSeq github repository](https://github.com/hall-lab/speedseq).
-### Get Reference FASTA
-We recommend using the GRCh37 human genome for SpeedSeq, available here:
-ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz
-ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/human_g1k_v37.fasta.fai
-The genome FASTA file should be unzipped and indexed with BWA before running SpeedSeq.
+Downloading these BAMs will consume a significant amount of time, bandwidth and disk space (~317GB).
+Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-lab/speedseq) to run `speedseq realign` and `speedseq sv` on these BAMs. This will produce the required files for the rest of this tutorial.
+
 ### Create cn.list file
 The cn.list file has a single column that contains the path to the VCF files output in the Copy Number Annotation step of this tutorial.
 
