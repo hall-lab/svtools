@@ -115,7 +115,7 @@ create_coordinates -i merged.vcf -o coordinates
 This step assumes you have already run CNVnator and that the output required for this step is stored in your analysis directory at 
 `/temp/cnvnator-temp/NA12877.bam.hist.root`. If you have installed SpeedSeq, CNVnator is run as part of `speedseq sv`. More details about `speedseq sv` are [here](https://github.com/hall-lab/speedseq#speedseq-sv)
 
-You will also need to prepare a subdirectory to hold the Copynumber(cn) VCF files 
+You will also need to prepare a subdirectory to hold the copynumber(cn) VCF files 
 ```
 mkdir -p cn
 ```
