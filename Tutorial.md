@@ -8,16 +8,15 @@ This tutorial includes example commands that you can alter to refer to your samp
 3. Use `svtools` to create a callset
     1. Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
     2. Use `svtools lsort` to combine and sort variants from multiple samples
-    3. Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
-    4. (Optional) Remove EBV (Epstein-Barr Virus) variants
-    5. Use `svtools genotype` to force genotypes for variant positions discovered in other samples
-    6. Use `svtools copynumber` to create per-sample copynumber annotations based on CNVnator histograms 
+    3. Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
+    4. Use `svtools genotype` to genotype all samples for all variants present in the merged set for variant positions discovered in other samples
+    5. Use `svtools copynumber` to create per-sample copynumber annotations based on CNVnator histograms 
         1. Prepare environment for CNVnator
         2. Make an uncompressed copy 
         3. Make coordinate file
         4. Annotate variants with copynumber from CNVnator using `svtools copynumber`
-    7. Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copynumber information
-    8. Use `svtools prune` to filter out additional variants deemed to be identical  
+    6. Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
+    7. Use `svtools prune` to filter out additional variant calls likely representing the same variant  
 
 ## Satisfy computing environment requirements
 ### Install SpeedSeq and dependencies
@@ -66,7 +65,7 @@ svtools lsort NA12877.sv.non_ref.vcf NA12878.sv.non_ref.vcf NA12879.sv.non_ref.v
 **Note:** `svtools lsort` will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
 
-### Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
+###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin --product -f 20 \
@@ -77,22 +76,14 @@ zcat sorted.vcf.gz \
 **Note:** `svtools lmerge` will return variant lines for SECONDARY breakends in addition to merging variants.
 This will sometimes cause the merged VCF to have more variant lines than the input.
 
-### (Optional) Remove variants detected by alignment to the EBV (Epstein-Barr Virus) contig
-If you used the recommended reference sequence, this step is unnecessary. However, if your reference contains a contig representing EBV then you may wish to remove SVs involved with this sequence.
-```
-zcat merged.vcf.gz \
-| vawk --header '{if($0 !~ /NC_007605/) print $0}' \
-| bgzip -c > merged.no_EBV.vcf.gz
-```
-
-### Use `svtools genotype` to force genotypes for variant positions discovered in other samples
-`svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.no_EBV.vcf.gz file.
+### Use `svtools genotype` to genotype all samples for all variants present in the merged set
+`svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.vcf.gz file.
 It requires the aligned BAM and a splitters BAM file for each sample. This step will output a fully genotyped VCF file for each sample.
 You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copynumber output.
 ```
 mkdir -p gt
 
-"zcat merged.no_EBV.vcf.gz \
+"zcat merged.vcf.gz \
 | vawk --header '{  \$6=\".\"; print }' \
 | svtools genotype \
   -B NA12877.bam \
@@ -111,12 +102,12 @@ source /gsc/pkg/root/root/bin/thisroot.sh
 #### Make an uncompressed copy
 This will be used to create the coordinate file in the next step.
 ```
-zcat merged.no_EBV.vcf.gz > merged.no_EBV.vcf
+zcat merged.vcf.gz > merged.vcf
 ```
 #### Make coordinate file
 CNVnator will return the copynumber for a list of coordinates. This script will create such a list and is deployed upon installation of `svtools`.
 ```
-create_coordinates -i merged.no_EBV.vcf -o coordinates
+create_coordinates -i merged.vcf -o coordinates
 ```
 **Note:** The last line of this file should be the word "exit". This is intentional and [required by CNVnator](https://github.com/abyzovlab/CNVnator).
 .
@@ -142,7 +133,7 @@ svtools copynumber \
 ```
 **Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
 
-### Use `svtools vcfpaste` to construct a VCF that pastes in genotype and copynumber information
+### Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
 
 To generate the cn.list file:
@@ -153,7 +144,7 @@ ls -1 cn/*vcf > cn.list
 Then run `svtools vcfpaste` to re-assemble a cohort-level VCF file
 ```
 svtools vcfpaste \
--m merged.no_EBV.vcf \
+-m merged.vcf \
 -f cn.list \
 -q \
 | bgzip -c \

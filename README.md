@@ -37,7 +37,7 @@ pip install svtools
 ```
 
 ### Installing via conda
-TBD
+Coming Soon.  `svtools` will be available from the [bioconda channel](https://bioconda.github.io/) of the conda pakcage manager. 
 
 ## Obtaining help
 Please see the documentation on, or linked to, this page. For additional help or to report a bug, please open an issue in the `svtools` repository: https://github.com/hall-lab/svtools/issues
@@ -79,4 +79,4 @@ Until `svtools` is published, please cite using its [DOI](https://zenodo.org/bad
 ## Troubleshooting
 As issues arise and common problems are identified, we will list them here.
 
-Note: For additional information and usage refer to the [Tutorial.md](https://github.com/hall-lab/svtools/blob/master/Tutorial.md) file.
+Note: For additional information and usage refer to the [Tutorial.md](Tutorial.md) file.
