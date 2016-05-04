@@ -8,15 +8,15 @@ This tutorial includes example commands that you can alter to refer to your samp
 3. Use `svtools` to create a callset
     1. Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
     2. Use `svtools lsort` to combine and sort variants from multiple samples
-    3. Use `svtools lmerge` to merge variants variant calls likely representing the same variant in the sorted VCF
+    3. Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
     4. Use `svtools genotype` to genotype all samples for all variants present in the merged set for variant positions discovered in other samples
     5. Use `svtools copynumber` to create per-sample copynumber annotations based on CNVnator histograms 
         1. Prepare environment for CNVnator
         2. Make an uncompressed copy 
         3. Make coordinate file
         4. Annotate variants with copynumber from CNVnator using `svtools copynumber`
-    6. Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copy-number annotated vcfs
-    7. Use `svtools prune` to filter out additional variants variant calls likely representing the same variant  
+    6. Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
+    7. Use `svtools prune` to filter out additional variant calls likely representing the same variant  
 
 ## Satisfy computing environment requirements
 ### Install SpeedSeq and dependencies
@@ -65,7 +65,7 @@ svtools lsort NA12877.sv.non_ref.vcf NA12878.sv.non_ref.vcf NA12879.sv.non_ref.v
 **Note:** `svtools lsort` will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
 
-### Use `svtools lmerge` to merge variants deemed to be identical in the sorted VCF
+###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin --product -f 20 \
@@ -76,7 +76,7 @@ zcat sorted.vcf.gz \
 **Note:** `svtools lmerge` will return variant lines for SECONDARY breakends in addition to merging variants.
 This will sometimes cause the merged VCF to have more variant lines than the input.
 
-### Use `svtools genotype` to genotype all samples for all variants present in the merged set for variant positions discovered in other samples
+### Use `svtools genotype` to genotype all samples for all variants present in the merged set
 `svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.vcf.gz file.
 It requires the aligned BAM and a splitters BAM file for each sample. This step will output a fully genotyped VCF file for each sample.
 You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copynumber output.
@@ -133,7 +133,7 @@ svtools copynumber \
 ```
 **Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
 
-### Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copy-number annotated vcfs
+### Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
 
 To generate the cn.list file:
