@@ -30,7 +30,7 @@
    * [Pysam](https://github.com/pysam-developers/pysam) (≥0.8.1)
  
 ## Installation
-We recommend you install using `conda`, but you may also install via `pip`. For more detailed instructions, see our Installation guide.
+We recommend you install using `conda`, but you may also install via `pip`. For more detailed instructions, see our [Installation guide](INSTALL.md).
 
 ### Installing via conda
 ```
