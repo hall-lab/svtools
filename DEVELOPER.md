@@ -102,8 +102,8 @@ These instructions assume you have committed no additional changes after tagging
   ```
   conda install conda-build
   ```
-3. Create the conda recipe skeleton
-  1. Run conda skeleton
+3. Create the conda recipe skeleton.
+  1. Run conda skeleton.
   
     ```
     conda skeleton pypi svtools
@@ -123,25 +123,32 @@ These instructions assume you have committed no additional changes after tagging
       - svtools --help
       - create_coordinates --help
     ```
+4. Build the conda recipe.
 
-
-4. Build the conda recipe
-  
   ```
   conda build -c bioconda svtools
   ```
 5. Test your recipe by installing it into a new conda environment. The bioconda channel is needed to pull in pysam.
-  
-  ```
-  conda install -c bioconda -n svtools_install_test --use-local svtools
-  ```
+  1. Create a new conda environment to install into.
+    
+    ```
+    conda create --name svtools_install_test python=2.7 pip
+    ```
+  2. Install svtools from your local recipe.
+    
+    ```
+    conda install -c bioconda -n svtools_install_test --use-local svtools
+    ```
+
 6. Verify the install was successful.
-  
+ 
   ```
   source activate svtools_install_test
   svtools --version
   create_coordinates --version
   ```
+  **Note:** pyenv and conda versions of activate can conflict. If this is the case for you, simply source the full path of the conda activate script to activate the environment.
+
 7. Upload to location TBD
 
 [1]: http://conda.pydata.org/docs/
