@@ -204,31 +204,35 @@ def merge(BP, sample_order, v_id, use_product):
 
     BP.sort(key=lambda x: x.start_l)
 
-    BP_i = range(len(BP))
+    BP_i = range(len(BP)) # index set of each node in the graph
     C = []
 
     while len(BP_i) > 0:
-        h_l = []
+        h_l = [] #heap of left breakpoint end coordinates and node id (index). heapq is a min heap and the end coord is what will be used for the sorting.
         max_c = []
         max_c_len = 0
         for i in BP_i:
+            # remove anything in the heap that doesn't intersect with the current breakpoint
             while (len(h_l) > 0) and (h_l[0][0] < BP[i].start_l):
                 heapq.heappop(h_l)
 
-            heapq.heappush(h_l, (BP[i].end_l, i))
+            heapq.heappush(h_l, (BP[i].end_l, i)) # add to the heap
 
             # at this point everything in h_l intersects on the left
             # but we need to take into account what is going on on the right 
-            h_r = []
-            h_l_i = [x[1] for x in h_l]
-            h_l_i.sort(key=lambda x:BP[x].start_r)
+            h_r = [] # heap with rightmost starts
+            h_l_i = [x[1] for x in h_l] # this is all of the node ids on the heap currently
+            h_l_i.sort(key=lambda x:BP[x].start_r) # sort them by their right start
             for j in h_l_i:
+                # remove anything in the heap that doesn't intersect with the current breakpoint on the right end
                 while (len(h_r) > 0) and (h_r[0][0] < BP[j].start_r):
                     heapq.heappop(h_r)
 
+                # add something to the right heap
                 heapq.heappush(h_r, (BP[j].end_r, j))
 
                 if max_c_len < len(h_r):
+                    # max clique! Register what nodes we have
                     max_c_len = len(h_r)
                     max_c = [y[1] for y in h_r]
 

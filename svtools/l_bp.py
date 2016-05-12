@@ -380,6 +380,7 @@ def align_intervals(I):
         
         new_I.append(new_i)
         
+    # one interval. last element is array of arrays of probs covering entire interval
     return [start, end, new_I]
 
 
