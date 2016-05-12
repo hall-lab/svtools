@@ -72,9 +72,9 @@ class Breakpoint:
         Calculate overlapping cumulative probability value as weight?
         0 if not overlapping.
         '''
-        if (self.chr_l != b.chr_l) or
+        if ((self.chr_l != b.chr_l) or
             (self.chr_r != b.chr_r) or
-            (self.sv_type != b.sv_type):
+            (self.sv_type != b.sv_type)):
                 return 0
         #get left common interval
         c_start_l, c_end_l = max(self.start_l, b.start_l), min(self.end_l, b.end_l)
