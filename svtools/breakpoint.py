@@ -10,7 +10,7 @@ class Breakpoint:
         '''
         self.l = line
 
-        self.sv_type,
+        (self.sv_type,
         self.chr_l,
         self.chr_r,
         self.strands,
@@ -18,7 +18,7 @@ class Breakpoint:
         self.end_l,
         self.start_r, 
         self.end_r, 
-        m = split_v(l)
+        m) = l_bp.split_v(line)
 
         # TODO Handle missing PRPOS and PREND with intelligent message. Pull out into method.
         self.p_l = [float(x) for x in m['PRPOS'].split(',')]
