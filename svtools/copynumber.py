@@ -83,8 +83,8 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-w', '--window', metavar='<INT>', required=True, help='CNVnator window size (required)')
     parser.add_argument('-s', '--sample', metavar='<STRING>', required=True, help='sample to annotate (required)')
     parser.add_argument('--cnvnator', metavar='<PATH>', required=True, help='path to cnvnator-multi binary (required)')
-    parser.add_argument('-v', '--input-vcf', metavar='<VCF>', default=None, help='VCF input')
-    parser.add_argument('-o', '--output-vcf', metavar='<PATH>', type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
+    parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input')
+    parser.add_argument('-o', '--output', metavar='<PATH>', type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -93,8 +93,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.input_vcf) as stream:
-        sv_readdepth(stream, args.sample, args.root, args.window, args.output_vcf, args.cnvnator, args.coordinates)
+    with su.InputStream(args.input) as stream:
+        sv_readdepth(stream, args.sample, args.root, args.window, args.output, args.cnvnator, args.coordinates)
 
 # initialize the script
 if __name__ == '__main__':
