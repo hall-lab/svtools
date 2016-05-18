@@ -25,6 +25,25 @@ class BreakpointTests(TestCase):
         self.assertEqual(bp.p_l, self.prpos)
         self.assertEqual(bp.p_r, self.prend)
 
+        # This was previously implemented in l_bp_tests, adding in here too
+        test_line = '1	1000	2345_1	N	[2:1100[N	0.00	.	SVTYPE=BND;STRANDS=--:7;IMPRECISE;CIPOS=-2,2;CIEND=-2,2;CIPOS95=-1,1;CIEND95=-1,1;MATEID=2345_2;EVENT=2345;SU=7;PE=7;SR=0;PRPOS=0.025,0.25,0.45,0.25,0.025;PREND=0.025,0.25,0.45,0.25,0.025'
+        no_slop = Breakpoint(test_line)
+        self.assertEqual(no_slop.p_l, [0.025, 0.25, 0.45, 0.25, 0.025])
+        self.assertEqual(no_slop.p_r, [0.025, 0.25, 0.45, 0.25, 0.025])
+
+        fixed_slop = Breakpoint(test_line, fixed_slop = 1)
+        self.assertEqual(fixed_slop.p_l, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+        self.assertEqual(fixed_slop.p_r, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+
+        percent_slop = Breakpoint(test_line, percent_slop = 0.2)
+        print percent_slop
+        self.assertEqual(percent_slop.p_l, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+        self.assertEqual(percent_slop.p_r, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+
+        percent_and_fixed_slop = Breakpoint(test_line, percent_slop = 0.2, fixed_slop = 2)
+        self.assertEqual(percent_and_fixed_slop.p_l, [1e-100, 1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100, 1e-100])
+        self.assertEqual(percent_and_fixed_slop.p_r, [1e-100, 1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100, 1e-100])
+
     def test_str(self):
         bp = Breakpoint(self.entry, fixed_slop=1)
         expected = [
