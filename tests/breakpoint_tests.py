@@ -41,3 +41,11 @@ class BreakpointTests(TestCase):
                 ]
 
         self.assertEqual(str(bp), '\t'.join(expected))
+
+    def test_ovl(self):
+        bp = Breakpoint(self.entry, fixed_slop=1)
+        bp2 = Breakpoint(self.entry, fixed_slop=2)
+        # Note that this is a regression test. This value was arrived at using the existing code.
+        # It's correctness is unknown.
+        self.assertEqual(bp.ovl(bp2), 1.0)
+
