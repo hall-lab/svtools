@@ -1,38 +1,10 @@
 import svtools.l_bp as l_bp
 from svtools.breakpoint import Breakpoint
+import svtools.logspace as ls
 
 import sys
 import numpy as np
 import argparse
-
-def get_p(ls):
-    return np.exp(ls)
-
-def get_ls(p):
-    if p == 0:
-        return float("-inf")
-    else:
-        return np.log(p)
-
-def ls_multiply(x, y):
-    if (x == float("-inf")) or (y == float("-inf")):
-        return float("-inf")
-    else:
-        return x + y
-
-def ls_divide(x, y):
-    return x - y
-
-def ls_add(x, y):
-    if x == float("-inf"):
-        return y
-    elif y == float("-inf"):
-        return x
-    elif (x < y):
-        return y + np.log(1 + np.exp(x - y))
-    else:
-        return x + np.log(1 + np.exp(y - x))
-
 
 def print_var_line(l):
     A = l.rstrip().split('\t')
@@ -273,31 +245,31 @@ def merge(BP, sample_order, v_id, use_product):
                     miss += 1
             if miss == 0:
                 ALG = "PROD"
-                ls_p_L = [get_ls(1)] * len(a_L[0])
-                ls_p_R = [get_ls(1)] * len(a_R[0])
+                ls_p_L = [ls.get_ls(1)] * len(a_L[0])
+                ls_p_R = [ls.get_ls(1)] * len(a_R[0])
                 for c_i in range(len(c)):
                     for i in range(len(a_L[c_i])):
-                        ls_p_L[i] = ls_multiply(ls_p_L[i], get_ls(a_L[c_i][i]))
+                        ls_p_L[i] = ls.ls_multiply(ls_p_L[i], ls.get_ls(a_L[c_i][i]))
 
                     for i in range(len(a_R[c_i])):
-                        ls_p_R[i] = ls_multiply(ls_p_R[i], get_ls(a_R[c_i][i]))
+                        ls_p_R[i] = ls.ls_multiply(ls_p_R[i], ls.get_ls(a_R[c_i][i]))
 
-                ls_sum_L = get_ls(0)
-                ls_sum_R = get_ls(0)
+                ls_sum_L = ls.get_ls(0)
+                ls_sum_R = ls.get_ls(0)
 
                 for ls_p in ls_p_L:
-                    ls_sum_L = ls_add(ls_sum_L, ls_p)
+                    ls_sum_L = ls.ls_add(ls_sum_L, ls_p)
 
                 for ls_p in ls_p_R:
-                    ls_sum_R = ls_add(ls_sum_R, ls_p)
+                    ls_sum_R = ls.ls_add(ls_sum_R, ls_p)
 
                 p_L = []
                 for ls_p in ls_p_L:
-                    p_L.append(get_p(ls_divide(ls_p, ls_sum_L)))
+                    p_L.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_L)))
 
                 p_R = []
                 for ls_p in ls_p_R:
-                    p_R.append(get_p(ls_divide(ls_p, ls_sum_R)))
+                    p_R.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_R)))
 
         sum_L = sum(p_L)
         sum_R = sum(p_R)
