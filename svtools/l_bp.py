@@ -200,6 +200,9 @@ def header_line_cmp(l1, l2):
     return cmp(order.index(h1),order.index(h2))
 
 def trim(A):
+    '''
+    Return offset of first non-zero value from each end of an array
+    '''
     clip_start = 0
     for i in range(len(A)):
         if A[i] == 0:

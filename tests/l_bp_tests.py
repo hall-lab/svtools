@@ -35,6 +35,12 @@ class Test_l_bp(TestCase):
         info_bnd_map['STRANDS'] = '+-'
         self.assertEqual(split_v(var3), ['DEL', '1', '1', '+-', 900, 1010, 1090, 1500, info_bnd_map])
 
+    def test_trim(self):
+        self.assertEqual(trim([0, 0, 2, 3, 5, 0, 0, 0]), [2, 3])
+        self.assertEqual(trim([0, 0, 2, 3, 5]), [2, 0])
+        self.assertEqual(trim([2, 3, 5, 0, 0, 0]), [0, 3])
+        self.assertEqual(trim([2, 3, 5]), [0, 0])
+
 if __name__ == "__main__":
     main()
 
