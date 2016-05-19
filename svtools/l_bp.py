@@ -1,6 +1,10 @@
 import re
 
 def find_all(a_str, sub):
+    '''
+    Generator to find the coordinates of the start of all
+    occurrences of a substring
+    '''
     start = 0
     while True:
         start = a_str.find(sub, start)
@@ -98,6 +102,9 @@ def parse_vcf_record(vcf_line):
 
 
 def split_v(l):
+    '''
+    Split a VCF line into constituents and return a subset of values in an array
+    '''
     A = l.split('\t', 8)
     m = to_map(A[7])
 
@@ -128,6 +135,9 @@ def split_v(l):
     return [m['SVTYPE'],chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m]
 
 def to_map(s):
+    '''
+    Convert a string like one would find in a VCF info field to a dictionary
+    '''
     m = {}
     for k_v in s.split(';'):
         A = k_v.split('=')
