@@ -65,9 +65,6 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
 
     return samples
 
-
-
-
 def parse_vcf_record(vcf_line):
 
     A = vcf_line.split('\t')
@@ -99,7 +96,6 @@ def parse_vcf_record(vcf_line):
                 vcf_line='\t'.join(A)
 
     return vcf_line
-
 
 def split_v(l):
     '''
