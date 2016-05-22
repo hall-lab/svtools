@@ -216,6 +216,10 @@ def trim(A):
 
 # I has 3 components [[start],[end],[p array]]
 def align_intervals(I):
+    '''
+    Find range containing all intervals then pad out 
+    probabilities with zeroes so each set is of the same length
+    '''
     start = -1
     end = -1
     new_I = []

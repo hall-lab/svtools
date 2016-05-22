@@ -41,6 +41,12 @@ class Test_l_bp(TestCase):
         self.assertEqual(trim([2, 3, 5, 0, 0, 0]), [0, 3])
         self.assertEqual(trim([2, 3, 5]), [0, 0])
 
+    def test_align_intervals(self):
+        interval1 = [0, 4, [0.2, 0.2, 0.2, 0.2, 0.2]]
+        interval2 = [1, 5, [0.2, 0.2, 0.2, 0.2, 0.2]]
+        self.assertEqual(align_intervals([interval1, interval2]), [0, 5, [[0.2, 0.2, 0.2, 0.2, 0.2, 0], [0, 0.2, 0.2, 0.2, 0.2, 0.2]]])
+
+
 if __name__ == "__main__":
     main()
 
