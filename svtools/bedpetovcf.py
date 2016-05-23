@@ -54,7 +54,7 @@ def epilog():
     return 'The input BEDPE file can be gzipped if it is specified explicitly.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
+    parser.add_argument('-i', '--input', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
     parser.add_argument('-o', '--output', metavar='<VCF>', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
@@ -64,7 +64,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.bedpe) as stream:
+    with su.InputStream(args.input) as stream:
         bedpeToVcf(stream, args.output)
 
 if __name__ == '__main__':

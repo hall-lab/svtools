@@ -171,7 +171,7 @@ class BedpetoBlockedBedConverter(object):
                 color))
         return output_lines
 
-def processBEDPE(bedpe_stream, name, dist, output_handle=sys.stdout):
+def processBEDPE(bedpe_stream, name, dist, output_handle):
     #Process the BEDPE file and convert each entry to SAM.
     converter = BedpetoBlockedBedConverter(name, dist)
     output_handle.write(converter.track_name())
@@ -191,7 +191,8 @@ def epilog():
     return 'The input BEDPE file may be gzipped. If the input file is omitted then input is read from stdin. Output is written to stdout.' 
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input file')
+    parser.add_argument('-i', '--input', metavar='<BEDPE>', default=None, help='BEDPE input file')
+    parser.add_argument('-o', '--output', metavar='<BED12>', type=argparse.FileType('w'), default=sys.stdout, help='Output BED12 to write (default: stdout)')
     parser.add_argument('-n', '--name', metavar='<STRING>', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
     parser.add_argument('-d', '--maxdist', metavar='<INT>', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
     parser.set_defaults(entry_point=run_from_args)
@@ -202,8 +203,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.bedpe) as stream:
-        processBEDPE(stream, args.name, args.dist)
+    with su.InputStream(args.input) as stream:
+        processBEDPE(stream, args.name, args.dist, args.output)
 
 if __name__ == "__main__":
     parser = command_parser()
