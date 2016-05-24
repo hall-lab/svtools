@@ -149,16 +149,27 @@ These instructions assume you have committed no additional changes after tagging
   ```
   **Note:** pyenv and conda versions of activate can conflict. If this is the case for you, simply source the full path of the conda activate script to activate the environment.
 
-7. Upload to location TBD
+7. Ensure you have a clone/fork of https://github.com/bioconda/bioconda-recipes
+    
+8. Move the old recipe aside
+    
+    We are currently preserving older versions in subdirectories. Create one with the name of the old version and copy the old recipe files there.
+    
+    ```
+    mkdir $REPO_PATH/bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+    git mv $REPO_PATH/bioconda-recipes/recipes/svtools/build.sh bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+    git mv $REPO_PATH/bioconda-recipes/recipes/svtools/meta.yaml bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+    ```
 
-[1]: http://conda.pydata.org/docs/
-[2]: https://pypi.python.org/pypi/pip/
-[3]: https://pypi.python.org/pypi
-[4]: https://github.com/yyuu/pyenv-virtualenv
-[5]: https://github.com/hall-lab/svtools
-[6]: https://github.com/hall-lab/svtools/releases
-[7]: https://xkcd.com/1168/
-[8]: https://github.com/warner/python-versioneer
-[9]: https://github.com/hall-lab/svtools/releases
-[10]: https://github.com/pysam-developers/pysam
+9. Copy over the build.sh and meta.yaml to the recipe folder
+    
+    This gives us our new recipe.
+    
+    ```
+    cp build.sh $REPO_PATH/bioconda-recipes/recipes/svtools/
+    cp meta.yaml $REPO_PATH/bioconda-recipes/recipes/svtools/
+    ```
 
+10. Commit your changes to the bioconda-recipes repo
+
+11. Make a pull request 
