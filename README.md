@@ -4,6 +4,7 @@
 [![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools) 
 [![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
 
+[![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io)
 [![PyPI](https://img.shields.io/pypi/v/svtools.svg)](https://pypi.python.org/pypi/svtools)
 [![DOI](https://zenodo.org/badge/16104/hall-lab/svtools.svg)](https://zenodo.org/badge/latestdoi/16104/hall-lab/svtools)
 
@@ -29,15 +30,17 @@
    * [Pysam](https://github.com/pysam-developers/pysam) (≥0.8.1)
  
 ## Installation
-We recommend you install using `pip` or `conda`. For more detailed instructions, see our Installation guide.
+We recommend you install using `conda`, but you may also install via `pip`. For more detailed instructions, see our [Installation guide](INSTALL.md).
+
+### Installing via conda
+```
+conda install -c bioconda svtools
+```
 
 ### Installing via pip
 ```
 pip install svtools
 ```
-
-### Installing via conda
-Coming Soon.  `svtools` will be available from the [bioconda channel](https://bioconda.github.io/) of the conda pakcage manager. 
 
 ## Obtaining help
 Please see the documentation on, or linked to, this page. For additional help or to report a bug, please open an issue in the `svtools` repository: https://github.com/hall-lab/svtools/issues
