@@ -173,3 +173,14 @@ These instructions assume you have committed no additional changes after tagging
 10. Commit your changes to the bioconda-recipes repo
 
 11. Make a pull request 
+
+[1]: http://conda.pydata.org/docs/
+[2]: https://pypi.python.org/pypi/pip/
+[3]: https://pypi.python.org/pypi
+[4]: https://github.com/yyuu/pyenv-virtualenv
+[5]: https://github.com/hall-lab/svtools
+[6]: https://github.com/hall-lab/svtools/releases
+[7]: https://xkcd.com/1168/
+[8]: https://github.com/warner/python-versioneer
+[9]: https://github.com/hall-lab/svtools/releases
+[10]: https://github.com/pysam-developers/pysam
