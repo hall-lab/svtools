@@ -102,8 +102,8 @@ These instructions assume you have committed no additional changes after tagging
   ```
   conda install conda-build
   ```
-3. Create the conda recipe skeleton
-  1. Run conda skeleton
+3. Create the conda recipe skeleton.
+  1. Run conda skeleton.
   
     ```
     conda skeleton pypi svtools
@@ -123,26 +123,56 @@ These instructions assume you have committed no additional changes after tagging
       - svtools --help
       - create_coordinates --help
     ```
+4. Build the conda recipe.
 
-
-4. Build the conda recipe
-  
   ```
   conda build -c bioconda svtools
   ```
 5. Test your recipe by installing it into a new conda environment. The bioconda channel is needed to pull in pysam.
-  
-  ```
-  conda install -c bioconda -n svtools_install_test --use-local svtools
-  ```
+  1. Create a new conda environment to install into.
+    
+    ```
+    conda create --name svtools_install_test python=2.7 pip
+    ```
+  2. Install svtools from your local recipe.
+    
+    ```
+    conda install -c bioconda -n svtools_install_test --use-local svtools
+    ```
+
 6. Verify the install was successful.
-  
+ 
   ```
   source activate svtools_install_test
   svtools --version
   create_coordinates --version
   ```
-7. Upload to location TBD
+  **Note:** pyenv and conda versions of activate can conflict. If this is the case for you, simply source the full path of the conda activate script to activate the environment.
+
+7. Ensure you have a clone/fork of https://github.com/bioconda/bioconda-recipes
+    
+8. Move the old recipe aside
+    
+    We are currently preserving older versions in subdirectories. Create one with the name of the old version and copy the old recipe files there.
+    
+    ```
+    mkdir $REPO_PATH/bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+    git mv $REPO_PATH/bioconda-recipes/recipes/svtools/build.sh bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+    git mv $REPO_PATH/bioconda-recipes/recipes/svtools/meta.yaml bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+    ```
+
+9. Copy over the build.sh and meta.yaml to the recipe folder
+    
+    This gives us our new recipe.
+    
+    ```
+    cp build.sh $REPO_PATH/bioconda-recipes/recipes/svtools/
+    cp meta.yaml $REPO_PATH/bioconda-recipes/recipes/svtools/
+    ```
+
+10. Commit your changes to the bioconda-recipes repo
+
+11. Make a pull request 
 
 [1]: http://conda.pydata.org/docs/
 [2]: https://pypi.python.org/pypi/pip/
@@ -154,4 +184,3 @@ These instructions assume you have committed no additional changes after tagging
 [8]: https://github.com/warner/python-versioneer
 [9]: https://github.com/hall-lab/svtools/releases
 [10]: https://github.com/pysam-developers/pysam
-
