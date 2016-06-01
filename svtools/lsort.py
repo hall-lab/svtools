@@ -15,7 +15,7 @@ def merge(*iterables):
        yield element.obj
 
 class Lsort(object):
-    def __init__(self, vcf_file_names, tempdir=None, batchsize=200):
+    def __init__(self, vcf_file_names, tempdir=None, batchsize=200, output_handle=sys.stdout):
         if tempdir:
             self.tempdir = tempdir
         else:
@@ -25,6 +25,7 @@ class Lsort(object):
         self.vcf_lines = []
         self.vcf_headers = []
         self.temp_files = []
+        self.output_handle = output_handle
 
     def execute(self):
         
@@ -43,7 +44,7 @@ class Lsort(object):
 
         self.vcf_lines.sort(key=l_bp.vcf_line_key)
         iterables = self.temp_files + [self.vcf_lines]
-        sys.stdout.writelines(merge(*iterables))
+        self.output_handle.writelines(merge(*iterables))
 
     def close_tempfiles(self):
         for tmp in self.temp_files:
@@ -58,7 +59,7 @@ class Lsort(object):
         self.vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
             "VARIOUS\n")
         self.vcf_headers.sort(cmp=l_bp.header_line_cmp)
-        sys.stdout.writelines(self.vcf_headers)
+        self.output_handle.writelines(self.vcf_headers)
 
     def write_temp_file(self):
         temp_outfile = open(os.path.join(self.tempdir,'%06i'%len(self.temp_files)),'w+b',64*1024)
