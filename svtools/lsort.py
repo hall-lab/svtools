@@ -45,6 +45,7 @@ class Lsort(object):
         self.vcf_lines.sort(key=l_bp.vcf_line_key)
         iterables = self.temp_files + [self.vcf_lines]
         self.output_handle.writelines(merge(*iterables))
+        self.close_tempfiles()
 
     def close_tempfiles(self):
         for tmp in self.temp_files:
