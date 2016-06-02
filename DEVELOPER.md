@@ -54,6 +54,10 @@ Finally we can spot check our `svtools` installation and observe the version num
 
     svtools --version
 
+## Contributing
+
+`svtools` development follows the general development model described [here](http://nvie.com/posts/a-successful-git-branching-model/). To contribute code, submit a pull request against the `develop` branch of https://github.com/hall-lab/svtools.
+
 ## Releasing a new version
 
 ### Tagging a release on github
