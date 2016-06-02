@@ -1,6 +1,10 @@
 import re
 
 def find_all(a_str, sub):
+    '''
+    Generator to find the coordinates of the start of all
+    occurrences of a substring
+    '''
     start = 0
     while True:
         start = a_str.find(sub, start)
@@ -61,9 +65,6 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
 
     return samples
 
-
-
-
 def parse_vcf_record(vcf_line):
 
     A = vcf_line.split('\t')
@@ -96,8 +97,10 @@ def parse_vcf_record(vcf_line):
 
     return vcf_line
 
-
 def split_v(l):
+    '''
+    Split a VCF line into constituents and return a subset of values in an array
+    '''
     A = l.split('\t', 8)
     m = to_map(A[7])
 
@@ -128,6 +131,9 @@ def split_v(l):
     return [m['SVTYPE'],chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m]
 
 def to_map(s):
+    '''
+    Convert a string like one would find in a VCF info field to a dictionary
+    '''
     m = {}
     for k_v in s.split(';'):
         A = k_v.split('=')
@@ -189,147 +195,10 @@ def header_line_cmp(l1, l2):
         return 1
     return cmp(order.index(h1),order.index(h2))
 
-class breakpoint:
-    chr_l = ''
-    start_l = 0
-    end_l = 0
-    p_l = []
-
-    chr_r = ''
-    start_r = 0
-    end_r = 0
-    p_r = []
-
-    sv_type = ''
-
-    strands = ''
-    
-    l = ''
-
-    def __init__(self, 
-                 l,
-                 percent_slop=0,
-                 fixed_slop=0):
-        self.l = l
-
-        [self.sv_type,\
-        self.chr_l, \
-        self.chr_r,\
-        self.strands,
-        self.start_l,\
-        self.end_l,\
-        self.start_r, \
-        self.end_r, 
-        m] = split_v(l)
-
-        self.p_l = [float(x) for x in m['PRPOS'].split(',')]
-        self.p_r = [float(x) for x in m['PREND'].split(',')]
-
-        slop_prob = 1e-100
-        if ((percent_slop > 0) or (fixed_slop > 0)):
-
-            l_slop = int(max(percent_slop*(self.end_l - self.start_l + 1),fixed_slop))
-            r_slop = int(max(percent_slop*(self.end_r - self.start_r + 1),fixed_slop))
-
-            # pad each interval with slop_prob on each side.
-            self.start_l = self.start_l-l_slop
-            self.end_l = self.end_l+l_slop
-            new_p_l = [slop_prob] * l_slop + self.p_l + [slop_prob] * l_slop
-
-            self.start_r = self.start_r-r_slop
-            self.end_r = self.end_r+r_slop
-            new_p_r = [slop_prob] * r_slop + self.p_r + [slop_prob] * r_slop
-
-            # chew off overhang if self.start_l or self.start_r less than 0
-            if self.start_l < 0:
-                new_p_l = new_p_l[-self.start_l:]
-                self.start_l = 0
-            if self.start_r < 0:
-                new_p_r = new_p_r[-self.start_r:]
-                self.start_r = 0
-
-            # normalize so each probability curve sums to 1.
-            sum_p_l = sum(new_p_l)
-            self.p_l = [float(x)/sum_p_l for x in new_p_l]
-            sum_p_r = sum(new_p_r)
-            self.p_r = [float(x)/sum_p_r for x in new_p_r]
-
-            # old_l = float(self.end_l - self.start_l + 1)
-            
-            # self.start_l = max(0,self.start_l-l_slop)
-            # self.end_l = self.end_l+l_slop
-
-            # new_l = float(self.end_l - self.start_l + 1)
-
-            # new_p_l = []
-            # for i in range(self.end_l-self.start_l+1):
-            #     p = i/new_l
-            #     old_i = int(p*old_l)
-            #     new_p_l.append(self.p_l[old_i])
-            # sum_p_l = sum(new_p_l)
-            # self.p_l = [float(x)/sum_p_l for x in new_p_l]
-
-            # old_r = float(self.end_r - self.start_r + 1)
-
-            # self.start_r = max(0,self.start_r-r_slop)
-            # self.end_r = self.end_r+r_slop
-
-            # new_r = float(self.end_r - self.start_r + 1)
-
-            # new_p_r = []
-            # for i in range(self.end_r-self.start_r+1):
-            #     p = float(i)/new_r
-            #     old_i = int(p*old_r)
-            #     new_p_r.append(self.p_r[old_i])
-            # sum_p_r = max(1,sum(new_p_r))
-            # self.p_r = [float(x)/sum_p_r for x in new_p_r]
-
-    def __str__(self):
-        return '\t'.join([str(x) for x in [self.chr_l, \
-                                           self.start_l,\
-                                           self.end_l,\
-                                           self.chr_r,\
-                                           self.start_r, \
-                                           self.end_r, 
-                                           self.sv_type,\
-                                           self.strands,\
-                                           self.p_l,
-                                           self.p_r]])
-    def ovl(self, b):
-        if (self.chr_l != b.chr_l) or \
-            (self.chr_r != b.chr_r) or \
-            (self.sv_type != b.sv_type):
-            return 0
-        #get left common interval
-        c_start_l, c_end_l = [max(self.start_l, b.start_l), \
-                              min(self.end_l, b.end_l)]
-        #get right common interval
-        c_start_r, c_end_r = [max(self.start_r, b.start_r), \
-                              min(self.end_r, b.end_r)]
-
-        c_l_len = c_end_l - c_start_l + 1
-        c_r_len = c_end_r - c_start_r + 1
-
-        if (c_l_len < 1) or (c_r_len < 1):
-            return 0
-
-        self_start_off_l = c_start_l - self.start_l
-        b_start_off_l = c_start_l - b.start_l
-
-        self_start_off_r = c_start_r - self.start_r
-        b_start_off_r = c_start_r - b.start_r
-
-        ovl_l = 0
-        for i in range(c_l_len):
-            ovl_l += min(self.p_l[i+self_start_off_l], b.p_l[i+b_start_off_l])
-
-        ovl_r = 0
-        for i in range(c_r_len):
-            ovl_r += min(self.p_r[i+self_start_off_r], b.p_r[i+b_start_off_r])
-
-        return ovl_l * ovl_r
-
 def trim(A):
+    '''
+    Return offset of first non-zero value from each end of an array
+    '''
     clip_start = 0
     for i in range(len(A)):
         if A[i] == 0:
@@ -347,6 +216,10 @@ def trim(A):
 
 # I has 3 components [[start],[end],[p array]]
 def align_intervals(I):
+    '''
+    Find range containing all intervals then pad out 
+    probabilities with zeroes so each set is of the same length
+    '''
     start = -1
     end = -1
     new_I = []
@@ -380,57 +253,5 @@ def align_intervals(I):
         
         new_I.append(new_i)
         
+    # one interval. last element is array of arrays of probs covering entire interval
     return [start, end, new_I]
-
-
-class node:
-    b = None
-    color = -1
-    edges = None
-    def __init__(self, b):
-        self.b = b
-        self.color = -1
-        self.edges = []
-
-def connect(G, B, t):
-    #first we need to add all of the elements in B to the graph
-
-    # each node in the graph has 3 elements
-    # 0: breakpoint
-    # 1: color
-    # 2: list of edges
-    #    each edge has 2 elements
-    #    0: correspondined node id in G
-    #    1: weight (ovl score)
-
-    b_ids = []
-
-    for b in B:
-        next_id = len(G)
-        b_ids.append(next_id)
-        #G[next_id] = [b, -1, []]
-        G[next_id] = node(b)
-
-    for i in range(len(B)):
-        for j in range(len(B)):
-            if i != j:
-                ovl = B[i].ovl(B[j])
-                if ovl > t:
-                    #G[b_ids[i]][2].append([b_ids[j], ovl])
-                    G[b_ids[i]].edges.append([b_ids[j], ovl])
-
-def bron_kerbosch(G, R, P, X):
-    if (len(P) == 0) and (len(X) == 0):
-        yield R
-    for v in P:
-        V = set([v])
-        N = set([g[0] for g in G[v].edges])
-    
-        for r in bron_kerbosch(G, \
-                               R.union(V), \
-                               P.intersection(N), 
-                               X.intersection(N)):
-            yield r
-
-        P = P - V
-        X = X.union(V)
