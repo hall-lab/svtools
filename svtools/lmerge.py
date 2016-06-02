@@ -525,14 +525,14 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     BP_max_end_l = -1
     BP_chr_l = ''
 
-    b=l_bp.Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+    b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
     BP_l.append(b)
     BP_max_end_l = max(BP_max_end_l, b.end_l)
     BP_chr_l = b.chr_l
     BP_sv_type = b.sv_type
 
     for l in infile:
-      b=l_bp.Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+      b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
       if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
         BP_l.append(b)
         BP_max_end_l = max(BP_max_end_l, b.end_l)
