@@ -69,7 +69,7 @@ This will cause the sorted VCF to have fewer variant lines than the input.
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin --product -f 20 \
-| bgzip -c > merged.vcf.gz "
+| bgzip -c > merged.vcf.gz
 
 ```
 
@@ -83,13 +83,13 @@ You will also need to prepare a gt subdirectory to store the output of these com
 ```
 mkdir -p gt
 
-"zcat merged.vcf.gz \
+zcat merged.vcf.gz \
 | vawk --header '{  \$6=\".\"; print }' \
 | svtools genotype \
   -B NA12877.bam \
   -S NA12877.splitters.bam \
 | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
-> gt/NA12877.vcf"
+> gt/NA12877.vcf
 ```
 You will need to repeat the `svtools genotype` command above for the other two samples (NA12878, NA12879) as well.
 
