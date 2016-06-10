@@ -34,8 +34,11 @@ class Variant(object):
         # make a genotype for each sample at variant
         self.format_string = var_list[8]
         self.format_dict = { key: index for index, key in enumerate(self.format_string.split(':')) }
-        self.format_dict.setdefault('GT', len(self.format_dict)) #add GT if it doesn't exist
         self.gts_string = '\t'.join(var_list[9:])
+
+        if 'GT' not in self.format_dict:
+            self.format_dict['GT'] = len(self.format_dict) #add GT if it doesn't exist
+            self._uncache_gts()
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
