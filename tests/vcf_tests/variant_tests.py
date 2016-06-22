@@ -67,6 +67,22 @@ class TestVariant(TestCase):
         self.assertEqual(self.variant.get_var_string(use_cached_gt_string=True), self.variant_line)
         self.assertNotEqual(self.variant.get_var_string(), self.variant_line)
 
+    def test_add_genotype(self):
+        header_lines = [
+                '##fileformat=VCFv4.2',
+                '##fileDate=20151202',
+                '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">',
+                '##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">',
+                '##INFO=<ID=IMAFLAG,Number=.,Type=Flag,Description="Test Flag code">',
+                '##FORMAT=<ID=SU,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">',
+                '##FORMAT=<ID=INACTIVE,Number=1,Type=Integer,Description="A format not in use">',
+                '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878' ]
+        vcf = Vcf()
+        vcf.add_header(header_lines)
+        variant_line = '1	820915	5838_1	N	]GL000232.1:20940]N	0.00	.	SVTYPE=BND;STRANDS=-+:9;IMAFLAG	SU	9'
+        variant = Variant(variant_line.split('\t'), vcf)
+        self.assertEqual(variant.get_gt_string(), './.:9')
+
 if __name__ == "__main__":
     main()
 
