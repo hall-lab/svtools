@@ -74,6 +74,7 @@ optional arguments:
     prune        cluster and prune a BEDPE file by position based on allele
                  frequency
     varlookup    look for variants common between two BEDPE files
+    classify     reclassify DEL and DUP based on read depth information
 ```
 
 ## Citing svtools
