@@ -43,6 +43,8 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12879_S1.bam
 Downloading these BAMs will consume a significant amount of time, bandwidth and disk space (~317GB).
 Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-lab/speedseq) to run `speedseq realign` and `speedseq sv` on these BAMs. This will produce the required files for the rest of this tutorial.
 
+**Note:** Make certain to run `speedseq sv` using the following options: `-v -d -P -g -k` option as subsequent steps will utilize CNVnator files in the temporary directories, assume that SVTyper has been run and require LUMPY's probability curves.
+
 ## Use `svtools` to create a callset
 ### Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
