@@ -86,7 +86,7 @@ You will also need to prepare a gt subdirectory to store the output of these com
 mkdir -p gt
 
 zcat merged.vcf.gz \
-| vawk --header '{  \$6=\".\"; print }' \
+| vawk --header '{  $6="."; print }' \
 | svtools genotype \
   -B NA12877.bam \
   -S NA12877.splitters.bam \
