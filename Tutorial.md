@@ -153,12 +153,12 @@ svtools vcfpaste \
 
 ### Use `svtools prune` to filter out additional variants deemed to be identical
 ```
-bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.gt.cn.vcf.gz \
+zcat merged.sv.gt.cn.vcf.gz \
 | svtools afreq \
 | svtools vcftobedpe \
 | svtools bedpesort \
-| svtools prune -s -d 100 -e \"AF\" \
+| svtools prune -s -d 100 -e "AF" \
 | svtools bedpetovcf \
-| bgzip -c > merged.sv.new_pruned.vcf.gz"
+| bgzip -c > merged.sv.new_pruned.vcf.gz
 ```
 
