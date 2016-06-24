@@ -351,7 +351,7 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
 
     resid=hom_het_alt_cn-cn_median
     #if test_set['svtype'][0]=='DEL':
-    if test_set.loc['svtype', 0]=='DEL':
+    if test_set.loc[0, 'svtype']=='DEL':
         resid=-resid
     
     resid=resid[(resid > (cn_mad * mad_threshold) ) & (resid>absolute_cn_diff)]
