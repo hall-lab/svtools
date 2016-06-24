@@ -215,36 +215,31 @@ def calc_params(vcf_path):
 
     df=pd.DataFrame(tSet, columns=CN_rec._fields)
     #exclude from training data, DELs and DUPs with CN in the tails of the distribution
-    df['q_low']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(lowQuantile)
-    df['q_high']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(highQuantile)
+    df.loc[:,'q_low']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(lowQuantile)
+    df.loc[:,'q_high']=df.groupby(['sample', 'svtype', 'GT'])['log2r'].transform(highQuantile)
     df=df[(df.log2r>=df.q_low) & (df.log2r<=df.q_high)]
     #df.to_csv('./train.csv')
-
     #adjust copy number for small deletions (<1kb), no strong relationship b/w cn and size for dups evident so far
-    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) & (df.svlen>=50)]
-    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) & (df.svlen>=50)]
+    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) & (df.svlen>=50)].copy()
+    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) & (df.svlen>=50)].copy()
     het_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
     hom_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
-    small_het_dels['offset']=small_het_dels['log2r']-het_del_mean
-    small_hom_dels['offset']=small_hom_dels['log2r']-hom_del_mean
-    
+    small_het_dels.loc[:,'offset']=small_het_dels.loc[:,'log2r']-het_del_mean
+    small_hom_dels.loc[:,'offset']=small_hom_dels.loc[:,'log2r']-hom_del_mean
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
         het_del_fit=smf.ols('offset~log_len',small_het_dels).fit()
         #print hom_del_fit.summary()
         #print het_del_fit.summary()
-        small_hom_dels['log2r_adj'] = small_hom_dels['log2r'] - hom_del_fit.predict(small_hom_dels)
-        small_het_dels['log2r_adj'] = small_het_dels['log2r'] - het_del_fit.predict(small_het_dels)
-
+        small_hom_dels.loc[:,'log2r_adj'] = small_hom_dels.loc[:,'log2r'] - hom_del_fit.predict(small_hom_dels)
+        small_het_dels.loc[:,'log2r_adj'] = small_het_dels.loc[:,'log2r'] - het_del_fit.predict(small_het_dels)
     small_dels=small_hom_dels.append(small_het_dels)
     small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj']]
-
     # dels of length<100 bp are excluded here
-    df1=df[(df.svtype!="DEL") | (df.GT=="0/0") | (df.svlen>=1000)]
-    df1['log2r_adj']=df1['log2r']
+    df1=df.loc[(df.svtype!="DEL") | (df.GT=="0/0") | (df.svlen>=1000), :].copy()
+    df1.loc[:,'log2r_adj']=df1.loc[:,'log2r']
     df1=df1.append(small_dels)
-
     params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean,np.var, len]).reset_index()
     params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()    
     params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'var0', 'var1', 'var2', 'len0', 'len1', 'len2']
@@ -271,16 +266,16 @@ def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5
             params1['log_len']=math.log(50)
         else:
             params1['log_len']=log_len
-        params1['mean1_adj'] = params1['mean1'] + het_del_fit.predict(params1)
-        params1['mean2_adj'] = params1['mean2'] + hom_del_fit.predict(params1)
+        params1.loc[:,'mean1_adj'] = params1.loc[:,'mean1'] + het_del_fit.predict(params1)
+        params1.loc[:,'mean2_adj'] = params1.loc[:,'mean2'] + hom_del_fit.predict(params1)
     else:
         params1=params.copy()
-        params1['mean1_adj'] = params1['mean1']
-        params1['mean2_adj'] = params1['mean2']
+        params1.loc[:,'mean1_adj'] = params1.loc[:,'mean1']
+        params1.loc[:,'mean2_adj'] = params1.loc[:,'mean2']
 
-    v0=test_set[test_set.GT=="0/0"]['log2r'].values
-    v1=test_set[test_set.GT=="0/1"]['log2r'].values
-    v2=test_set[test_set.GT=="1/1"]['log2r'].values
+    v0=test_set.loc[test_set.GT=="0/0", 'log2r'].values
+    v1=test_set.loc[test_set.GT=="0/1", 'log2r'].values
+    v2=test_set.loc[test_set.GT=="1/1", 'log2r'].values
 
     if len(v0)>0:
         med0=np.median(v0)
@@ -308,9 +303,9 @@ def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5
 
     mm=pd.merge(test_set, params1, how='left')
 
-    mm['lld0'] = mm.apply(lambda row:lld(row["log2r"], row["mean0"],row["std_pooled"]), axis=1)
-    mm['lld1'] = mm.apply(lambda row:lld(row["log2r"], row["mean1_adj"],row["std_pooled"]), axis=1)
-    mm['lld2'] = mm.apply(lambda row:lld(row["log2r"], row["mean2_adj"],row["std_pooled"]), axis=1)
+    mm.loc[:,'lld0'] = mm.apply(lambda row:lld(row["log2r"], row["mean0"],row["std_pooled"]), axis=1)
+    mm.loc[:,'lld1'] = mm.apply(lambda row:lld(row["log2r"], row["mean1_adj"],row["std_pooled"]), axis=1)
+    mm.loc[:,'lld2'] = mm.apply(lambda row:lld(row["log2r"], row["mean2_adj"],row["std_pooled"]), axis=1)
    
     return  rd_support_nb(mm, p_cnv)
 
@@ -355,7 +350,8 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
     # tally up the pos. genotyped samples meeting the mad_threshold
 
     resid=hom_het_alt_cn-cn_median
-    if test_set['svtype'][0]=='DEL':
+    #if test_set['svtype'][0]=='DEL':
+    if test_set.loc['svtype', 0]=='DEL':
         resid=-resid
     
     resid=resid[(resid > (cn_mad * mad_threshold) ) & (resid>absolute_cn_diff)]
@@ -563,7 +559,8 @@ def run_reclassifier(vcf_file, vcf_out, sex_file, ae_path, f_overlap, exclude_li
                 method)
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--input', metavar='<VCF>', dest='vcf_in', type=argparse.FileType('r'), default=None, help='VCF input [stdin]')
+    parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input')
+    #parser.add_argument('-i', '--input', metavar='<STRING>', dest='vcf_in', type=argparse.FileType('r'), default=None, help='VCF input [stdin]')
     parser.add_argument('-o', '--output', metavar='<VCF>', dest='vcf_out', type=argparse.FileType('w'), default=sys.stdout, help='VCF output [stdout]')
     parser.add_argument('-g', '--gender', metavar='<FILE>', dest='gender', type=argparse.FileType('r'), required=True, default=None, help='tab delimited file of sample genders (male=1, female=2)\nex: SAMPLE_A\t2')
     parser.add_argument('-a', '--annotation', metavar='<BED>', dest='ae_path', type=str, default=None, help='BED file of annotated elements')
@@ -585,12 +582,13 @@ def command_parser():
     return parser
 
 def run_from_args(args):
+#    sys.stderr.write(args.vcf_in)
     if args.tSet is None:
         if args.method!="large_sample":
             sys.stderr.write("Training data required for naive Bayes or hybrid classifiers\n")
             parser.print_help()
             sys.exit(1)
-    with su.InputStream(args.vcf_in) as stream:
+    with su.InputStream(args.input) as stream:
         run_reclassifier(stream, args.vcf_out, args.gender, args.ae_path, args.f_overlap, args.exclude, args.slope_threshold, args.rsquared_threshold, args.tSet, args.method, args.diag_outfile)
 
 if __name__ == '__main__':
