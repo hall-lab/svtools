@@ -17,7 +17,7 @@ def bedpeToVcf(bedpe_file, vcf_out):
             if line[0:2] == '##':
                 header.append(line)
                 continue
-            elif line[0] == '#' and line[1] != '#':    
+            elif line[0] == '#' and line[1] != '#':
                 sample_list_str = line.rstrip().split('\t', 20)[-1]
                 header.append('\t'.join([
                                     '#CHROM',
@@ -36,15 +36,19 @@ def bedpeToVcf(bedpe_file, vcf_out):
                 myvcf.add_header(header)
                 myvcf.file_format='VCFv4.2'
                 vcf_out.write(myvcf.get_header() + '\n')
-        # 
+        #
         bedpe = Bedpe(line.rstrip().split('\t'))
         variants = converter.convert(bedpe)
         for v in variants:
             vcf_out.write(v.get_var_string() + '\n')
 
-    # close the VCF output file
+    # close the VCF output file and header if no variants found
+    if in_header == True:
+        myvcf.add_header(header)
+        myvcf.file_format='VCFv4.2'
+        vcf_out.write(myvcf.get_header() + '\n')
     vcf_out.close()
-    
+
     return
 
 def description():
