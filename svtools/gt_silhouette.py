@@ -3,7 +3,6 @@
 import argparse, sys, copy, gzip, time, math, re
 import numpy as np
 import pandas as pd
-import fastcluster
 from scipy import stats, cluster, spatial
 from sklearn import metrics
 from collections import Counter, defaultdict, namedtuple
@@ -95,7 +94,7 @@ def run_gt_refine(vcf_in, vcf_out, diag_outfile, gender_file):
         df1=get_silhouette(df)
 
         sil_avg=df1.iloc[0, df1.columns.get_loc('sil_gt_avg')]
-        sil_ind=df1.loc[:, 'sil_gt']
+        #sil_ind=df1.loc[:, 'sil_gt']
         var.info['SIL_GT_AVG'] = '%0.2f' % sil_avg
         vcf_out.write(var.get_var_string(use_cached_gt_string=True) + '\n')
         
