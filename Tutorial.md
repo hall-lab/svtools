@@ -43,6 +43,8 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/ERA172/ERA172924/bam/NA12879_S1.bam
 Downloading these BAMs will consume a significant amount of time, bandwidth and disk space (~317GB).
 Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-lab/speedseq) to run `speedseq realign` and `speedseq sv` on these BAMs. This will produce the required files for the rest of this tutorial.
 
+**Note:** Make certain to run `speedseq sv` using the following options: `-v -d -P -g -k` option as subsequent steps will utilize CNVnator files in the temporary directories, assume that SVTyper has been run and require LUMPY's probability curves.
+
 ## Use `svtools` to create a callset
 ### Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
 This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
@@ -69,7 +71,7 @@ This will cause the sorted VCF to have fewer variant lines than the input.
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin --product -f 20 \
-| bgzip -c > merged.vcf.gz "
+| bgzip -c > merged.vcf.gz
 
 ```
 
@@ -83,13 +85,13 @@ You will also need to prepare a gt subdirectory to store the output of these com
 ```
 mkdir -p gt
 
-"zcat merged.vcf.gz \
-| vawk --header '{  \$6=\".\"; print }' \
+zcat merged.vcf.gz \
+| vawk --header '{  $6="."; print }' \
 | svtools genotype \
   -B NA12877.bam \
   -S NA12877.splitters.bam \
 | sed 's/PR...=[0-9\.e,-]*\(;\)\{0,1\}\(\t\)\{0,1\}/\2/g' - \
-> gt/NA12877.vcf"
+> gt/NA12877.vcf
 ```
 You will need to repeat the `svtools genotype` command above for the other two samples (NA12878, NA12879) as well.
 
@@ -153,12 +155,12 @@ svtools vcfpaste \
 
 ### Use `svtools prune` to filter out additional variants deemed to be identical
 ```
-bsub -q long -M 8000000 -R 'select[mem>8000] rusage[mem=8000]' "zcat merged.sv.gt.cn.vcf.gz \
+zcat merged.sv.gt.cn.vcf.gz \
 | svtools afreq \
 | svtools vcftobedpe \
 | svtools bedpesort \
-| svtools prune -s -d 100 -e \"AF\" \
+| svtools prune -s -d 100 -e "AF" \
 | svtools bedpetovcf \
-| bgzip -c > merged.sv.new_pruned.vcf.gz"
+| bgzip -c > merged.sv.new_pruned.vcf.gz
 ```
 

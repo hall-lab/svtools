@@ -1,37 +1,10 @@
 import svtools.l_bp as l_bp
+from svtools.breakpoint import Breakpoint
+import svtools.logspace as ls
 
 import sys
 import numpy as np
 import argparse
-
-def get_p(ls):
-    return np.exp(ls)
-
-def get_ls(p):
-    if p == 0:
-        return float("-inf")
-    else:
-        return np.log(p)
-
-def ls_multiply(x, y):
-    if (x == float("-inf")) or (y == float("-inf")):
-        return float("-inf")
-    else:
-        return x + y
-
-def ls_divide(x, y):
-    return x - y
-
-def ls_add(x, y):
-    if x == float("-inf"):
-        return y
-    elif y == float("-inf"):
-        return x
-    elif (x < y):
-        return y + np.log(1 + np.exp(x - y))
-    else:
-        return x + np.log(1 + np.exp(y - x))
-
 
 def print_var_line(l):
     A = l.rstrip().split('\t')
@@ -204,31 +177,35 @@ def merge(BP, sample_order, v_id, use_product):
 
     BP.sort(key=lambda x: x.start_l)
 
-    BP_i = range(len(BP))
+    BP_i = range(len(BP)) # index set of each node in the graph
     C = []
 
     while len(BP_i) > 0:
-        h_l = []
+        h_l = [] #heap of left breakpoint end coordinates and node id (index). heapq is a min heap and the end coord is what will be used for the sorting.
         max_c = []
         max_c_len = 0
         for i in BP_i:
+            # remove anything in the heap that doesn't intersect with the current breakpoint
             while (len(h_l) > 0) and (h_l[0][0] < BP[i].start_l):
                 heapq.heappop(h_l)
 
-            heapq.heappush(h_l, (BP[i].end_l, i))
+            heapq.heappush(h_l, (BP[i].end_l, i)) # add to the heap
 
             # at this point everything in h_l intersects on the left
             # but we need to take into account what is going on on the right 
-            h_r = []
-            h_l_i = [x[1] for x in h_l]
-            h_l_i.sort(key=lambda x:BP[x].start_r)
+            h_r = [] # heap with rightmost starts
+            h_l_i = [x[1] for x in h_l] # this is all of the node ids on the heap currently
+            h_l_i.sort(key=lambda x:BP[x].start_r) # sort them by their right start
             for j in h_l_i:
+                # remove anything in the heap that doesn't intersect with the current breakpoint on the right end
                 while (len(h_r) > 0) and (h_r[0][0] < BP[j].start_r):
                     heapq.heappop(h_r)
 
+                # add something to the right heap
                 heapq.heappush(h_r, (BP[j].end_r, j))
 
                 if max_c_len < len(h_r):
+                    # max clique! Register what nodes we have
                     max_c_len = len(h_r)
                     max_c = [y[1] for y in h_r]
 
@@ -268,31 +245,31 @@ def merge(BP, sample_order, v_id, use_product):
                     miss += 1
             if miss == 0:
                 ALG = "PROD"
-                ls_p_L = [get_ls(1)] * len(a_L[0])
-                ls_p_R = [get_ls(1)] * len(a_R[0])
+                ls_p_L = [ls.get_ls(1)] * len(a_L[0])
+                ls_p_R = [ls.get_ls(1)] * len(a_R[0])
                 for c_i in range(len(c)):
                     for i in range(len(a_L[c_i])):
-                        ls_p_L[i] = ls_multiply(ls_p_L[i], get_ls(a_L[c_i][i]))
+                        ls_p_L[i] = ls.ls_multiply(ls_p_L[i], ls.get_ls(a_L[c_i][i]))
 
                     for i in range(len(a_R[c_i])):
-                        ls_p_R[i] = ls_multiply(ls_p_R[i], get_ls(a_R[c_i][i]))
+                        ls_p_R[i] = ls.ls_multiply(ls_p_R[i], ls.get_ls(a_R[c_i][i]))
 
-                ls_sum_L = get_ls(0)
-                ls_sum_R = get_ls(0)
+                ls_sum_L = ls.get_ls(0)
+                ls_sum_R = ls.get_ls(0)
 
                 for ls_p in ls_p_L:
-                    ls_sum_L = ls_add(ls_sum_L, ls_p)
+                    ls_sum_L = ls.ls_add(ls_sum_L, ls_p)
 
                 for ls_p in ls_p_R:
-                    ls_sum_R = ls_add(ls_sum_R, ls_p)
+                    ls_sum_R = ls.ls_add(ls_sum_R, ls_p)
 
                 p_L = []
                 for ls_p in ls_p_L:
-                    p_L.append(get_p(ls_divide(ls_p, ls_sum_L)))
+                    p_L.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_L)))
 
                 p_R = []
                 for ls_p in ls_p_R:
-                    p_R.append(get_p(ls_divide(ls_p, ls_sum_R)))
+                    p_R.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_R)))
 
         sum_L = sum(p_L)
         sum_R = sum(p_R)
@@ -548,14 +525,14 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     BP_max_end_l = -1
     BP_chr_l = ''
 
-    b=l_bp.breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+    b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
     BP_l.append(b)
     BP_max_end_l = max(BP_max_end_l, b.end_l)
     BP_chr_l = b.chr_l
     BP_sv_type = b.sv_type
 
     for l in infile:
-      b=l_bp.breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+      b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
       if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
         BP_l.append(b)
         BP_max_end_l = max(BP_max_end_l, b.end_l)
@@ -580,10 +557,10 @@ def epilog():
     return 'Note that if both slop parameters are set then the maximum is used.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--inFile', metavar='<FILE>', help='a sorted LUMPY output file generated by lsort. Column 7 must have the format sample:variantID')
+    parser.add_argument('-i', '--inFile', metavar='<FILE>', help='a sorted VCF file generated by svtools lsort. Each INFO field must contain an SNAME tag containing the sample name (e.g. SNAME=SAMPLE_NAME)')
     parser.add_argument('-p', '--percent-slop', metavar='<FLOAT>', type=float, default=0.0, help='increase the the breakpoint confidence interval both up and down stream by a given proportion of the original size')
     parser.add_argument('-f', '--fixed-slop', metavar='<INT>', type=int, default=0, help='increase the the breakpoint confidence interval both up and down stream by a given fixed size')
-    parser.add_argument('--product', dest='use_product', action='store_true', default=False, help='calculate breakpoint PDF and position using product')
+    parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
