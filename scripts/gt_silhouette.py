@@ -26,6 +26,12 @@ def get_silhouette(df):
     [mn_CN, mn_AB]=df.loc[:, ['CN', 'AB']].mean(skipna=True)
     [sd_CN, sd_AB]=df.loc[:, ['CN', 'AB']].std(skipna=True)
 
+    if df.loc[:,'GT'].unique().size==1:
+        df.loc[:,'sil_gt_avg']=1
+        df.loc[:, 'sil_gt']=1
+        df=df[ ['var_id', 'sample', 'svtype', 'AF', 'GT', 'CN', 'AB', 'sil_gt_avg', 'sil_gt']]
+        return df
+
     #standardize the 2 dims
     if sd_AB>0.01:
         df.loc[:, 'AB1']=(df.loc[:,'AB']-mn_AB)/sd_AB
