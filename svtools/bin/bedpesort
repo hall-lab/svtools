@@ -1,9 +1,7 @@
 #!/bin/bash
 
-set -ueo pipefail
+set -eo pipefail
 
-# adapted from erik garrion's vcfsort (in vcflib)
-# https://github.com/ekg/vcflib/blob/master/bin/vcfsort
 if [ ! -z "$1" ]
 then
     # Reading from a file. We have occasionally seen this error: http://www.gnu.org/software/coreutils/faq/coreutils-faq.html#Value-too-large-for-defined-data-type

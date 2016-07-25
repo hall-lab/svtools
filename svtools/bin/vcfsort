@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ueo pipefail
+set -eo pipefail
 
 if [ ! -z "$1" ]
 then
