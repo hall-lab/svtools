@@ -66,28 +66,26 @@ def vcfToBedpe(vcf_file, bedpe_out):
         v = line.rstrip().split('\t')
         var = svtools.vcf.variant.Variant(v, vcf)
         var.set_info("POS", var.pos)
-        unique_name = var.var_id
-        if 'EVENT' in var.info:
-            unique_name = var.info['EVENT']
-        if var.info['SVTYPE'] != 'BND':
+        # If there is no MATEID then assume this is a single-ended BND and simply output
+        if var.info['SVTYPE'] != 'BND' or 'MATEID' not in var.info:
             bedpe_out.write(str(converter.convert(var)) + '\n')
         else:
+            mate_id = var.info['MATEID']
             if 'SECONDARY' in var.info:
-                if unique_name in bnds:
+                if mate_id in bnds:
                     #primary
-                    var1 = bnds[unique_name]
+                    var1 = bnds[mate_id]
                     bedpe_out.write(str(converter.convert(var1, var)) + '\n')
-                    del bnds[unique_name]
+                    del bnds[mate_id]
                 else:
-                    sec_bnds.update({unique_name:var})
+                    sec_bnds.update({var.var_id:var})
             else: 
-                bnds.update({unique_name:var})
-                continue
-    intersected_keys = bnds.viewkeys() & sec_bnds.viewkeys()
-    for key in intersected_keys:
-        bedpe_out.write(str(converter.convert(bnds[key], sec_bnds[key])) + '\n')
-        del bnds[key] 
-        del sec_bnds[key]
+                if mate_id in sec_bnds:
+                    var2 = sec_bnds[mate_id]
+                    bedpe_out.write(str(converter.convert(var, var2)) + '\n')
+                    del sec_bnds[mate_id]
+                else:
+                    bnds.update({var.var_id:var})
     if bnds is not None:
         for bnd in bnds:
             sys.stderr.write('Warning: missing secondary multiline variant at ID:' + bnd + '\n')
