@@ -25,7 +25,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     line = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
                 header.append(line)
                 continue
-            elif line[0] == '#' and line[1] != '#':    
+            elif line[0] == '#' and line[1] != '#':
                 sample_list = line.rstrip().split('\t')[9:]
                 header.append(line)
                 continue
@@ -36,7 +36,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                 if "SVTYPE" in [info.id for info in vcf.info_list]:
                    vcf.add_info_after("SVTYPE", "POS", 1, 'Integer', 'Position of the variant described in this record')
                 header=vcf.get_header()
-                bedpe_out.write(header[:header.rfind('\n')] + '\n')                
+                bedpe_out.write(header[:header.rfind('\n')] + '\n')
                 final_header_line = ['#CHROM_A',
                         'START_A',
                         'END_A',
@@ -79,7 +79,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     del bnds[mate_id]
                 else:
                     sec_bnds.update({var.var_id:var})
-            else: 
+            else:
                 if mate_id in sec_bnds:
                     var2 = sec_bnds[mate_id]
                     bedpe_out.write(str(converter.convert(var, var2)) + '\n')
@@ -94,7 +94,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
         for bnd in sec_bnds:
             sys.stderr.write('Warning: missing primary multiline variant at ID:' + bnd + '\n')
             bedpe_out.write(str(converter.convert(None, sec_bnds[bnd])) + '\n')
-            
+
     # close the files
     bedpe_out.close()
     return
