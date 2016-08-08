@@ -490,7 +490,7 @@ def r_cluster(BP_l, sample_order, v_id, use_product):
 
     return v_id
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False):
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False):
     v_id = 0
     vcf_lines = []
     vcf_headers = list()
@@ -512,13 +512,18 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
       if l[0] != '#':
         break
 
-    vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-
     sample_order = []
     for header in vcf_headers:
       if header[:8] == '##SAMPLE':
         sample_order.append(header.rstrip()[13:-1])
       print header,
+
+    # Add in the sample names etc
+    chromosome_header_line = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO'
+    if include_genotypes:
+        sample_header = '\t'.join(sample_order)
+        chromosome_header_line += '\t' + sample_header
+    print chromosome_header_line
 
     BP_l = []
     BP_sv_type = ''
