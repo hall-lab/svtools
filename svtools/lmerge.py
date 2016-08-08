@@ -7,8 +7,12 @@ import numpy as np
 import argparse
 
 def null_format_string(format_string):
-    null_list = ['./.']
-    null_list.extend(list('.' * (len(format_string.split(':')) - 1)))
+    null_list = []
+    num_null_fields = len(format_string.split(':'))
+    if format_string.startswith('GT:'):
+        null_list = ['./.']
+        num_null_fields -= 1
+    null_list.extend(list('.' * num_null_fields))
     null_string = ':'.join(null_list)
     return null_string
 
