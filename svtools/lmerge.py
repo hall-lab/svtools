@@ -6,7 +6,20 @@ import sys
 import numpy as np
 import argparse
 
-def print_var_line(l):
+def null_format_string(format_string):
+    null_list = ['./.']
+    null_list.extend(list('.' * (len(format_string.split(':')) - 1)))
+    null_string = ':'.join(null_list)
+    return null_string
+
+def construct_null_sample_dict(format_string, sample_order):
+    null_string = null_format_string(format_string)
+    # NOTE I think the null string will actually be the same object for each sample
+    # You don't want to edit it.
+    null_dict = dict(zip(sample_order, [null_string] * len(sample_order)))
+    return null_dict
+
+def print_var_line(l, genotypes=None):
     A = l.rstrip().split('\t')
 
     if A[4] == '<INV>' and ('--:0' in A[7] or '++:0' in A[7]):
@@ -120,24 +133,36 @@ def print_var_line(l):
 
         A[7] += ';MATEID=' + A[2] + '_2'
         A[2] += '_1'
-        print '\t'.join(A[:8])
-        print '\t'.join([str(o) for o in O])
+        var1 = '\t'.join(A[:8])
+        var2 = '\t'.join([str(o) for o in O])
+        if genotypes != None:
+            var1 = '\t'.join([var1, GTS])
+            var2 = '\t'.join([var2, GTS])
+
+        print var1
+        print var2
 
     else:
-        print '\t'.join(A[:8])
+        var = '\t'.join(A[:8])
+        if genotypes != None:
+            var = '\t'.join([var, GTS])
+        print var
 
-def merge(BP, sample_order, v_id, use_product):
+def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
     if len(BP) == 1:
         A = BP[0].l.rstrip().split('\t')
         #tack on id to SNAME
         s_start=A[7].find('SNAME=')
         s_end=A[7].find(';',s_start)
+        sname = None
         if (s_end > -1):
+            sname = A[7][s_start:s_end]
             A[7] = A[7][:s_start] + \
                     A[7][s_start:s_end] + \
                     ':' + A[2] + \
                     A[7][s_end:]
         else:
+            sname = A[7][s_start:]
             A[7]+= ':' + A[2]
 
         # reset the id to be unique in this file
@@ -169,7 +194,12 @@ def merge(BP, sample_order, v_id, use_product):
         else:
             A[7] += ';ALG=SUM'
 
-        print_var_line('\t'.join(A))
+        GTS = None
+        if include_genotypes:
+            null_dict = construct_null_sample_dict(A[8], sample_order)
+            null_dict[sname] = A[9]
+            GTS = '\t'.join([format_string] + [gt_dict[x] for x in sample_order])
+        print_var_line('\t'.join(A), GTS)
         return v_id
 
     #Sweep the set.  Find the largest intersecting set.  Remove it.  Continue.
@@ -375,7 +405,8 @@ def merge(BP, sample_order, v_id, use_product):
 
         s_name_list = []
 
-        gt_list = []
+        format_string = None
+        gt_dict = None
 
         for b_i in c:
             A = BP[b_i].l.rstrip().split('\t')
@@ -396,11 +427,23 @@ def merge(BP, sample_order, v_id, use_product):
 
             s_name_list.append(m['SNAME'] + ':' + A[2])
 
-            gt_list += A[9:]
+            if include_genotypes:
+                if format_string == None:
+                    format_string = A[8]
+                    gt_dict = construct_null_sample_dict(format_string, sample_order)
+
+                if format_string == A[8]:
+                    gt_dict[m['SNAME']] = A[9] # because we created a full null dict above. This also validates we aren't adding a sample we're unaware of.
+                else:
+                    sys.stderr('Unable merge and include genotypes when FORMAT fields differ across VCF files\n')
+                    sys.exit(1)
+
 
         SNAME=','.join(s_name_list)
 
-        GTS = '\t'.join(gt_list)
+        GTS = None
+        if include_genotypes:
+            GTS = '\t'.join([format_string] + [gt_dict[x] for x in sample_order])
 
         strand_types_counts = []
         for strand in strand_map:
@@ -460,7 +503,7 @@ def merge(BP, sample_order, v_id, use_product):
 
         O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
 
-        print_var_line('\t'.join([str(o) for o in O]))
+        print_var_line('\t'.join([str(o) for o in O]), GTS)
     return v_id
 
 def r_cluster(BP_l, sample_order, v_id, use_product):
@@ -522,7 +565,7 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     chromosome_header_line = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO'
     if include_genotypes:
         sample_header = '\t'.join(sample_order)
-        chromosome_header_line += '\t' + sample_header
+        chromosome_header_line += '\tFORMAT\t' + sample_header
     print chromosome_header_line
 
     BP_l = []
