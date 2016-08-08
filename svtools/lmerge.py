@@ -160,13 +160,13 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         s_end=A[7].find(';',s_start)
         sname = None
         if (s_end > -1):
-            sname = A[7][s_start:s_end]
+            sname = A[7][s_start + 6:s_end]
             A[7] = A[7][:s_start] + \
                     A[7][s_start:s_end] + \
                     ':' + A[2] + \
                     A[7][s_end:]
         else:
-            sname = A[7][s_start:]
+            sname = A[7][s_start + 6:]
             A[7]+= ':' + A[2]
 
         # reset the id to be unique in this file
