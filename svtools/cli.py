@@ -28,7 +28,7 @@ def svtools_cli_parser():
     parser.add_argument('--version', action='version', version=version_string)
     parser.add_argument('--support', action=SupportAction, nargs=0, help='information on obtaining support')
     subparsers = parser.add_subparsers(title=None, metavar='subcommand', help='description')
-    
+
     lsort = subparsers.add_parser('lsort', help=svtools.lsort.description(), epilog=svtools.lsort.epilog())
     svtools.lsort.add_arguments_to_parser(lsort)
 
@@ -43,7 +43,7 @@ def svtools_cli_parser():
 
     genotype = subparsers.add_parser('genotype', help=svtools.genotype.description())
     svtools.genotype.add_arguments_to_parser(genotype)
-    
+
     afreq = subparsers.add_parser('afreq', help=svtools.afreq.description(), epilog=svtools.afreq.epilog())
     svtools.afreq.add_arguments_to_parser(afreq)
 
@@ -61,16 +61,16 @@ def svtools_cli_parser():
 
     bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description())
     svtools.bedpesort.add_arguments_to_parser(bedpesort)
-    
+
     prune = subparsers.add_parser('prune', help=svtools.prune.description(), epilog=svtools.prune.epilog())
     svtools.prune.add_arguments_to_parser(prune)
 
     varlookup = subparsers.add_parser('varlookup', help=svtools.varlookup.description())
     svtools.varlookup.add_arguments_to_parser(varlookup)
-    
+
     classifier = subparsers.add_parser('classify', help=svtools.sv_classifier.description())
     svtools.sv_classifier.add_arguments_to_parser(classifier)
-    
+
     return parser
 
 def main():
