@@ -140,8 +140,8 @@ def print_var_line(l, genotypes=None):
         var1 = '\t'.join(A[:8])
         var2 = '\t'.join([str(o) for o in O])
         if genotypes != None:
-            var1 = '\t'.join([var1, GTS])
-            var2 = '\t'.join([var2, GTS])
+            var1 = '\t'.join([var1, genotypes])
+            var2 = '\t'.join([var2, genotypes])
 
         print var1
         print var2
@@ -149,7 +149,7 @@ def print_var_line(l, genotypes=None):
     else:
         var = '\t'.join(A[:8])
         if genotypes != None:
-            var = '\t'.join([var, GTS])
+            var = '\t'.join([var, genotypes])
         print var
 
 def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
@@ -202,7 +202,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         if include_genotypes:
             null_dict = construct_null_sample_dict(A[8], sample_order)
             null_dict[sname] = A[9]
-            GTS = '\t'.join([format_string] + [gt_dict[x] for x in sample_order])
+            GTS = '\t'.join([A[8]] + [null_dict[x] for x in sample_order])
         print_var_line('\t'.join(A), GTS)
         return v_id
 
@@ -510,7 +510,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         print_var_line('\t'.join([str(o) for o in O]), GTS)
     return v_id
 
-def r_cluster(BP_l, sample_order, v_id, use_product):
+def r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes=False):
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
     BP_l.sort(key=lambda x: x.chr_r)
@@ -527,13 +527,13 @@ def r_cluster(BP_l, sample_order, v_id, use_product):
             BP_max_end_r = max(BP_max_end_r, b.end_r)
             BP_chr_r = b.chr_r
         else:
-            v_id = merge(BP_r, sample_order, v_id, use_product)
+            v_id = merge(BP_r, sample_order, v_id, use_product, include_genotypes)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
 
     if len(BP_r) > 0:
-        v_id = merge(BP_r, sample_order, v_id, use_product)
+        v_id = merge(BP_r, sample_order, v_id, use_product, include_genotypes)
 
     return v_id
 
@@ -591,14 +591,14 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
         BP_chr_l = b.chr_l
         BP_sv_type = b.sv_type
       else:
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes)
         BP_l = [b]
         BP_max_end_l = b.end_l
         BP_sv_type = b.sv_type
         BP_chr_l = b.chr_l
 
     if len(BP_l) > 0:
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes)
 
     infile.close()
 
@@ -613,6 +613,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-p', '--percent-slop', metavar='<FLOAT>', type=float, default=0.0, help='increase the the breakpoint confidence interval both up and down stream by a given proportion of the original size')
     parser.add_argument('-f', '--fixed-slop', metavar='<INT>', type=int, default=0, help='increase the the breakpoint confidence interval both up and down stream by a given fixed size')
     parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
+    parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -624,7 +625,8 @@ def run_from_args(args):
     l_cluster_by_line(args.inFile,
             percent_slop=args.percent_slop,
             fixed_slop=args.fixed_slop,
-            use_product=args.use_product)
+            use_product=args.use_product,
+            include_genotypes=args.include_genotypes)
 
 if __name__ == "__main__":
     parser = command_parser()
