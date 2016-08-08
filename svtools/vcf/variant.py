@@ -138,6 +138,18 @@ class Variant(object):
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
             sys.exit(1)
 
+    def set_genotype(self, sample_name, new_genotype):
+        '''
+        Set the Genotype object for the given sample. Programmer needs to be
+        very careful about what gets added here as there is no error checking.
+        '''
+        self._uncache_gts()
+        try:
+            self.gts[sample_name] = new_genotype
+        except KeyError:
+            sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
+            sys.exit(1)
+
     def get_var_string(self, use_cached_gt_string=False):
         '''
         Return the String representation for this line
