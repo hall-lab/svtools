@@ -168,7 +168,7 @@ def merge(BP, sample_order, v_id, use_product):
             A[7]+= ';ALG=PROD'
         else:
             A[7] += ';ALG=SUM'
- 
+
         print_var_line('\t'.join(A))
         return v_id
 
@@ -192,7 +192,7 @@ def merge(BP, sample_order, v_id, use_product):
             heapq.heappush(h_l, (BP[i].end_l, i)) # add to the heap
 
             # at this point everything in h_l intersects on the left
-            # but we need to take into account what is going on on the right 
+            # but we need to take into account what is going on on the right
             h_r = [] # heap with rightmost starts
             h_l_i = [x[1] for x in h_l] # this is all of the node ids on the heap currently
             h_l_i.sort(key=lambda x:BP[x].start_r) # sort them by their right start
@@ -375,7 +375,7 @@ def merge(BP, sample_order, v_id, use_product):
 
         s_name_list = []
 
-        gt_list = [] 
+        gt_list = []
 
         for b_i in c:
             A = BP[b_i].l.rstrip().split('\t')
@@ -484,7 +484,7 @@ def r_cluster(BP_l, sample_order, v_id, use_product):
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
- 
+
     if len(BP_r) > 0:
         v_id = merge(BP_r, sample_order, v_id, use_product)
 
@@ -513,7 +513,7 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
         break
 
     vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-    
+
     sample_order = []
     for header in vcf_headers:
       if header[:8] == '##SAMPLE':
@@ -548,7 +548,7 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     if len(BP_l) > 0:
         v_id = r_cluster(BP_l, sample_order, v_id, use_product)
 
-    infile.close()                
+    infile.close()
 
 def description():
     return 'merge LUMPY calls inside a single file from svtools lsort'
