@@ -1,4 +1,6 @@
-import argparse, sys
+# PYTHON_ARGCOMPLETE_OK
+
+import argcomplete, argparse, sys
 import svtools.lsort
 import svtools.lmerge
 import svtools.vcfpaste
@@ -26,13 +28,13 @@ def svtools_cli_parser():
     parser.add_argument('--version', action='version', version=version_string)
     parser.add_argument('--support', action=SupportAction, nargs=0, help='information on obtaining support')
     subparsers = parser.add_subparsers(title=None, metavar='subcommand', help='description')
-
+    
     lsort = subparsers.add_parser('lsort', help=svtools.lsort.description(), epilog=svtools.lsort.epilog())
     svtools.lsort.add_arguments_to_parser(lsort)
 
     lmerge = subparsers.add_parser('lmerge', help=svtools.lmerge.description(), epilog=svtools.lmerge.epilog())
     svtools.lmerge.add_arguments_to_parser(lmerge)
-    
+
     vcf_paste = subparsers.add_parser('vcfpaste', help=svtools.vcfpaste.description(), epilog=svtools.vcfpaste.epilog())
     svtools.vcfpaste.add_arguments_to_parser(vcf_paste)
 
@@ -65,14 +67,15 @@ def svtools_cli_parser():
 
     varlookup = subparsers.add_parser('varlookup', help=svtools.varlookup.description())
     svtools.varlookup.add_arguments_to_parser(varlookup)
-
+    
     classifier = subparsers.add_parser('classify', help=svtools.sv_classifier.description())
     svtools.sv_classifier.add_arguments_to_parser(classifier)
-
+    
     return parser
 
 def main():
     parser = svtools_cli_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     sys.exit(args.entry_point(args))
 
