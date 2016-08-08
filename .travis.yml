@@ -18,7 +18,7 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - deps='libgfortran pip nose coverage statsmodels numpy pandas scipy'
+  - deps='libgfortran pip nose coverage statsmodels numpy pandas scipy argcomplete'
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION $deps
   - source activate test-environment
 
