@@ -94,6 +94,23 @@ class BedpeTests(TestCase):
         b1 = Bedpe(entry1)
         self.assertEqual(str(b1), '\t'.join(entry1))
 
+    def test_sname_value(self):
+        self.assertEqual(Bedpe.sname_value('SNAME=sample1:2,sample2:3'), 'sample1:2,sample2:3')
+        self.assertIsNone(Bedpe.sname_value('AF'))
+        self.assertIsNone(Bedpe.sname_value('SNAME='))
+
+    def test__combine_sname_values(self):
+        self.assertEqual(set(Bedpe._combine_sname_values('sample1:2', 'sample2:4,sample3:5').split(',')), set(['sample1:2', 'sample2:4', 'sample3:5']))
+        self.assertEqual(Bedpe._combine_sname_values(None, 'sample2:4,sample3:5'), 'sample2:4,sample3:5')
+        self.assertEqual(Bedpe._combine_sname_values('sample2:4,sample3:5', None), 'sample2:4,sample3:5')
+
+    def test__update_sname_field(self):
+        expected = set(['sample2:4', 'sample3:12'])
+        result = Bedpe._update_sname_field('SNAME=sample2:4', 'SNAME=sample3:12')
+        tag_name, values = result.split('=')
+        self.assertEqual(tag_name, 'SNAME')
+        result_set = set(values.split(','))
+        self.assertEqual(result_set, expected)
 
 if __name__ == "__main__":
     main()
