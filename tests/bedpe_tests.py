@@ -6,6 +6,25 @@ class BedpeTests(TestCase):
         self.assertEqual(Bedpe.parse_score('20'), 20)
         self.assertEqual(Bedpe.parse_score('.'), '.')
 
+    def test_parse_info_tag(self):
+        self.assertEqual(Bedpe.parse_info_tag('SVTYPE', 'SVTYPE'), True)
+        self.assertEqual(Bedpe.parse_info_tag('SVTYPE', 'AF='), False)
+        self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;AF=0.2', 'AF='), '0.2')
+        self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;AF=0.2', 'SVTYPE='), 'BND')
+        self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;SECONDARY;AF=0.2', 'SECONDARY'), True)
+
+    def test_parse_info_tag(self):
+        self.assertEqual(Bedpe.update_info_tag('SNAME=sample', 'SNAME=', 'sample,sample2'), 'SNAME=sample,sample2')
+        self.assertEqual(Bedpe.update_info_tag('SNAME=sample;AF=0.75', 'SNAME=', 'sample,sample2'), 'SNAME=sample,sample2;AF=0.75')
+        with self.assertRaises(ValueError):
+            Bedpe.update_info_tag('AF=0.75', 'SNAME=', 'sample,sample2')
+
+        with self.assertRaises(ValueError):
+            Bedpe.update_info_tag('SECONDARY;AF=0.5', 'SECONDARY', 'NEW_VALUE')
+
+        with self.assertRaises(ValueError):
+            Bedpe.update_info_tag('AF=0.5;SECONDARY', 'SECONDARY', 'NEW_VALUE')
+
     def test_malformed(self):
         entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b1 = Bedpe(entry1)
@@ -13,13 +32,13 @@ class BedpeTests(TestCase):
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND;AF=0.2', 'MISSING' ]
         b2 = Bedpe(entry2)
         self.assertEqual(b2.malformedFlag, 2)
-        self.assertEqual(b2.info1, entry2[18]) 
+        self.assertEqual(b2.info1, entry2[18])
 
     def test_info(self):
         entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'MISSING', 'SVTYPE=BND;AF=0.2' ]
         b1 = Bedpe(entry1)
         self.assertEqual(b1.info, 'SVTYPE=BND;AF=0.2')
-        
+
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND;AF=0.2', 'MISSING' ]
         b2 = Bedpe(entry2)
         self.assertEqual(b2.info, 'SVTYPE=BND;AF=0.2')
@@ -33,7 +52,7 @@ class BedpeTests(TestCase):
         b1 = Bedpe(entry1)
         b1.set_info('AF', '0.2')
         self.assertEqual(b1.info, 'SVTYPE=BND;AF=0.2')
-        
+
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND', 'MISSING' ]
         b2 = Bedpe(entry2)
         b2.set_info('AF', '0.2')

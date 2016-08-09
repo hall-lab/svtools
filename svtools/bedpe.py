@@ -45,6 +45,51 @@ class Bedpe(object):
             return float(score)
         else:
             return score
+
+    @staticmethod
+    def parse_info_tag(info_string, tag):
+        '''
+        Accessory method to parse out the value of a tag in an info string.
+        Make sure to include the equals sign if you are looking for a
+        non-boolean tag
+        '''
+
+        tag_start = info_string.find(tag)
+        if tag_start == -1:
+            # If you were looking for a flag then this is the right value.
+            # Otherwise your tag doesn't exist. Client code must know how to
+            # interpret.
+            return False 
+    
+        tag_end = info_string.find(';', tag_start)
+        value_start = tag_start + len(tag)
+        if (value_start >= len(info_string)) or (tag_end != -1 and value_start >= tag_end):
+            return True
+        if tag_end == -1:
+            tag_end = None # We didn't find our end index
+        return info_string[value_start:tag_end]
+
+    @staticmethod
+    def update_info_tag(info_string, tag, new_value):
+        '''
+        Accessory method to update a tag's value. Like parse_info_tag, make sure to include the equals sign.
+        '''
+
+        tag_start = info_string.find(tag)
+        if tag_start == -1:
+            raise ValueError("Tag {0} doesn't exist".format(tag))
+
+        tag_end = info_string.find(';', tag_start)
+        value_start = tag_start + len(tag)
+        if (value_start >= tag_end and tag_end != -1) or value_start >= len(info_string):
+            raise ValueError("Tag {0} doesn't have a value".format(tag))
+        if tag_end == -1:
+            tag_end = None # We didn't find our end index
+        new_info_string = info_string[:value_start] + new_value
+        if tag_end:
+            new_info_string += info_string[tag_end:]
+        return new_info_string
+
     @property
     def info(self):
         '''
