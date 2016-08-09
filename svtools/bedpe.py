@@ -179,7 +179,7 @@ class Bedpe(object):
         Combine the sname values from two comma-separated strings
         '''
         combined = None
-        if first != None and second != None:
+        if first is not None and second is not None:
             sname_set = set(first.split(',') + second.split(','))
             combined = ','.join(sname_set)
         else:
