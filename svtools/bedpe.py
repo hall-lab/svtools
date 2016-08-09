@@ -168,7 +168,7 @@ class Bedpe(object):
         easily do it for either info1 or info2 on demand
         '''
         value = Bedpe.parse_info_tag(info_string, 'SNAME=')
-        if value == False or value == True:
+        if value in (False, True):
             return None
         else:
             return value
