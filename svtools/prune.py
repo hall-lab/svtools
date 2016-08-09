@@ -59,7 +59,7 @@ class Pruner(object):
                                 matched_cluster_pruned = True
                                 del matched_clusters[j]
                             j += 1
-                        i += 1        
+                        i += 1
                     if matched_cluster_pruned:
                         self.cluster_list = [cluster for cluster in self.cluster_list if cluster not in matched_clusters]
             #prune and print eligible clusters
@@ -67,7 +67,7 @@ class Pruner(object):
                 self.cluster_list = self.prune(bedpe,
                                      False,
                                      bedpe_out)
-    
+
         self.cluster_list = self.prune(None,
                              True,
                              bedpe_out)
@@ -84,11 +84,11 @@ class Pruner(object):
         new_cluster_list = []
         for cluster in self.cluster_list:
             # cluster is beyond updatable window:
-            if (bedpe is None or 
-                    cluster.chrom_a != bedpe.c1 or 
-                    cluster.min_a - max_distance > bedpe.e1 or 
+            if (bedpe is None or
+                    cluster.chrom_a != bedpe.c1 or
+                    cluster.min_a - max_distance > bedpe.e1 or
                     cluster.max_a + max_distance < bedpe.s1):
-                
+
                 # print the cluster if eligible
                 if (cluster.size >= min_cluster_size or print_ineligible):
                     self.emitted_lines += 1
@@ -99,7 +99,7 @@ class Pruner(object):
             # leave it in the cluster list
             else:
                 new_cluster_list.append(cluster)
-    
+
         return new_cluster_list
 
 def description():
