@@ -51,8 +51,8 @@ class Cluster(object):
                 if self.elements[0]:
                     bedpe.combine_snames(self.elements[0])
                 self.elements[0] = bedpe
-        else:
-            self.elements[0].combine_snames(bedpe)
+            else:
+                self.elements[0].combine_snames(bedpe)
 
         self.size += 1
         self.sv_event=bedpe.svtype
