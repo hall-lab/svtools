@@ -57,6 +57,7 @@ class Pruner(object):
                             if matched_clusters[i].can_add(matched_clusters[j].elements[0], max_distance):
                                 matched_clusters[i].add(matched_clusters[j].elements[0], eval_param)
                                 pruned_clusters.append(matched_clusters[j])
+                                del matched_clusters[j]
                             j += 1
                         i += 1
                     if pruned_clusters:
