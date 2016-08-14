@@ -439,7 +439,8 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
                 if format_string == A[8]:
                     gt_dict[m['SNAME']] = A[9] # because we created a full null dict above. This also validates we aren't adding a sample we're unaware of.
                 else:
-                    sys.stderr('Unable merge and include genotypes when FORMAT fields differ across VCF files\n')
+                    sys.stderr.write('Unable merge and include genotypes when FORMAT fields differ across VCF files\n')
+                    sys.stderr.write('Previous: {0} Current: {1}\n'.format(format_string, A[8]))
                     sys.exit(1)
 
 
