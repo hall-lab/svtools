@@ -16,13 +16,6 @@ def null_format_string(format_string):
     null_string = ':'.join(null_list)
     return null_string
 
-def construct_null_sample_dict(format_string, sample_order):
-    null_string = null_format_string(format_string)
-    # NOTE I think the null string will actually be the same object for each sample
-    # You don't want to edit it.
-    null_dict = dict(zip(sample_order, [null_string] * len(sample_order)))
-    return null_dict
-
 def print_var_line(l, genotypes=None):
     A = l.rstrip().split('\t')
 
@@ -200,9 +193,9 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
 
         GTS = None
         if include_genotypes:
-            null_dict = construct_null_sample_dict(A[8], sample_order)
-            null_dict[sname] = A[9]
-            GTS = '\t'.join([A[8]] + [null_dict[x] for x in sample_order])
+            null_string = null_format_string(A[8])
+            gt_dict = { sname: A[9] }
+            GTS = '\t'.join([A[8]] + [gt_dict.get[x, null_string] for x in sample_order])
         print_var_line('\t'.join(A), GTS)
         return v_id
 
@@ -410,7 +403,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         s_name_list = []
 
         format_string = None
-        gt_dict = None
+        gt_dict = dict()
 
         for b_i in c:
             A = BP[b_i].l.rstrip().split('\t')
@@ -434,10 +427,9 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
             if include_genotypes:
                 if format_string == None:
                     format_string = A[8]
-                    gt_dict = construct_null_sample_dict(format_string, sample_order)
 
                 if format_string == A[8]:
-                    gt_dict[m['SNAME']] = A[9] # because we created a full null dict above. This also validates we aren't adding a sample we're unaware of.
+                    gt_dict[m['SNAME']] = A[9]
                 else:
                     sys.stderr.write('Unable merge and include genotypes when FORMAT fields differ across VCF files\n')
                     sys.stderr.write('Previous: {0} Current: {1}\n'.format(format_string, A[8]))
@@ -448,7 +440,8 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
 
         GTS = None
         if include_genotypes:
-            GTS = '\t'.join([format_string] + [gt_dict[x] for x in sample_order])
+            null_string = null_format_string(format_string)
+            GTS = '\t'.join([format_string] + [gt_dict.get[x, null_string] for x in sample_order])
 
         strand_types_counts = []
         for strand in strand_map:
