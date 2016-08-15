@@ -195,7 +195,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         if include_genotypes:
             null_string = null_format_string(A[8])
             gt_dict = { sname: A[9] }
-            GTS = '\t'.join([A[8]] + [gt_dict.get[x, null_string] for x in sample_order])
+            GTS = '\t'.join([A[8]] + [gt_dict.get(x, null_strin)) for x in sample_order])
         print_var_line('\t'.join(A), GTS)
         return v_id
 
@@ -450,7 +450,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         GTS = None
         if include_genotypes:
             null_string = null_format_string(format_string)
-            GTS = '\t'.join([format_string] + [gt_dict.get[x, null_string] for x in sample_order])
+            GTS = '\t'.join([format_string] + [gt_dict.get(x, null_string) for x in sample_order])
 
         strand_types_counts = []
         for strand in strand_map:
