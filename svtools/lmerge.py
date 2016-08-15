@@ -442,8 +442,8 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
                     else:
                         sys.stderr.write('Unable merge and include genotypes when FORMAT fields differ across VCF files\n')
                         sys.stderr.write('Previous: {0} Current: {1}\n'.format(format_string, A[8]))
+                        sys.stderr.write('Variant: {0}\n'.format(m['SNAME'] + ':' + A[2]))
                         sys.exit(1)
-
 
         SNAME=','.join(s_name_list)
 
