@@ -20,7 +20,7 @@ The creation of the pyenv virtual environment and activation looks like this:
 ### <a name="conda-install"></a> Installing using a [conda][1] package
 Activate your conda environment of choice and then:
 
-    conda -c bioconda install svtools
+    conda install -c bioconda svtools
 
 ### <a name="pip-install"></a> Installing from [PyPI][3] using [pip][2]
 Once you have your Python environment set up you should be able to install the `svtools` package from PyPI:

@@ -50,24 +50,24 @@ class Pruner(object):
             else:
                 if len(matched_clusters) > 1:
                     i = 0
-                    matched_cluster_pruned = False
+                    pruned_clusters = []
                     while i < (len(matched_clusters) - 1):
                         j = i + 1
                         while j < len(matched_clusters):
                             if matched_clusters[i].can_add(matched_clusters[j].elements[0], max_distance):
                                 matched_clusters[i].add(matched_clusters[j].elements[0], eval_param)
-                                matched_cluster_pruned = True
+                                pruned_clusters.append(matched_clusters[j])
                                 del matched_clusters[j]
                             j += 1
-                        i += 1        
-                    if matched_cluster_pruned:
-                        self.cluster_list = [cluster for cluster in self.cluster_list if cluster not in matched_clusters]
+                        i += 1
+                    if pruned_clusters:
+                        self.cluster_list = [cluster for cluster in self.cluster_list if cluster not in pruned_clusters]
             #prune and print eligible clusters
             if self.bedpe_lines % 1000 == 0 and is_sorted:
                 self.cluster_list = self.prune(bedpe,
                                      False,
                                      bedpe_out)
-    
+
         self.cluster_list = self.prune(None,
                              True,
                              bedpe_out)
@@ -84,11 +84,11 @@ class Pruner(object):
         new_cluster_list = []
         for cluster in self.cluster_list:
             # cluster is beyond updatable window:
-            if (bedpe is None or 
-                    cluster.chrom_a != bedpe.c1 or 
-                    cluster.min_a - max_distance > bedpe.e1 or 
+            if (bedpe is None or
+                    cluster.chrom_a != bedpe.c1 or
+                    cluster.min_a - max_distance > bedpe.e1 or
                     cluster.max_a + max_distance < bedpe.s1):
-                
+
                 # print the cluster if eligible
                 if (cluster.size >= min_cluster_size or print_ineligible):
                     self.emitted_lines += 1
@@ -99,7 +99,7 @@ class Pruner(object):
             # leave it in the cluster list
             else:
                 new_cluster_list.append(cluster)
-    
+
         return new_cluster_list
 
 def description():

@@ -5,6 +5,11 @@ import sys
 import difflib
 import svtools.lmerge as lmerge
 
+class LmergeUnitTest(TestCase):
+    def test_null_format_string(self):
+        self.assertEqual(lmerge.null_format_string('GT:GQ:AD'), './.:.:.')
+        self.assertEqual(lmerge.null_format_string('GQ:AD'), '.:.')
+
 class LmergeIntegrationTest(TestCase):
     def run_integration_test(self):
         test_directory = os.path.dirname(os.path.abspath(__file__))

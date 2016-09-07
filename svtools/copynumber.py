@@ -18,6 +18,7 @@ def run_cnvnator(cnvnator_path, root, window, coord_list):
     # See http://wiki.biouml.org/index.php/CNVnator_genotype_output_(file_format)
     p3 = Popen(['awk', '{ if($1!="Assuming"){print $4} }'], stdin=p2.stdout, stdout=PIPE)
     cn_list = map(float, p3.communicate()[0].split('\n')[:-1])
+   
     return cn_list
 
 def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_list):

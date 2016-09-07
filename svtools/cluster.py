@@ -48,7 +48,12 @@ class Cluster(object):
         if eval_param is None or eval_param.lower() == 'af':
             if  bedpe.af != '.' and bedpe.af > self.filter:
                 #First node represents best variant
+                if self.elements[0]:
+                    bedpe.combine_snames(self.elements[0])
                 self.elements[0] = bedpe
+            else:
+                self.elements[0].combine_snames(bedpe)
+
         self.size += 1
         self.sv_event=bedpe.svtype
         self.filter = max(self.filter,bedpe.af)

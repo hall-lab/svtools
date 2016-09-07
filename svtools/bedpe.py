@@ -29,7 +29,7 @@ class Bedpe(object):
 
         # FIXME This is only really needed for varlookup. Something more general would be helpful
         self.cohort_vars = dict()
-        
+
         try:
             self.svtype = self.retrieve_svtype()
         except ValueError:
@@ -45,6 +45,51 @@ class Bedpe(object):
             return float(score)
         else:
             return score
+
+    @staticmethod
+    def parse_info_tag(info_string, tag):
+        '''
+        Accessory method to parse out the value of a tag in an info string.
+        Make sure to include the equals sign if you are looking for a
+        non-boolean tag
+        '''
+
+        tag_start = info_string.find(tag)
+        if tag_start == -1:
+            # If you were looking for a flag then this is the right value.
+            # Otherwise your tag doesn't exist. Client code must know how to
+            # interpret.
+            return False
+
+        tag_end = info_string.find(';', tag_start)
+        value_start = tag_start + len(tag)
+        if (value_start >= len(info_string)) or (tag_end != -1 and value_start >= tag_end):
+            return True
+        if tag_end == -1:
+            tag_end = None # We didn't find our end index
+        return info_string[value_start:tag_end]
+
+    @staticmethod
+    def update_info_tag(info_string, tag, new_value):
+        '''
+        Accessory method to update a tag's value. Like parse_info_tag, make sure to include the equals sign.
+        '''
+
+        tag_start = info_string.find(tag)
+        if tag_start == -1:
+            raise ValueError("Tag {0} doesn't exist".format(tag))
+
+        tag_end = info_string.find(';', tag_start)
+        value_start = tag_start + len(tag)
+        if (value_start >= tag_end and tag_end != -1) or value_start >= len(info_string):
+            raise ValueError("Tag {0} doesn't have a value".format(tag))
+        if tag_end == -1:
+            tag_end = None # We didn't find our end index
+        new_info_string = info_string[:value_start] + new_value
+        if tag_end:
+            new_info_string += info_string[tag_end:]
+        return new_info_string
+
     @property
     def info(self):
         '''
@@ -72,7 +117,7 @@ class Bedpe(object):
         if self.info1 == 'MISSING':
             self.malformedFlag = 1
         if self.info2 == 'MISSING':
-            self.malformedFlag = 2      
+            self.malformedFlag = 2
 
     def retrieve_svtype(self):
         try:
@@ -87,7 +132,7 @@ class Bedpe(object):
         except IndexError:
             af = None
         return af
-    
+
     def __str__(self):
         '''
         A string representation of the line represented by this object
@@ -112,7 +157,53 @@ class Bedpe(object):
             self.orig_ref2,
             self.orig_alt2,
             self.info1,
-            self.info2] + 
+            self.info2] +
             self.misc
             )
 
+    @staticmethod
+    def sname_value(info_string):
+        '''
+        Retrieves the SNAME value from an info_string. Static method so we can
+        easily do it for either info1 or info2 on demand
+        '''
+        value = Bedpe.parse_info_tag(info_string, 'SNAME=')
+        if value in (False, True):
+            return None
+        else:
+            return value
+
+    @staticmethod
+    def _combine_sname_values(first, second):
+        '''
+        Combine the sname values from two comma-separated strings
+        '''
+        combined = None
+        if first is not None and second is not None:
+            sname_set = set(first.split(',') + second.split(','))
+            combined = ','.join(sname_set)
+        else:
+            combined = first or second # set to whichever is non-None
+        return combined
+
+    @staticmethod
+    def _update_sname_field(original_info1, original_info2):
+        '''
+        Update the sname field in the original info string by adding
+        values from the another info string
+        '''
+        new_sname = Bedpe._combine_sname_values(
+                Bedpe.sname_value(original_info1),
+                Bedpe.sname_value(original_info2))
+        if new_sname:
+            return Bedpe.update_info_tag(original_info1, 'SNAME=', new_sname)
+        else:
+            return original_info1
+
+    def combine_snames(self, other):
+        '''
+        This method adds the sname values from the info fields of another bedpe
+        entry into the sname tag of itself
+        '''
+        self.info1 = self._update_sname_field(self.info1, other.info1)
+        self.info2 = self._update_sname_field(self.info2, other.info2)
