@@ -440,7 +440,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
                         format_string = longer
                         gt_dict[m['SNAME']] = A[9]
                     else:
-                        sys.stderr.write('Unable merge and include genotypes when FORMAT fields differ across VCF files\n')
+                        sys.stderr.write('Unable to merge and include genotypes when FORMAT fields differ across VCF files\n')
                         sys.stderr.write('Previous: {0} Current: {1}\n'.format(format_string, A[8]))
                         sys.stderr.write('Variant: {0}\n'.format(m['SNAME'] + ':' + A[2]))
                         sys.exit(1)
