@@ -81,7 +81,7 @@ class VcfToBedpeConverter(object):
     @staticmethod
     def adjust_coordinate(vcf_variant, info_tag, start, end):
         '''
-        Return adjusted start and end coordinates according to the contents 
+        Return adjusted start and end coordinates according to the contents
         of the tag (if it exists)
         '''
         if info_tag in vcf_variant.info:
@@ -108,7 +108,7 @@ class VcfToBedpeConverter(object):
         parser = self.simple_breakpoints
         if sv_type == 'BND':
             parser = self.bnd_breakpoints
-        
+
         c1, s1, e1, c2, s2, e2, o1, o2 = parser(vcf_variant)
 
         s1, e1 = self.adjust_coordinate(vcf_variant, 'CIPOS', s1, e1)
@@ -134,8 +134,8 @@ class VcfToBedpeConverter(object):
                 orig_ref_b = secondary_variant.ref
                 orig_alt_b = secondary_variant.alt
 
-        # For MANTA single-ended BNDs, EVENT is not present. 
-        # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache? 
+        # For MANTA single-ended BNDs, EVENT is not present.
+        # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache?
         # By adding to the variant class, perhaps?
         name = vcf_variant.var_id
         if 'EVENT' in vcf_variant.info:
