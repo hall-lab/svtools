@@ -21,7 +21,7 @@ This tutorial includes example commands that you can alter to refer to your samp
     1. Generate a repeat elements BED file
     2. Generate a file specifying the number of X chromosome copies in each person
     3. Run classifier in 'large_sample' mode
-    4. Run classifier in 'naive_bayes' mode (or 'hybrid' mode)
+    4. Run classifier in 'naive_bayes' mode
         1. Generation of training variant VCF
         2. Run `svtools classify`
 5. (Optional) Create a set of high-quality, simple deletions and duplications for reclassification
@@ -210,10 +210,10 @@ zcat merged.sv.new_pruned.vcf.gz \
 | bgzip -c > output.ls.vcf.gz
 ```
 
-### Run classifier in 'naive_bayes' mode (or 'hybrid' mode)
+### Run classifier in 'naive_bayes' mode
 
 #### Generation of training variant VCF
-To run in 'naive_bayes' (or 'hybrid') mode, you will need training data. We first created a curated BEDPE file of high-quality, simple deletions and duplications (the provided example file, `training_vars.bedpe.gz` can be used or you can create your own). 
+To run in 'naive_bayes' mode, you will need training data. We first created a curated BEDPE file of high-quality, simple deletions and duplications (the provided example file, `training_vars.bedpe.gz` can be used or you can create your own). 
 
 You need to find the subset of high-quality training variants that overlap your dataset, e.g., using `svtools varlookup`, to produce a VCF of training data.
 
