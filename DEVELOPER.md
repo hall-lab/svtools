@@ -10,7 +10,7 @@ The creation of the pyenv virtual environment and activation looks like this:
     pyenv virtualenv 2.7.9 svtools_install_from_repo-2.7.9
     pyenv activate svtools_install_from_repo-2.7.9
 
-Once you have your python environment set up you will want to check out `svtools` from the [hall-lab github repository][5].  The master branch contains the bleeding edge version.
+Once you have your python environment set up you will want to check out `svtools` from the [hall-lab github repository][5].  The develop branch contains the bleeding edge version.
 
     git clone https://github.com/hall-lab/svtools.git svtools_test
     cd svtools_test
