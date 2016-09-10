@@ -20,13 +20,9 @@ This tutorial includes example commands that you can alter to refer to your samp
 4. Use `svtools classify` to refine genotypes and SV types
     1. Generate a repeat elements BED file
     2. Generate a file specifying the number of X chromosome copies in each person
-    3. Run classifier in 'large_sample' mode
-    4. Run classifier in 'naive_bayes' mode
-        1. Generation of training variant VCF
-        2. Run `svtools classify`
-5. (Optional) Create a set of high-quality, simple deletions and duplications for reclassification
-    1. Find the mean per-site copy number and overall percentiles for deletions and duplications
-    2. Extract high-quality duplication and deletion sites
+    3. Download a file of high-quality, simple deletions and duplications
+    4. Generate a VCF of training variants
+    5. Run svtools classify
 
 ## Satisfy computing environment requirements
 ### Install SpeedSeq and dependencies
