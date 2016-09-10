@@ -22,7 +22,7 @@ This tutorial includes example commands that you can alter to refer to your samp
     2. Generate a file specifying the number of X chromosome copies in each person
     3. Download a file of high-quality, simple deletions and duplications
     4. Generate a VCF of training variants
-    5. Run svtools classify
+    5. Run `svtools classify`
 
 ## Satisfy computing environment requirements
 ### Install SpeedSeq and dependencies
