@@ -76,7 +76,7 @@ This will cause the sorted VCF to have fewer variant lines than the input.
 ###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
 ```
 zcat sorted.vcf.gz \
-| svtools lmerge -i /dev/stdin --product -f 20 \
+| svtools lmerge -i /dev/stdin -f 20 \
 | bgzip -c > merged.vcf.gz
 
 ```
