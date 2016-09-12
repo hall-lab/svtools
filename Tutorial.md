@@ -17,6 +17,12 @@ This tutorial includes example commands that you can alter to refer to your samp
         4. Annotate variants with copynumber from CNVnator using `svtools copynumber`
     6. Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
     7. Use `svtools prune` to filter out additional variant calls likely representing the same variant  
+4. Use `svtools classify` to refine genotypes and SV types
+    1. Generate a repeat elements BED file
+    2. Generate a file specifying the number of X chromosome copies in each person
+    3. Download a file of high-quality, simple deletions and duplications
+    4. Generate a VCF of training variants
+    5. Run `svtools classify`
 
 ## Satisfy computing environment requirements
 ### Install SpeedSeq and dependencies
@@ -70,7 +76,7 @@ This will cause the sorted VCF to have fewer variant lines than the input.
 ###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
 ```
 zcat sorted.vcf.gz \
-| svtools lmerge -i /dev/stdin --product -f 20 \
+| svtools lmerge -i /dev/stdin -f 20 \
 | bgzip -c > merged.vcf.gz
 
 ```
@@ -164,3 +170,56 @@ zcat merged.sv.gt.cn.vcf.gz \
 | bgzip -c > merged.sv.new_pruned.vcf.gz
 ```
 
+## Use `svtools classify` to refine genotypes and SV types
+
+The classifier can be run in several modes depending on the sample size. For this tutorial we will use the 'naive_bayes' mode. For additional information about the classifier go [here](Classifier.md).
+
+### Generate a repeat elements BED file
+All `svtools classify` commands require a BED file of repeats for classifying Mobile Element Insertions (MEI). This can be created from the UCSC genome browser.
+
+```
+curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
+| gzip -cdfq \
+| awk '{ gsub("^chr", "", $6); if ($3<200) print $6,$7,$8,$12"|"$13"|"$11,$3,$10 }' OFS="\t" \
+| sort -k1,1V -k2,2n -k3,3n \
+| awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
+| bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz
+```
+
+### Generate a file specifying the number of X chromosome copies in each person
+All `svtools classify` commands require a tab-delimited file with two columns. The first column is the sample id and the second column is a number indicating the number of X chromosomes in the sample. Thus there should be a 1 for males and a 2 for females.
+
+```
+echo -e 'NA12877\t1\nNA12878\t2\nNA12879\t2' > ceph.sex.txt
+```
+
+### Download a file of high-quality, simple deletions and duplications
+To run in 'naive_bayes' mode, you will need training data. We have created a curated BEDPE file of high-quality, simple deletions and duplications. (Alternatively you can [create your own](https://github.com/ernfrid/svtools/blob/classifier_docs/Classifier.md#creating-a-set-of-high-quality-simple-deletions-and-duplications-for-classifier-training).
+```
+curl -O https://raw.githubusercontent.com/ernfrid/svtools/classifier_docs/resources/training_vars.bedpe.gz
+```
+
+### Generate a VCF of training variants
+You need to find the subset of high-quality training variants that overlap your dataset, e.g., using `svtools varlookup`, to produce a VCF of training data.
+
+```
+zcat merged.sv.pruned.vcf.gz \
+| svtools vcftobedpe  \
+| svtools varlookup -a stdin -b training_vars.bedpe.gz -c HQ -d 50 \
+| svtools bedpetovcf \
+| svtools vcfsort \
+| vawk --header '{if(I$HQ_AF>0) print $0}' \
+| bgzip -c > training.vars.vcf.gz
+```
+### Run `svtools classify`
+The training VCF is then provided as an input to the classifier.
+
+```
+zcat merged.sv.pruned.vcf.gz \
+|  svtools classify \
+-g ceph.sex.txt \
+-a repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz \
+-m naive_bayes \
+-t training.vars.vcf.gz \
+| bgzip -c > output.nb.vcf.gz
+```
