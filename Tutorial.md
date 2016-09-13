@@ -136,7 +136,7 @@ svtools copynumber \
 -w 100 \
 -r /temp/cnvnator-temp/NA12877.bam.hist.root \
  -c coordinates \
- -v gt/NA12877.vcf \
+ -i gt/NA12877.vcf \
 > cn/NA12877.vcf
 ```
 **Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
@@ -167,7 +167,7 @@ zcat merged.sv.gt.cn.vcf.gz \
 | svtools bedpesort \
 | svtools prune -s -d 100 -e "AF" \
 | svtools bedpetovcf \
-| bgzip -c > merged.sv.new_pruned.vcf.gz
+| bgzip -c > merged.sv.pruned.vcf.gz
 ```
 
 ## Use `svtools classify` to refine genotypes and SV types
