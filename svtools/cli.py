@@ -1,4 +1,6 @@
-import argparse, sys
+# PYTHON_ARGCOMPLETE_OK
+
+import argcomplete, argparse, sys
 import svtools.lsort
 import svtools.lmerge
 import svtools.vcfpaste
@@ -73,6 +75,7 @@ def svtools_cli_parser():
 
 def main():
     parser = svtools_cli_parser()
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     sys.exit(args.entry_point(args))
 

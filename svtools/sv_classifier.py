@@ -1,22 +1,14 @@
 #!/usr/bin/env python
 
 import argparse, sys, copy, gzip, time, math, re
-import numpy as np
-import pandas as pd
-from scipy import stats
 from collections import Counter, defaultdict, namedtuple
-import statsmodels.formula.api as smf
-from operator import itemgetter
 import warnings
 from svtools.vcf.file import Vcf
 from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
 import svtools.utils as su
 
-
 CN_rec = namedtuple ('CN_rec', 'var_id sample svtype svlen AF GT CN AB log_len log2r')
-
-
 
 # http://stackoverflow.com/questions/8930370/where-can-i-find-mad-mean-absolute-deviation-in-scipy
 def mad(arr):
@@ -24,6 +16,7 @@ def mad(arr):
         Indices variabililty of the sample.
         https://en.wikipedia.org/wiki/Median_absolute_deviation 
     """
+    import numpy as np
     arr = np.ma.array(arr).compressed() # should be faster to not use masked arrays.
     med = np.median(arr)
     return np.median(np.abs(arr - med))
@@ -92,6 +85,7 @@ def reciprocal_overlap(a, b_list):
     return min(overlap / (a[1] - a[0]), overlap / b_aggregate)
 
 def collapse_bed_records(bed_list):
+    from operator import itemgetter
 
     bed_list_sorted = sorted(bed_list, key=itemgetter(1))
     collapsed_bed_list = []
@@ -161,9 +155,11 @@ def annotation_intersect(var, ae_dict, threshold):
     return None
 
 def lowQuantile(xx):
+    import numpy as np
     return np.percentile(xx,2.5)
 
 def highQuantile(xx):
+    import numpy as np
     return np.percentile(xx,97.5)
 
 def lld(xx, mean, sd):
@@ -171,6 +167,9 @@ def lld(xx, mean, sd):
     return ll
 
 def calc_params(vcf_path):
+    import numpy as np
+    import pandas as pd
+    import statsmodels.formula.api as smf
 
     tSet = list()
     epsilon=0.1
@@ -249,6 +248,8 @@ def calc_params(vcf_path):
 
 
 def rd_support_nb(temp, p_cnv):
+    import numpy as np
+    import pandas as pd
     tr = pd.DataFrame({'p0' : [1.0, 0.1, 0.0], 'p1' : [0.0, 0.7, 0.25], 'p2' : [0.0, 0.2, 0.75], 'GT' : ["0/0", "0/1", "1/1"]})
     temp = pd.merge(temp, tr, on='GT', how='left')
     temp['p_mix'] = temp['lld0'] * temp['p0'] + temp['lld1'] * temp['p1'] + temp['lld2'] * temp['p2']
@@ -256,6 +257,8 @@ def rd_support_nb(temp, p_cnv):
    
 
 def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5):
+    import numpy as np
+    import pandas as pd
     svtype=test_set['svtype'][0]
     svlen=test_set['svlen'][0]
     log_len=test_set['log_len'][0]
@@ -311,6 +314,7 @@ def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5
 
 
 def load_df(var, exclude, sex):
+    import pandas as pd
     
     epsilon=0.1
     test_set = list()
@@ -330,7 +334,7 @@ def load_df(var, exclude, sex):
 
 # test for read depth support of low frequency variants
 def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
-
+    import numpy as np
     mad_quorum = 0.5 # this fraction of the pos. genotyped results must meet the mad_threshold
     
     hom_ref_cn=test_set[test_set.GT=="0/0"]['CN'].values.astype(float)
@@ -363,6 +367,8 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
 
 # test whether variant has read depth support by regression
 def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
+    from scipy import stats
+    import numpy as np
     
     rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
     if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:

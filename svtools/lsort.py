@@ -1,14 +1,14 @@
 import svtools.l_bp as l_bp
-
 import sys
 import os
-import heapq
 import argparse
-from tempfile import gettempdir
 from collections import namedtuple
+import heapq 
+from tempfile import gettempdir
 
 Keyed = namedtuple("Keyed", ["key", "obj"])
-def merge(*iterables):
+
+def merge(*iterables): 
    keyed_iterables = [(Keyed(l_bp.vcf_line_key(obj), obj) for obj in iterable)
                         for iterable in iterables]
    for element in heapq.merge(*keyed_iterables):
