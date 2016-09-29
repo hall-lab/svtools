@@ -484,7 +484,7 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         I = ['SVTYPE='   + str(SVTYPE),
              'STRANDS='  + str(STRANDS)
             ]
-        if SVLEN:
+        if SVLEN is not None:
             I += ['SVLEN='    + str(SVLEN)]
         I += ['CIPOS='    + str(CIPOS),
              'CIEND='    + str(CIEND),
