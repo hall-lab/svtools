@@ -27,7 +27,7 @@ def sv_readdepth(vcf_file, sample, root, window, vcf_out, cnvnator_path, coord_l
 
 def update_line_copynumber(v, cn_list, i):
     """
-    Updates an individual line's copynumber and does error checking
+    Updates an individual line's copynumber in place
     """
     if cn_list[i] == -1:
         sys.stderr.write('cnvnator produced a copynumber of -1 for variant {0} at coordinate {1}'.format(v[2], str(i + 1)))
