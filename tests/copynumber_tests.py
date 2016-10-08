@@ -6,6 +6,22 @@ import tempfile
 import difflib
 import svtools.copynumber
 
+class CopynumberTests(TestCase):
+    def test_update_line_copynumber(self):
+        cn_list = [ 1, -1 ]
+
+        v1 = ['1', '825957', '22', 'N', '<DEL>', '0.00', '.', '.', 'GT', '0/1']
+        svtools.copynumber.update_line_copynumber(v1, cn_list, 0)
+        self.assertEqual(v1[9], '0/1:1')
+        self.assertEqual(v1[8], 'GT:CN')
+
+        v2 = ['1', '825957', '22', 'N', '<DEL>', '0.00', '.', '.', 'GT:CN', '0/1:2']
+        svtools.copynumber.update_line_copynumber(v2, cn_list, 0)
+        self.assertEqual(v1[9], '0/1:1')
+
+        with self.assertRaises(SystemExit):
+            svtools.copynumber.update_line_copynumber(v1, cn_list, 1)
+
 class IntegrationTest_copynumber(TestCase):
     def run_integration_test(self):
         test_directory = os.path.dirname(os.path.abspath(__file__))
