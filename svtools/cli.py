@@ -1,4 +1,4 @@
-import argparse, sys
+import argparse, sys, errno
 import svtools.lsort
 import svtools.lmerge
 import svtools.vcfpaste
@@ -74,7 +74,11 @@ def svtools_cli_parser():
 def main():
     parser = svtools_cli_parser()
     args = parser.parse_args()
-    sys.exit(args.entry_point(args))
+    try:
+        sys.exit(args.entry_point(args))
+    except IOError as e:
+        if e.errno == errno.EPIPE:
+            sys.exit(141)
 
 if __name__ == '__main__':
     main()
