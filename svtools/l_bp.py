@@ -12,13 +12,11 @@ def find_all(a_str, sub):
         yield start
         start += len(sub) # use start += 1 to find overlapping matches
 
-def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
+def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, skip_ref=False):
     header = ''
     samples = ''
 
-    f = open(vcf_file_name, 'r')
-
-    for l in f:
+    for l in vcf_file_stream:
         if l[0] == '#':
             if l[1] != '#':
                 samples = l.rstrip().split('\t')[9:]
@@ -30,6 +28,10 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
                     vcf_headers.append(l)
         else:
             A = l.split('\t')
+            if skip_ref and 'GT' in A[8] and
+                (A[9].startswith('0/0') or A[9].startswith('./.')):
+                    continue
+
             if not 'SECONDARY' in A[7]:
 
                 if add_sname and (samples != ''):
