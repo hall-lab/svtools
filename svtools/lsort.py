@@ -111,6 +111,9 @@ def run_from_args(args):
                 file_name = line.rstrip()
                 vcf_files.append(file_name)
 
+    if not vcf_files:
+        sys.stderr.write("No input files provided.\n")
+        sys.exit(1)
     sorter = Lsort(args.vcf_files, tempdir=args.tempdir, batchsize=args.batchsize, skip_ref=bool(not args.include_reference))
     sorter.execute()
 
