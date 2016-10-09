@@ -28,8 +28,8 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, skip_ref=
                     vcf_headers.append(l)
         else:
             A = l.split('\t')
-            if skip_ref and 'GT' in A[8] and
-                (A[9].startswith('0/0') or A[9].startswith('./.')):
+            if (skip_ref and ('GT' in A[8]) and
+                (A[9].startswith('0/0') or A[9].startswith('./.'))):
                     continue
 
             if not 'SECONDARY' in A[7]:
