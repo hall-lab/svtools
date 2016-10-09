@@ -36,7 +36,7 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
                     l = '\t'.join(A)
 
-                
+
                 if 'SVTYPE=BND' in A[7]:
                     m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
                     o_chr,o_pos = m.group(2).split(':')
@@ -46,13 +46,13 @@ def parse_vcf(vcf_file_name, vcf_lines, vcf_headers, add_sname=True):
                         pos_s = A[7].find('++:')
 
                         if neg_s > 0:
-                            neg_e = neg_s + A[7][neg_s:].find(';') 
+                            neg_e = neg_s + A[7][neg_s:].find(';')
                             pre=A[7][:neg_s]
                             mid=A[7][neg_s:neg_e]
                             post=A[7][neg_e:]
                             A[7] = pre + '++:0,' + mid + post
                         else:
-                            pos_e = pos_s + A[7][pos_s:].find(';') 
+                            pos_e = pos_s + A[7][pos_s:].find(';')
                             pre=A[7][:pos_s]
                             mid=A[7][pos_s:pos_e]
                             post=A[7][pos_e:]
@@ -125,7 +125,7 @@ def split_v(l):
 
     start_r = pos_r + int(m['CIEND'].split(',')[0])
     end_r = pos_r + int(m['CIEND'].split(',')[1])
-        
+
     strands = m['STRANDS']
 
     return [m['SVTYPE'],chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m]
@@ -174,7 +174,7 @@ def header_line_cmp(l1, l2):
         return -1
 
     if l2[:12] == '##fileformat':
-        return 1 
+        return 1
 
     # make sure #CHROM ... is last
     if l1[1] != '#':
@@ -183,14 +183,14 @@ def header_line_cmp(l1, l2):
         return -1
 
     if l1.find('=') == -1:
-        return -1 
+        return -1
     if l2.find('=') == -1:
         return 1
 
     h1 = l1[:l1.find('=')]
     h2 = l2[:l2.find('=')]
     if h1 not in order:
-        return -1 
+        return -1
     if h2 not in order:
         return 1
     return cmp(order.index(h1),order.index(h2))
@@ -210,14 +210,14 @@ def trim(A):
         if A[i] == 0:
             clip_end += 1
         else:
-            break               
+            break
     return [clip_start, clip_end]
 
 
 # I has 3 components [[start],[end],[p array]]
 def align_intervals(I):
     '''
-    Find range containing all intervals then pad out 
+    Find range containing all intervals then pad out
     probabilities with zeroes so each set is of the same length
     '''
     start = -1
@@ -248,10 +248,10 @@ def align_intervals(I):
             new_i = [0]*n + new_i
 
         if i[END] < end:
-            n = end - i[END] 
+            n = end - i[END]
             new_i = new_i + [0]*n
-        
+
         new_I.append(new_i)
-        
+
     # one interval. last element is array of arrays of probs covering entire interval
     return [start, end, new_I]

@@ -28,7 +28,7 @@ class Lsort(object):
         self.output_handle = output_handle
 
     def execute(self):
-        
+
         counter = 0
         for vcf_file_name in self.vcf_file_names:
             samples = l_bp.parse_vcf(vcf_file_name, self.vcf_lines, self.vcf_headers)
@@ -76,7 +76,7 @@ def description():
     return 'sort N LUMPY VCF files into a single file'
 
 def epilog():
-    return '''Specify -t to override where temporary files are placed. Use -b to control the amount of memory required. 
+    return '''Specify -t to override where temporary files are placed. Use -b to control the amount of memory required.
     This will vary depending on the number of lines in your input files.'''
 
 def add_arguments_to_parser(parser):
