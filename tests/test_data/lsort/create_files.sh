@@ -7,5 +7,9 @@ zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz | 
 zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12891/NA12891.sv.vcf.gz | grep -v '0\/0' > NA12891.vcf
 zcat /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12892/NA12892.sv.vcf.gz | grep -v '0\/0' > NA12892.vcf
 
+cp /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12878/NA12878.sv.vcf.gz .
+cp /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12891/NA12891.sv.vcf.gz .
+cp /gscmnt/gc2802/halllab/sv_aggregate/MISC/lumpy/NA12892/NA12892.sv.vcf.gz .
+
 #svtools lsort *vcf > lsort_expected
 #rm *vcf
