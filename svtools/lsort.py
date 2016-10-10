@@ -92,7 +92,7 @@ def epilog():
 
 def add_arguments_to_parser(parser):
     parser.add_argument('vcf_files', metavar='<VCF>', nargs='*', help='VCF files to combine and sort')
-    parser.add_argument('-f', '--vcf-list', metavar='<FILE>', help='file containing a line-delimited list of VCF files to paste')
+    parser.add_argument('-f', '--vcf-list', metavar='<FILE>', help='file containing a line-delimited list of VCF files to combine and sort')
     parser.add_argument('-r', '--include-reference', required=False, action='store_true', default=False, help='whether or not to include homozygous reference or missing calls in the output.')
     parser.add_argument('-t', '--tempdir', metavar='<DIRECTORY_PATH>', default=gettempdir(), help='temporary directory')
     parser.add_argument('-b', '--batchsize', metavar='<INT>', type=int, default=200, help='number of files to sort in batch')
