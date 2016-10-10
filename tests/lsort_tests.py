@@ -18,7 +18,7 @@ class Test_lsort(TestCase):
         self.assertEqual(args2.batchsize, 2)
         self.assertEqual(args2.tempdir, 'temp')
         self.assertEqual(args2.vcf_files, ['file1', 'file2'])
-    
+
     def test_lsort_init_defaults(self):
         file_list = ['file1', 'file2']
         lsort_class = lsort.Lsort(file_list)
@@ -63,7 +63,7 @@ class LsortIntegrationTest(TestCase):
         # glob vcfs
         vcfs = list()
         for sample in ('NA12878', 'NA12891', 'NA12892'):
-            vcfs.append(os.path.join(self.test_data_dir, '{0}.vcf.gz'.format(sample)))
+            vcfs.append(os.path.join(self.test_data_dir, '{0}.sv.vcf.gz'.format(sample)))
         expected_result = os.path.join(self.test_data_dir, 'lsort_expected')
         temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
         with os.fdopen(temp_descriptor, 'w') as output_handle:
