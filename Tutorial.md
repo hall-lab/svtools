@@ -52,21 +52,11 @@ Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-l
 **Note:** Make certain to run `speedseq sv` using the following options: `-v -d -P -g -k` option as subsequent steps will utilize CNVnator files in the temporary directories, assume that SVTyper has been run and require LUMPY's probability curves.
 
 ## Use `svtools` to create a callset
-### Use vawk to remove homozygous reference variants from SpeedSeq SV VCFs
-This step will remove variants that have been detected by Lumpy but then determined to be homozygous reference when SVTyper is run.
-This command will need to be run once per sample and ouputs one non_ref VCF file per sample.
-```
-  zcat NA12877.sv.vcf.gz \
-  | vawk --header '{if(S$*$GT!="0/0" && S$*$GT!="./.") print $0}' \
-  > NA12877.sv.non_ref.vcf
-```
-**Note:** vawk is included as part of SpeedSeq.
-
 ### Use `svtools lsort` to combine and sort variants from multiple samples
-`svtools lsort` takes a space separated list of all of the non_ref VCF files generated in the previous step as arguments.
+`svtools lsort` takes a space separated list of all of the LUMPY VCF files generated in the previous step as arguments or a file containing a single column with the paths to the LUMPY VCF files.
 The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.
 ```
-svtools lsort NA12877.sv.non_ref.vcf NA12878.sv.non_ref.vcf NA12879.sv.non_ref.vcf \
+svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 | bgzip -c > sorted.vcf.gz
 ```
 
