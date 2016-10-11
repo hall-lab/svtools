@@ -16,13 +16,13 @@ def merge(*iterables):
        yield element.obj
 
 class Lsort(object):
-    def __init__(self, vcf_file_names, tempdir=None, batchsize=200, skip_ref=False, output_handle=sys.stdout):
+    def __init__(self, vcf_file_names, tempdir=None, batchsize=200, include_ref=False, output_handle=sys.stdout):
         if tempdir:
             self.tempdir = tempdir
         else:
             self.tempdir = gettempdir()
         self.batchsize = batchsize
-        self.skip_ref = skip_ref
+        self.include_ref = include_ref
         self.vcf_file_names = vcf_file_names
         self.vcf_lines = []
         self.vcf_headers = []
@@ -41,7 +41,7 @@ class Lsort(object):
             else:
                 input_stream = open(vcf_file_name, 'r')
 
-            samples = l_bp.parse_vcf(input_stream, self.vcf_lines, self.vcf_headers, skip_ref=self.skip_ref)
+            samples = l_bp.parse_vcf(input_stream, self.vcf_lines, self.vcf_headers, include_ref=self.include_ref)
             for sample in samples:
                 self.vcf_headers.append("##SAMPLE=<ID=" + sample + ">\n")
             counter += 1
@@ -114,7 +114,7 @@ def run_from_args(args):
     if not vcf_files:
         sys.stderr.write("No input files provided.\n")
         sys.exit(1)
-    sorter = Lsort(args.vcf_files, tempdir=args.tempdir, batchsize=args.batchsize, skip_ref=bool(not args.include_reference))
+    sorter = Lsort(args.vcf_files, tempdir=args.tempdir, batchsize=args.batchsize, include_ref=args.include_reference)
     sorter.execute()
 
 if __name__ == "__main__":

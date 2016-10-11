@@ -67,7 +67,7 @@ class LsortIntegrationTest(TestCase):
         expected_result = os.path.join(self.test_data_dir, 'lsort_expected')
         temp_descriptor, temp_output_path = tempfile.mkstemp(suffix='.vcf')
         with os.fdopen(temp_descriptor, 'w') as output_handle:
-            sorter = lsort.Lsort(vcfs, tempdir=None, batchsize=2, skip_ref=True, output_handle=output_handle)
+            sorter = lsort.Lsort(vcfs, tempdir=None, batchsize=2, include_ref=False, output_handle=output_handle)
             sorter.execute()
             output_handle.flush()
             expected_lines = open(expected_result).readlines()

@@ -12,7 +12,7 @@ def find_all(a_str, sub):
         yield start
         start += len(sub) # use start += 1 to find overlapping matches
 
-def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, skip_ref=False):
+def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_ref=False):
     header = ''
     samples = ''
 
@@ -28,7 +28,7 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, skip_ref=
                     vcf_headers.append(l)
         else:
             A = l.split('\t')
-            if skip_ref and ('GT' in A[8]):
+            if not include_ref and ('GT' in A[8]):
                 has_nonref = False
                 for sample_fields in A[9:]:
                     if not (A[9].startswith('0/0') or A[9].startswith('./.')):
