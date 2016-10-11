@@ -114,7 +114,7 @@ def run_from_args(args):
     if not vcf_files:
         sys.stderr.write("No input files provided.\n")
         sys.exit(1)
-    sorter = Lsort(args.vcf_files, tempdir=args.tempdir, batchsize=args.batchsize, include_ref=args.include_reference)
+    sorter = Lsort(vcf_files, tempdir=args.tempdir, batchsize=args.batchsize, include_ref=args.include_reference)
     sorter.execute()
 
 if __name__ == "__main__":
