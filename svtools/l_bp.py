@@ -30,8 +30,8 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
             A = l.split('\t')
             if not include_ref and ('GT' in A[8]):
                 has_nonref = False
-                for sample_fields in A[9:]:
-                    if not (A[9].startswith('0/0') or A[9].startswith('./.')):
+                for sample_field in A[9:]:
+                    if not (sample_field.startswith('0/0') or sample_field.startswith('./.')):
                         has_nonref = True
                         break
                 if not has_nonref:
