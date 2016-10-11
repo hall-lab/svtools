@@ -27,6 +27,8 @@ class Pruner(object):
         in_header = True
         for line in in_file:
             if line.startswith('#') and in_header:
+                if line.startswith('#CHROM'):
+                    bedpe_out.write('##INFO=<ID=RETAINED,Number=0,Type=Flag,Description="Variants clustering with this call were pruned">\n')
                 bedpe_out.write(line)
                 continue
             in_header = False
