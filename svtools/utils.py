@@ -19,7 +19,7 @@ class InputStream(object):
         if string is None and sys.stdin.isatty():
             raise IOError('no input specified but terminal is interactive')
         return True
-    
+
     def __enter__(self):
         '''Support use of with by passing back the originating handle'''
         return self.handle
