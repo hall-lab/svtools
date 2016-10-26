@@ -7,7 +7,7 @@ The classifier can be run in several modes depending on the sample size. For coh
 In 'large_sample' mode, copynumber estimates are regressed against allele balance (for high frequency variants) or compared between individuals that are homozygous reference and non-reference (for rare variants). This is the preferred method if you have a large number of samples in your cohort.
 
 ```
-zcat merged.sv.new_pruned.vcf.gz \
+zcat merged.sv.pruned.vcf.gz \
 |  svtools classify \
  -g ceph.sex.txt \
  -a repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz \
