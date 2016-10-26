@@ -184,7 +184,7 @@ echo -e 'NA12877\t1\nNA12878\t2\nNA12879\t2' > ceph.sex.txt
 ```
 
 ### Download a file of high-quality, simple deletions and duplications
-To run in 'naive_bayes' mode, you will need training data. We have created a curated BEDPE file of high-quality, simple deletions and duplications. (Alternatively you can [create your own](https://github.com/ernfrid/svtools/blob/classifier_docs/Classifier.md#creating-a-set-of-high-quality-simple-deletions-and-duplications-for-classifier-training).
+To run in 'naive_bayes' mode, you will need training data. We have created a curated BEDPE file of high-quality, simple deletions and duplications. (Alternatively you can [create your own](https://github.com/ernfrid/svtools/blob/classifier_docs/Classifier.md#creating-a-set-of-high-quality-simple-deletions-and-duplications-for-classifier-training).)
 ```
 curl -O https://raw.githubusercontent.com/ernfrid/svtools/classifier_docs/resources/training_vars.bedpe.gz
 ```
