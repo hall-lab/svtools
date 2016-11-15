@@ -174,7 +174,7 @@ class Variant(object):
                 sys.exit(1)
             else:
                 fields += [
-                        self.get_format_string(),
+                        self.get_format_string(use_cached_gt_string),
                         gts_string
                     ]
         return '\t'.join(map(str, fields))
