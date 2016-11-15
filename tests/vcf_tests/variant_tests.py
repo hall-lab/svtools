@@ -2,6 +2,7 @@ from unittest import TestCase, main
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 from svtools.vcf.genotype import Genotype
+import sys
 
 class TestVariant(TestCase):
     def setUp(self):
@@ -50,7 +51,25 @@ class TestVariant(TestCase):
         self.assertEqual(self.variant.get_info_string(), 'SVTYPE=BND;STRANDS=-+:9')
 
     def test_get_format_string(self):
-        self.assertEqual(self.variant.get_format_string(), 'GT:SU') 
+        self.assertEqual(self.variant.get_format_string(), 'GT:SU')
+
+    def test_get_format_string_caching(self):
+        header_lines = [
+                '##fileformat=VCFv4.2',
+                '##fileDate=20151202',
+                '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">',
+                '##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">',
+                '##INFO=<ID=IMAFLAG,Number=.,Type=Flag,Description="Test Flag code">',
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                '##FORMAT=<ID=SU,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">',
+                '##FORMAT=<ID=AS,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">',
+                '##FORMAT=<ID=INACTIVE,Number=1,Type=Integer,Description="A format not in use">',
+                '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878' ]
+        vcf = Vcf()
+        vcf.add_header(header_lines)
+        variant_line = '1	820915	5838_1	N	]GL000232.1:20940]N	0.00	.	SVTYPE=BND;STRANDS=-+:9;IMAFLAG	GT:AS:SU	0/0:1:9'
+        variant = Variant(variant_line.split('\t'), vcf)
+        self.assertEqual(variant.get_format_string(), 'GT:AS:SU')
 
     def test_get_gt_string(self):
         self.assertEqual(self.variant.get_gt_string(), '0/0:9	1/1:15')

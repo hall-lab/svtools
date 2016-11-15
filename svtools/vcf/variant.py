@@ -94,11 +94,14 @@ class Variant(object):
         '''
         Construct the FORMAT field containing the names of the fields in the Genotype columns
         '''
-        f_list = list()
-        for f in self.format_list:
-            if f.id in self.format_dict:
-                f_list.append(f.id)
-        return ':'.join(f_list)
+        if self.format_string is not None:
+            return self.format_string
+        else:
+            f_list = list()
+            for f in self.format_list:
+                if f.id in self.format_dict:
+                    f_list.append(f.id)
+            return ':'.join(f_list)
 
     def get_gt_string(self, use_cached_gt_string=False):
         '''
