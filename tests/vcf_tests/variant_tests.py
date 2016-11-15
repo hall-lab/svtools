@@ -71,6 +71,11 @@ class TestVariant(TestCase):
         variant = Variant(variant_line.split('\t'), vcf)
         self.assertEqual(variant.get_format_string(), 'GT:AS:SU')
 
+        gts = variant.genotypes()
+        self.assertEqual(variant.get_format_string(), 'GT:SU:AS')
+
+        self.assertEqual(variant.get_format_string(True), 'GT:AS:SU')
+
     def test_get_gt_string(self):
         self.assertEqual(self.variant.get_gt_string(), '0/0:9	1/1:15')
 

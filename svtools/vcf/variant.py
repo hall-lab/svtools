@@ -90,11 +90,11 @@ class Variant(object):
                     i_list.append('%s=%s' % (info_field.id, self.info[info_field.id]))
         return ';'.join(i_list)
 
-    def get_format_string(self):
+    def get_format_string(self, use_cached_format_string=False):
         '''
         Construct the FORMAT field containing the names of the fields in the Genotype columns
         '''
-        if self.format_string is not None:
+        if use_cached_format_string or self.gts is None:
             return self.format_string
         else:
             f_list = list()
@@ -121,7 +121,6 @@ class Variant(object):
         '''
         if self.gts is None:
             self.gts = self._parse_genotypes(self.gts_string.split('\t'))
-            self.format_string = None
 
     def genotypes(self):
         '''
