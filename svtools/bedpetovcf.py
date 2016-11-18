@@ -17,7 +17,7 @@ def bedpeToVcf(bedpe_file, vcf_out):
             if line[0:2] == '##':
                 header.append(line)
                 continue
-            elif line[0] == '#' and line[1] != '#':    
+            elif line[0] == '#' and line[1] != '#':
                 sample_list_str = line.rstrip().split('\t', 20)[-1]
                 header.append('\t'.join([
                                     '#CHROM',
@@ -36,15 +36,19 @@ def bedpeToVcf(bedpe_file, vcf_out):
                 myvcf.add_header(header)
                 myvcf.file_format='VCFv4.2'
                 vcf_out.write(myvcf.get_header() + '\n')
-        # 
+        #
         bedpe = Bedpe(line.rstrip().split('\t'))
         variants = converter.convert(bedpe)
         for v in variants:
             vcf_out.write(v.get_var_string() + '\n')
 
-    # close the VCF output file
+    # close the VCF output file and header if no variants found
+    if in_header == True:
+        myvcf.add_header(header)
+        myvcf.file_format='VCFv4.2'
+        vcf_out.write(myvcf.get_header() + '\n')
     vcf_out.close()
-    
+
     return
 
 def description():
@@ -54,7 +58,7 @@ def epilog():
     return 'The input BEDPE file can be gzipped if it is specified explicitly.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
+    parser.add_argument('-i', '--input', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
     parser.add_argument('-o', '--output', metavar='<VCF>', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 
@@ -64,7 +68,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.bedpe) as stream:
+    with su.InputStream(args.input) as stream:
         bedpeToVcf(stream, args.output)
 
 if __name__ == '__main__':

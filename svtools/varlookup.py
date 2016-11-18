@@ -41,7 +41,7 @@ def varLookup(aFile, bFile, bedpe_out, max_distance, pass_prefix, cohort_name):
     headerObj=Vcf() #co-opt the VCF header object
     if cohort_name is None:
         cohort_name=str(str(bFile).split('/')[-1])
-        
+
     if bFile == "stdin":
         bData = sys.stdin
     elif bFile.endswith('.gz'):
@@ -56,14 +56,14 @@ def varLookup(aFile, bFile, bedpe_out, max_distance, pass_prefix, cohort_name):
             sys.stderr.write('No allele frequency for variant found in -b file. This tool requires allele frequency information to function. Please add with svtools afreq and rerun\n')
             sys.exit(1)
         bList.append(bentry)
-    
+
     if aFile == "stdin":
         aData = sys.stdin
     elif aFile.endswith('.gz'):
         aData = gzip.open(aFile, 'rb')
     else:
         aData = open(aFile, 'r')
-    in_header=True    
+    in_header=True
     header_lines = []
     sample_list = None
     for aLine in aData:
@@ -80,7 +80,7 @@ def varLookup(aFile, bFile, bedpe_out, max_distance, pass_prefix, cohort_name):
                 headerObj.add_info(cohort_name + '_VarID', '.', 'Integer', 'List of Variant ID(s) for matching variants found in the ' + cohort_name + ' vcf' + ' (' + str(str(bFile).split('/')[-1]) + ')' )
 
                 header = headerObj.get_header()
-                bedpe_out.write(header[:header.rfind('\n')] + '\n')                
+                bedpe_out.write(header[:header.rfind('\n')] + '\n')
                 if len(sample_list) > 0:
                     bedpe_out.write('\t'.join(['#CHROM_A',
                                                'START_A',
@@ -128,7 +128,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-d', '--distance', metavar='<INT>', type=int, dest='max_distance', default=50, help='max separation distance (bp) of adjacent loci between bedpe files [50]')
     parser.add_argument("-a", "--aFile", dest="aFile", metavar='<BEDPE>', help="pruned, merged BEDPE (A file) or standard input (-a stdin).")
     parser.add_argument("-b", "--bFile", dest="bFile", metavar='<BEDPE>', help="pruned merged BEDPE (B file) (-b stdin). For pruning use svtools prune")
-    parser.add_argument("-c", "--cohort", dest='cohort_name', metavar='<STRING>', default=None, help="cohort name to add information of matching variants (default:bFile)")                    
+    parser.add_argument("-c", "--cohort", dest='cohort_name', metavar='<STRING>', default=None, help="cohort name to add information of matching variants (default:bFile)")
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), metavar='<BEDPE>', default=sys.stdout, help='output BEDPE to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
 

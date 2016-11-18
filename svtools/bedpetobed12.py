@@ -16,13 +16,13 @@ class BedpetoBlockedBedConverter(object):
         self.coordinate_buffer = 500
         self.distant_color = '204,204,204' #gray
         self.unknown_close_color = '128,0,128'
-        self.color_table = { 
+        self.color_table = {
                 'DEL': '153,0,0', #red
                 'DUP': '0,102,0', #green
                 'INV': '0,51,204', #blue
                 'BND': self.distant_color
                 }
-    
+
     def track_name(self):
         '''
         Return the track name for the output bedpe. Assumes name is a valid string
@@ -85,14 +85,14 @@ class BedpetoBlockedBedConverter(object):
         Create a blockedBed line
         '''
         fields = [
-            chrom, 
-            start, 
-            end, 
-            name, 
-            score, 
-            strand, 
-            start, 
-            end, 
+            chrom,
+            start,
+            end,
+            name,
+            score,
+            strand,
+            start,
+            end,
             color
             ]
         if size_tuple is not None and start_tuple is not None:
@@ -115,13 +115,13 @@ class BedpetoBlockedBedConverter(object):
             name = self.bed12_name(bedpe.svtype, bedpe.name, bedpe.af)
             if span <= self.max_dist:
                 output_lines.append(self.create_line(
-                    bedpe.c1, 
-                    bedpe.s1, 
-                    bedpe.e2, 
-                    name, 
-                    bedpe.score, 
+                    bedpe.c1,
+                    bedpe.s1,
+                    bedpe.e2,
+                    name,
+                    bedpe.score,
                     '+',
-                    color, 
+                    color,
                     (bedpe.e1 - bedpe.s1, bedpe.e2 - bedpe.s2),
                     (0, bedpe.s2 - bedpe.s1)))
             else:
@@ -129,13 +129,13 @@ class BedpetoBlockedBedConverter(object):
                 size_tuple1 = self.distant_block_sizes(bedpe.o1, bedpe.s1, bedpe.e1)
                 start_tuple1 = self.distant_block_starts(bedpe.o1, bedpe.s1, bedpe.e1)
                 output_lines.append(self.create_line(
-                    bedpe.c1, 
-                    s1, 
-                    e1, 
-                    name, 
-                    bedpe.score, 
-                    bedpe.o1, 
-                    color, 
+                    bedpe.c1,
+                    s1,
+                    e1,
+                    name,
+                    bedpe.score,
+                    bedpe.o1,
+                    color,
                     size_tuple1,
                     start_tuple1))
                 s2, e2 = self.distant_coordinates(bedpe.o2, bedpe.s2, bedpe.e2)
@@ -157,7 +157,7 @@ class BedpetoBlockedBedConverter(object):
                 bedpe.c1,
                 bedpe.s1,
                 bedpe.e1,
-                name, 
+                name,
                 bedpe.score,
                 bedpe.o1,
                 color))
@@ -165,13 +165,13 @@ class BedpetoBlockedBedConverter(object):
                 bedpe.c2,
                 bedpe.s2,
                 bedpe.e2,
-                name, 
+                name,
                 bedpe.score,
                 bedpe.o2,
                 color))
         return output_lines
 
-def processBEDPE(bedpe_stream, name, dist, output_handle=sys.stdout):
+def processBEDPE(bedpe_stream, name, dist, output_handle):
     #Process the BEDPE file and convert each entry to SAM.
     converter = BedpetoBlockedBedConverter(name, dist)
     output_handle.write(converter.track_name())
@@ -188,10 +188,11 @@ def description():
     return 'convert a BEDPE file to BED12 format for viewing in IGV or the UCSC browser'
 
 def epilog():
-    return 'The input BEDPE file may be gzipped. If the input file is omitted then input is read from stdin. Output is written to stdout.' 
+    return 'The input BEDPE file may be gzipped. If the input file is omitted then input is read from stdin. Output is written to stdout.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-b', '--bedpe', metavar='<BEDPE>', default=None, help='BEDPE input file')
+    parser.add_argument('-i', '--input', metavar='<BEDPE>', default=None, help='BEDPE input file')
+    parser.add_argument('-o', '--output', metavar='<BED12>', type=argparse.FileType('w'), default=sys.stdout, help='Output BED12 to write (default: stdout)')
     parser.add_argument('-n', '--name', metavar='<STRING>', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
     parser.add_argument('-d', '--maxdist', metavar='<INT>', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
     parser.set_defaults(entry_point=run_from_args)
@@ -202,8 +203,8 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.bedpe) as stream:
-        processBEDPE(stream, args.name, args.dist)
+    with su.InputStream(args.input) as stream:
+        processBEDPE(stream, args.name, args.dist, args.output)
 
 if __name__ == "__main__":
     parser = command_parser()

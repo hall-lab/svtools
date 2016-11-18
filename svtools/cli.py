@@ -1,4 +1,4 @@
-import argparse, sys
+import argparse, sys, errno
 import svtools.lsort
 import svtools.lmerge
 import svtools.vcfpaste
@@ -12,6 +12,7 @@ import svtools.bedpesort
 import svtools.genotype
 import svtools.prune
 import svtools.varlookup
+import svtools.sv_classifier
 
 class SupportAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -31,7 +32,7 @@ def svtools_cli_parser():
 
     lmerge = subparsers.add_parser('lmerge', help=svtools.lmerge.description(), epilog=svtools.lmerge.epilog())
     svtools.lmerge.add_arguments_to_parser(lmerge)
-    
+
     vcf_paste = subparsers.add_parser('vcfpaste', help=svtools.vcfpaste.description(), epilog=svtools.vcfpaste.epilog())
     svtools.vcfpaste.add_arguments_to_parser(vcf_paste)
 
@@ -40,7 +41,7 @@ def svtools_cli_parser():
 
     genotype = subparsers.add_parser('genotype', help=svtools.genotype.description())
     svtools.genotype.add_arguments_to_parser(genotype)
-    
+
     afreq = subparsers.add_parser('afreq', help=svtools.afreq.description(), epilog=svtools.afreq.epilog())
     svtools.afreq.add_arguments_to_parser(afreq)
 
@@ -58,19 +59,26 @@ def svtools_cli_parser():
 
     bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description())
     svtools.bedpesort.add_arguments_to_parser(bedpesort)
-    
+
     prune = subparsers.add_parser('prune', help=svtools.prune.description(), epilog=svtools.prune.epilog())
     svtools.prune.add_arguments_to_parser(prune)
 
     varlookup = subparsers.add_parser('varlookup', help=svtools.varlookup.description())
     svtools.varlookup.add_arguments_to_parser(varlookup)
 
+    classifier = subparsers.add_parser('classify', help=svtools.sv_classifier.description())
+    svtools.sv_classifier.add_arguments_to_parser(classifier)
+
     return parser
 
 def main():
     parser = svtools_cli_parser()
     args = parser.parse_args()
-    sys.exit(args.entry_point(args))
+    try:
+        sys.exit(args.entry_point(args))
+    except IOError as e:
+        if e.errno == errno.EPIPE:
+            sys.exit(141)
 
 if __name__ == '__main__':
     main()

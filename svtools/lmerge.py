@@ -1,39 +1,22 @@
 import svtools.l_bp as l_bp
+from svtools.breakpoint import Breakpoint
+import svtools.logspace as ls
 
 import sys
 import numpy as np
 import argparse
 
-def get_p(ls):
-    return np.exp(ls)
+def null_format_string(format_string):
+    null_list = []
+    num_null_fields = len(format_string.split(':'))
+    if format_string.startswith('GT:'):
+        null_list = ['./.']
+        num_null_fields -= 1
+    null_list.extend(list('.' * num_null_fields))
+    null_string = ':'.join(null_list)
+    return null_string
 
-def get_ls(p):
-    if p == 0:
-        return float("-inf")
-    else:
-        return np.log(p)
-
-def ls_multiply(x, y):
-    if (x == float("-inf")) or (y == float("-inf")):
-        return float("-inf")
-    else:
-        return x + y
-
-def ls_divide(x, y):
-    return x - y
-
-def ls_add(x, y):
-    if x == float("-inf"):
-        return y
-    elif y == float("-inf"):
-        return x
-    elif (x < y):
-        return y + np.log(1 + np.exp(x - y))
-    else:
-        return x + np.log(1 + np.exp(y - x))
-
-
-def print_var_line(l):
+def print_var_line(l, genotypes=None):
     A = l.rstrip().split('\t')
 
     if A[4] == '<INV>' and ('--:0' in A[7] or '++:0' in A[7]):
@@ -147,24 +130,36 @@ def print_var_line(l):
 
         A[7] += ';MATEID=' + A[2] + '_2'
         A[2] += '_1'
-        print '\t'.join(A[:8])
-        print '\t'.join([str(o) for o in O])
+        var1 = '\t'.join(A[:8])
+        var2 = '\t'.join([str(o) for o in O])
+        if genotypes != None:
+            var1 = '\t'.join([var1, genotypes])
+            var2 = '\t'.join([var2, genotypes])
+
+        print var1
+        print var2
 
     else:
-        print '\t'.join(A[:8])
+        var = '\t'.join(A[:8])
+        if genotypes != None:
+            var = '\t'.join([var, genotypes])
+        print var
 
-def merge(BP, sample_order, v_id, use_product):
+def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
     if len(BP) == 1:
         A = BP[0].l.rstrip().split('\t')
         #tack on id to SNAME
         s_start=A[7].find('SNAME=')
         s_end=A[7].find(';',s_start)
+        sname = None
         if (s_end > -1):
+            sname = A[7][s_start + 6:s_end]
             A[7] = A[7][:s_start] + \
                     A[7][s_start:s_end] + \
                     ':' + A[2] + \
                     A[7][s_end:]
         else:
+            sname = A[7][s_start + 6:]
             A[7]+= ':' + A[2]
 
         # reset the id to be unique in this file
@@ -195,8 +190,13 @@ def merge(BP, sample_order, v_id, use_product):
             A[7]+= ';ALG=PROD'
         else:
             A[7] += ';ALG=SUM'
- 
-        print_var_line('\t'.join(A))
+
+        GTS = None
+        if include_genotypes:
+            null_string = null_format_string(A[8])
+            gt_dict = { sname: A[9] }
+            GTS = '\t'.join([A[8]] + [gt_dict.get(x, null_string) for x in sample_order])
+        print_var_line('\t'.join(A), GTS)
         return v_id
 
     #Sweep the set.  Find the largest intersecting set.  Remove it.  Continue.
@@ -204,31 +204,35 @@ def merge(BP, sample_order, v_id, use_product):
 
     BP.sort(key=lambda x: x.start_l)
 
-    BP_i = range(len(BP))
+    BP_i = range(len(BP)) # index set of each node in the graph
     C = []
 
     while len(BP_i) > 0:
-        h_l = []
+        h_l = [] #heap of left breakpoint end coordinates and node id (index). heapq is a min heap and the end coord is what will be used for the sorting.
         max_c = []
         max_c_len = 0
         for i in BP_i:
+            # remove anything in the heap that doesn't intersect with the current breakpoint
             while (len(h_l) > 0) and (h_l[0][0] < BP[i].start_l):
                 heapq.heappop(h_l)
 
-            heapq.heappush(h_l, (BP[i].end_l, i))
+            heapq.heappush(h_l, (BP[i].end_l, i)) # add to the heap
 
             # at this point everything in h_l intersects on the left
-            # but we need to take into account what is going on on the right 
-            h_r = []
-            h_l_i = [x[1] for x in h_l]
-            h_l_i.sort(key=lambda x:BP[x].start_r)
+            # but we need to take into account what is going on on the right
+            h_r = [] # heap with rightmost starts
+            h_l_i = [x[1] for x in h_l] # this is all of the node ids on the heap currently
+            h_l_i.sort(key=lambda x:BP[x].start_r) # sort them by their right start
             for j in h_l_i:
+                # remove anything in the heap that doesn't intersect with the current breakpoint on the right end
                 while (len(h_r) > 0) and (h_r[0][0] < BP[j].start_r):
                     heapq.heappop(h_r)
 
+                # add something to the right heap
                 heapq.heappush(h_r, (BP[j].end_r, j))
 
                 if max_c_len < len(h_r):
+                    # max clique! Register what nodes we have
                     max_c_len = len(h_r)
                     max_c = [y[1] for y in h_r]
 
@@ -268,31 +272,31 @@ def merge(BP, sample_order, v_id, use_product):
                     miss += 1
             if miss == 0:
                 ALG = "PROD"
-                ls_p_L = [get_ls(1)] * len(a_L[0])
-                ls_p_R = [get_ls(1)] * len(a_R[0])
+                ls_p_L = [ls.get_ls(1)] * len(a_L[0])
+                ls_p_R = [ls.get_ls(1)] * len(a_R[0])
                 for c_i in range(len(c)):
                     for i in range(len(a_L[c_i])):
-                        ls_p_L[i] = ls_multiply(ls_p_L[i], get_ls(a_L[c_i][i]))
+                        ls_p_L[i] = ls.ls_multiply(ls_p_L[i], ls.get_ls(a_L[c_i][i]))
 
                     for i in range(len(a_R[c_i])):
-                        ls_p_R[i] = ls_multiply(ls_p_R[i], get_ls(a_R[c_i][i]))
+                        ls_p_R[i] = ls.ls_multiply(ls_p_R[i], ls.get_ls(a_R[c_i][i]))
 
-                ls_sum_L = get_ls(0)
-                ls_sum_R = get_ls(0)
+                ls_sum_L = ls.get_ls(0)
+                ls_sum_R = ls.get_ls(0)
 
                 for ls_p in ls_p_L:
-                    ls_sum_L = ls_add(ls_sum_L, ls_p)
+                    ls_sum_L = ls.ls_add(ls_sum_L, ls_p)
 
                 for ls_p in ls_p_R:
-                    ls_sum_R = ls_add(ls_sum_R, ls_p)
+                    ls_sum_R = ls.ls_add(ls_sum_R, ls_p)
 
                 p_L = []
                 for ls_p in ls_p_L:
-                    p_L.append(get_p(ls_divide(ls_p, ls_sum_L)))
+                    p_L.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_L)))
 
                 p_R = []
                 for ls_p in ls_p_R:
-                    p_R.append(get_p(ls_divide(ls_p, ls_sum_R)))
+                    p_R.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_R)))
 
         sum_L = sum(p_L)
         sum_R = sum(p_R)
@@ -398,7 +402,8 @@ def merge(BP, sample_order, v_id, use_product):
 
         s_name_list = []
 
-        gt_list = [] 
+        format_string = None
+        gt_dict = dict()
 
         for b_i in c:
             A = BP[b_i].l.rstrip().split('\t')
@@ -419,11 +424,33 @@ def merge(BP, sample_order, v_id, use_product):
 
             s_name_list.append(m['SNAME'] + ':' + A[2])
 
-            gt_list += A[9:]
+            if include_genotypes:
+                if format_string == None:
+                    format_string = A[8]
+
+                if format_string == A[8]:
+                    gt_dict[m['SNAME']] = A[9]
+                else:
+                    longer = A[8]
+                    shorter = format_string
+                    if len(longer) < len(shorter):
+                        longer, shorter = shorter, longer
+
+                    if longer.find(shorter) == 0:
+                        format_string = longer
+                        gt_dict[m['SNAME']] = A[9]
+                    else:
+                        sys.stderr.write('Unable to merge and include genotypes when FORMAT fields differ across VCF files\n')
+                        sys.stderr.write('Previous: {0} Current: {1}\n'.format(format_string, A[8]))
+                        sys.stderr.write('Variant: {0}\n'.format(m['SNAME'] + ':' + A[2]))
+                        sys.exit(1)
 
         SNAME=','.join(s_name_list)
 
-        GTS = '\t'.join(gt_list)
+        GTS = None
+        if include_genotypes:
+            null_string = null_format_string(format_string)
+            GTS = '\t'.join([format_string] + [gt_dict.get(x, null_string) for x in sample_order])
 
         strand_types_counts = []
         for strand in strand_map:
@@ -457,7 +484,7 @@ def merge(BP, sample_order, v_id, use_product):
         I = ['SVTYPE='   + str(SVTYPE),
              'STRANDS='  + str(STRANDS)
             ]
-        if SVLEN:
+        if SVLEN is not None:
             I += ['SVLEN='    + str(SVLEN)]
         I += ['CIPOS='    + str(CIPOS),
              'CIEND='    + str(CIEND),
@@ -483,10 +510,10 @@ def merge(BP, sample_order, v_id, use_product):
 
         O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
 
-        print_var_line('\t'.join([str(o) for o in O]))
+        print_var_line('\t'.join([str(o) for o in O]), GTS)
     return v_id
 
-def r_cluster(BP_l, sample_order, v_id, use_product):
+def r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes=False):
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
     BP_l.sort(key=lambda x: x.chr_r)
@@ -503,17 +530,17 @@ def r_cluster(BP_l, sample_order, v_id, use_product):
             BP_max_end_r = max(BP_max_end_r, b.end_r)
             BP_chr_r = b.chr_r
         else:
-            v_id = merge(BP_r, sample_order, v_id, use_product)
+            v_id = merge(BP_r, sample_order, v_id, use_product, include_genotypes)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
- 
+
     if len(BP_r) > 0:
-        v_id = merge(BP_r, sample_order, v_id, use_product)
+        v_id = merge(BP_r, sample_order, v_id, use_product, include_genotypes)
 
     return v_id
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False):
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False):
     v_id = 0
     vcf_lines = []
     vcf_headers = list()
@@ -535,43 +562,48 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
       if l[0] != '#':
         break
 
-    vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
-    
     sample_order = []
     for header in vcf_headers:
       if header[:8] == '##SAMPLE':
         sample_order.append(header.rstrip()[13:-1])
       print header,
 
+    # Add in the sample names etc
+    chromosome_header_line = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO'
+    if include_genotypes:
+        sample_header = '\t'.join(sample_order)
+        chromosome_header_line += '\tFORMAT\t' + sample_header
+    print chromosome_header_line
+
     BP_l = []
     BP_sv_type = ''
     BP_max_end_l = -1
     BP_chr_l = ''
 
-    b=l_bp.breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+    b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
     BP_l.append(b)
     BP_max_end_l = max(BP_max_end_l, b.end_l)
     BP_chr_l = b.chr_l
     BP_sv_type = b.sv_type
 
     for l in infile:
-      b=l_bp.breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
+      b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
       if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
         BP_l.append(b)
         BP_max_end_l = max(BP_max_end_l, b.end_l)
         BP_chr_l = b.chr_l
         BP_sv_type = b.sv_type
       else:
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes)
         BP_l = [b]
         BP_max_end_l = b.end_l
         BP_sv_type = b.sv_type
         BP_chr_l = b.chr_l
 
     if len(BP_l) > 0:
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product)
+        v_id = r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes)
 
-    infile.close()                
+    infile.close()
 
 def description():
     return 'merge LUMPY calls inside a single file from svtools lsort'
@@ -580,10 +612,11 @@ def epilog():
     return 'Note that if both slop parameters are set then the maximum is used.'
 
 def add_arguments_to_parser(parser):
-    parser.add_argument('-i', '--inFile', metavar='<FILE>', help='a sorted LUMPY output file generated by lsort. Column 7 must have the format sample:variantID')
+    parser.add_argument('-i', '--inFile', metavar='<FILE>', help='a sorted VCF file generated by svtools lsort. Each INFO field must contain an SNAME tag containing the sample name (e.g. SNAME=SAMPLE_NAME)')
     parser.add_argument('-p', '--percent-slop', metavar='<FLOAT>', type=float, default=0.0, help='increase the the breakpoint confidence interval both up and down stream by a given proportion of the original size')
     parser.add_argument('-f', '--fixed-slop', metavar='<INT>', type=int, default=0, help='increase the the breakpoint confidence interval both up and down stream by a given fixed size')
-    parser.add_argument('--product', dest='use_product', action='store_true', default=False, help='calculate breakpoint PDF and position using product')
+    parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
+    parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -595,7 +628,8 @@ def run_from_args(args):
     l_cluster_by_line(args.inFile,
             percent_slop=args.percent_slop,
             fixed_slop=args.fixed_slop,
-            use_product=args.use_product)
+            use_product=args.use_product,
+            include_genotypes=args.include_genotypes)
 
 if __name__ == "__main__":
     parser = command_parser()

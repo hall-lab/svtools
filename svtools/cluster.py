@@ -1,3 +1,5 @@
+from svtools.bedpe import Bedpe
+
 class Cluster(object):
     '''
     Stores information about overlapping SV and tracks the "best" one of the group
@@ -41,6 +43,14 @@ class Cluster(object):
         else:
             return False
 
+    @staticmethod
+    def flag_as_pruned(bedpe):
+        '''
+        Mark a BEDPE info field(s) as RETAINED
+        '''
+        if not Bedpe.parse_info_tag(bedpe.info, 'RETAINED'):
+            bedpe.set_info('RETAINED', None)
+
     def add(self, bedpe, eval_param):
         '''
         Add a new Bedpe object to this cluster
@@ -48,9 +58,16 @@ class Cluster(object):
         if eval_param is None or eval_param.lower() == 'af':
             if  bedpe.af != '.' and bedpe.af > self.filter:
                 #First node represents best variant
+                if self.elements[0]:
+                    bedpe.combine_snames(self.elements[0])
+                    self.flag_as_pruned(bedpe)
                 self.elements[0] = bedpe
+            else:
+                self.elements[0].combine_snames(bedpe)
+                self.flag_as_pruned(self.elements[0])
+
         self.size += 1
-        self.sv_event=bedpe.svtype
+        self.sv_event = bedpe.svtype
         self.filter = max(self.filter,bedpe.af)
         self.chrom_a = bedpe.c1
         self.min_a = min(self.min_a, bedpe.s1)

@@ -34,8 +34,11 @@ class Variant(object):
         # make a genotype for each sample at variant
         self.format_string = var_list[8]
         self.format_dict = { key: index for index, key in enumerate(self.format_string.split(':')) }
-        self.format_dict.setdefault('GT', len(self.format_dict)) #add GT if it doesn't exist
         self.gts_string = '\t'.join(var_list[9:])
+
+        if 'GT' not in self.format_dict:
+            self.format_dict['GT'] = len(self.format_dict) #add GT if it doesn't exist
+            self._uncache_gts()
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
@@ -87,15 +90,18 @@ class Variant(object):
                     i_list.append('%s=%s' % (info_field.id, self.info[info_field.id]))
         return ';'.join(i_list)
 
-    def get_format_string(self):
+    def get_format_string(self, use_cached_format_string=False):
         '''
         Construct the FORMAT field containing the names of the fields in the Genotype columns
         '''
-        f_list = list()
-        for f in self.format_list:
-            if f.id in self.format_dict:
-                f_list.append(f.id)
-        return ':'.join(f_list)
+        if use_cached_format_string or self.gts is None:
+            return self.format_string
+        else:
+            f_list = list()
+            for f in self.format_list:
+                if f.id in self.format_dict:
+                    f_list.append(f.id)
+            return ':'.join(f_list)
 
     def get_gt_string(self, use_cached_gt_string=False):
         '''
@@ -115,7 +121,6 @@ class Variant(object):
         '''
         if self.gts is None:
             self.gts = self._parse_genotypes(self.gts_string.split('\t'))
-            self.format_string = None
 
     def genotypes(self):
         '''
@@ -131,6 +136,18 @@ class Variant(object):
         self._uncache_gts()
         try:
             return self.gts[sample_name]
+        except KeyError:
+            sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
+            sys.exit(1)
+
+    def set_genotype(self, sample_name, new_genotype):
+        '''
+        Set the Genotype object for the given sample. Programmer needs to be
+        very careful about what gets added here as there is no error checking.
+        '''
+        self._uncache_gts()
+        try:
+            self.gts[sample_name] = new_genotype
         except KeyError:
             sys.stderr.write('\nError: invalid sample name, \"' + sample_name + '\"\n')
             sys.exit(1)
@@ -157,7 +174,7 @@ class Variant(object):
                 sys.exit(1)
             else:
                 fields += [
-                        self.get_format_string(),
+                        self.get_format_string(use_cached_gt_string),
                         gts_string
                     ]
         return '\t'.join(map(str, fields))

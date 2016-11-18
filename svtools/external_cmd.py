@@ -19,7 +19,7 @@ class ExternalCmd(object):
         else:
             sys.stderr.write('Unable to locate {0} script at {1}\n'.format(self.name, path_to_script))
             sys.exit(1)
-    
+
     def run_cmd_with_options(self, options):
         cmd = [ self.path_to_shell_script() ]
         cmd.extend(options)
@@ -29,11 +29,11 @@ class ExternalCmd(object):
         p = subprocess.Popen(cmd, preexec_fn=lambda:
                 signal.signal(signal.SIGPIPE, signal.SIG_DFL))
         code = p.wait()
-        # The check for code != 141 is here because 
+        # The check for code != 141 is here because
         # 141 indicates a SIGPIPE signal returned in the underlying bash pipelines
         # We want to be silent there
         # FIXME 141 is bash specific and while the underlying scripts are bash
-        # It is not clear that the shell this script is run in should be exiting with 141 
+        # It is not clear that the shell this script is run in should be exiting with 141
         # or if that is even necessary
         if code:
             if code is not 141:
