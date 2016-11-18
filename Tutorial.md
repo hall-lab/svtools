@@ -77,7 +77,7 @@ This will sometimes cause the merged VCF to have more variant lines than the inp
 ### Use `svtools genotype` to genotype all samples for all variants present in the merged set
 `svtools genotype` will calculate a genotype for each sample at the variant positions in the merged.vcf.gz file.
 It requires the aligned BAM for each sample (it no longer requires a splitters BAM).
-We highly recommend you use the -l option to output a json file of library information. This step will output a fully genotyped VCF file for each sample.
+We highly recommend you use the `-l` option to output a json file of library information. This step will output a fully genotyped VCF file for each sample.
 You will also need to prepare a gt subdirectory to store the output of these commands to avoid name collisions with the upcoming copynumber output.
 ```
 mkdir -p gt
