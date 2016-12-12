@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # # make truth set and sort the BAMs
 # BAM=/gscmnt/gc2802/halllab/sv_aggregate/MISC/realigned_BAMs/NA12878/NA12878.bam
 # BAM_BASE=`basename $BAM .bam`
