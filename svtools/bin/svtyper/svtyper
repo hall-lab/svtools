@@ -8,7 +8,7 @@ from collections import Counter
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang (colbychiang@wustl.edu)"
-__version__ = "v0.1.1"
+__version__ = "v0.1.2"
 
 # --------------------------------------
 # define functions
@@ -582,7 +582,7 @@ class Library(object):
         # the number of instances of that value observed in the dataset.
         # So valueCount[5] is the number of times 5 has been seen in the data.
         valueCounts = Counter()
-        for read in self.bam:
+        for read in self.bam.fetch():
             if skip_counter < skip:
                 skip_counter += 1
                 continue
