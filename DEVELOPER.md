@@ -109,11 +109,11 @@ These instructions assume you have committed no additional changes after tagging
 3. Create the conda recipe skeleton.
   1. Run conda skeleton.
   
-    ```
-    conda skeleton pypi svtools
-    ```
+   ```
+   conda skeleton pypi svtools
+   ```
   2. Edit the tests section of the resulting `svtools/meta.yml` file to look like the following section:
-    ```YAML
+   ```YAML
     test:
       # Python imports
       imports:
@@ -126,31 +126,31 @@ These instructions assume you have committed no additional changes after tagging
     
       - svtools --help
       - create_coordinates --help
-    ```
+   ```
 4. Build the conda recipe.
 
-  ```
-  conda build -c bioconda svtools
-  ```
+ ```
+ conda build -c bioconda svtools
+ ```
 5. Test your recipe by installing it into a new conda environment. The bioconda channel is needed to pull in pysam.
   1. Create a new conda environment to install into.
     
-    ```
-    conda create --name svtools_install_test python=2.7 pip
-    ```
+   ```
+   conda create --name svtools_install_test python=2.7 pip
+   ```
   2. Install svtools from your local recipe.
     
-    ```
-    conda install -c bioconda -n svtools_install_test --use-local svtools
-    ```
+   ```
+   conda install -c bioconda -n svtools_install_test --use-local svtools
+   ```
 
 6. Verify the install was successful.
  
-  ```
-  source activate svtools_install_test
-  svtools --version
-  create_coordinates --version
-  ```
+ ```
+ source activate svtools_install_test
+ svtools --version
+ create_coordinates --version
+ ```
   **Note:** pyenv and conda versions of activate can conflict. If this is the case for you, simply source the full path of the conda activate script to activate the environment.
 
 7. Ensure you have a clone/fork of https://github.com/bioconda/bioconda-recipes
@@ -159,11 +159,11 @@ These instructions assume you have committed no additional changes after tagging
     
     We are currently preserving older versions in subdirectories. Create one with the name of the old version and copy the old recipe files there.
     
-    ```
-    mkdir $REPO_PATH/bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
-    git mv $REPO_PATH/bioconda-recipes/recipes/svtools/build.sh bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
-    git mv $REPO_PATH/bioconda-recipes/recipes/svtools/meta.yaml bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
-    ```
+   ```
+   mkdir $REPO_PATH/bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+   git mv $REPO_PATH/bioconda-recipes/recipes/svtools/build.sh bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+   git mv $REPO_PATH/bioconda-recipes/recipes/svtools/meta.yaml bioconda-recipes/recipes/svtools/$LAST_SVTOOLS_VERSION
+   ```
 
 9. Copy over the build.sh and meta.yaml to the recipe folder
     
