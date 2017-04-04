@@ -125,8 +125,10 @@ These instructions assume you have committed no additional changes after tagging
       # entry points work.
     
       - svtools --help
+      - svtools --version
       - create_coordinates --help
    ```
+   3. Remove setuptools from the `run` subsection of `requirements` section. Failing to do so will result in a linting error in bioconda.
 4. Build the conda recipe.
 
  ```
