@@ -84,6 +84,10 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     var2 = sec_bnds[mate_id]
                     bedpe_out.write(str(converter.convert(var, var2)) + '\n')
                     del sec_bnds[mate_id]
+                elif mate_id in bnds:
+                    var1 = bnds[mate_id]
+                    bedpe_out.write(str(converter.convert(var1, var)) + '\n')
+                    del bnds[mate_id]
                 else:
                     bnds.update({var.var_id:var})
     if bnds is not None:
