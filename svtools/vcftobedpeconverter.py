@@ -142,7 +142,7 @@ class VcfToBedpeConverter(object):
             name = vcf_variant.info['EVENT']
         elif 'MATEID' in vcf_variant.info and vcf_variant.var_id.startswith('Manta'):
             # Specifically handle Manta
-            name, end = vcf_variant.info.rsplit(':', 1)
+            name, end = vcf_variant.var_id.rsplit(':', 1)
 
 
 
