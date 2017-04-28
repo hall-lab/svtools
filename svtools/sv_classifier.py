@@ -365,7 +365,7 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
 def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
     
     rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
-    if len(np.unique(rd[0,:])) > 1 and len(np.unique(rd[1,:])) > 1:
+    if len(np.unique(rd[:,0])) > 1 and len(np.unique(rd[:,1])) > 1:
         
         (slope, intercept, r_value, p_value, std_err) = stats.linregress(rd)
         if df['svtype'][0] == 'DEL':
