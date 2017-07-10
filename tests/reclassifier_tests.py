@@ -59,7 +59,7 @@ class IntegrationTest_sv_classify(TestCase):
             result = ''.join(diff)
             if result != '':
                 for line in result:
-                    sys.stdout.write(line)
+                   sys.stdout.write(line)
                 self.assertFalse(result)
         os.remove(temp_output_path)
         os.remove(diags_file)
