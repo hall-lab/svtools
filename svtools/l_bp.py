@@ -39,7 +39,7 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
 
             if not 'SECONDARY' in A[7]:
 
-                if add_sname and (samples != ''):
+                if add_sname and (samples != []):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
                     l = '\t'.join(A)
 
