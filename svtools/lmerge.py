@@ -121,7 +121,7 @@ def getCI95( p_L, p_R, max_i_L, max_i_R):
 
 
 
-def combine_pdfs(BP, c, use_product, weight_by_support=False, weight_by_samples=False):
+def combine_pdfs(BP, c, use_product, weighting_scheme)
   
     L = []
     R = []
@@ -139,14 +139,14 @@ def combine_pdfs(BP, c, use_product, weight_by_support=False, weight_by_samples=
 
     for c_i in range(len(c)):
 
-        if weight_by_support:
+        if weighting_scheme is in ['carrier_wt']:
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
             wt=int(m['SU'])
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]
-        elif weight_by_samples:
+        elif weighting_scheme is in ['evidence_wt']:
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
@@ -220,10 +220,9 @@ def combine_pdfs(BP, c, use_product, weight_by_support=False, weight_by_samples=
 
     return new_start_L, new_start_R, p_L, p_R, ALG
 
+def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unweighted'):
 
-def create_merged_variant(BP, c, v_id, vcf, use_product, weight_by_support, weight_by_samples):
-
-    new_start_L, new_start_R, p_L , p_R, ALG = combine_pdfs(BP, c, use_product, weight_by_support, weight_by_samples)
+    new_start_L, new_start_R, p_L , p_R, ALG = combine_pdfs(BP, c, use_product, weighting_scheme)
 
 
     max_i_L = p_L.index(max(p_L))
@@ -451,7 +450,7 @@ def write_var(var, vcf_out, include_genotypes=False):
 
     
 
-def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weight_by_support=False, weight_by_samples=False):
+def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
 
     if len(BP) == 1:  
        #merge a single breakpoint 
@@ -468,14 +467,14 @@ def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=F
         #merge cliques
         for cliq in ordered_cliques:
             v_id+=1
-            var=create_merged_variant(BP, cliq, v_id, vcf, use_product, weight_by_support, weight_by_samples)
+            var=create_merged_variant(BP, cliq, v_id, vcf, use_product, weighting_scheme)
             combine_var_support(var, BP, cliq, include_genotypes, sample_order)
             write_var(var, vcf_out, include_genotypes)
 
     return v_id
 
 
-def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weight_by_support=False, weight_by_samples=False):
+def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
     
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
@@ -493,19 +492,19 @@ def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genot
             BP_max_end_r = max(BP_max_end_r, b.end_r)
             BP_chr_r = b.chr_r
         else:
-            v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weight_by_support, weight_by_samples)
+            v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
 
     if len(BP_r) > 0:
-        v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weight_by_support, weight_by_samples)
+        v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
 
     return v_id
 
 
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weight_by_support=False, weight_by_samples=False):
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted'):
     
     v_id = 0
 
@@ -513,10 +512,6 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     header = []
     vcf = Vcf()
     vcf_out=sys.stdout
-    if weight_by_samples and weight_by_support:
-        sys.stderr('Error:  Can only weight by total support OR carrier count, but not both')
-        sys.exit(1)
-
 
     with su.InputStream(file_name) as vcf_stream:
 
@@ -561,14 +556,14 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                 BP_sv_type = b.sv_type
 
             else:
-                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weight_by_support, weight_by_samples)
+                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
                 BP_l = [b]
                 BP_max_end_l = b.end_l
                 BP_sv_type = b.sv_type
                 BP_chr_l = b.chr_l
 
         if len(BP_l) > 0:
-            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weight_by_support, weight_by_samples)
+            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
 
 def description():
     return 'merge LUMPY calls inside a single file from svtools lsort'
@@ -582,8 +577,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-f', '--fixed-slop', metavar='<INT>', type=int, default=0, help='increase the the breakpoint confidence interval both up and down stream by a given fixed size')
     parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
     parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
-    parser.add_argument('-w', dest='weight_by_support', action='store_true', default=False, help='weight combined pdfs by total support evidence')
-    parser.add_argument('--ws', dest='weight_by_samples', action='store_true', default=False, help='weight combined pdfs by number of carriers')
+    parser.add_argument('-w', dest='weighting_scheme', metavar='<STRING>', default="unweighted", choices=['carrier_wt', 'evidence_wt'], help='weighting scheme (intended for use in tiered merging), options: unweighted, carrier_wt, evidence_wt')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -596,9 +590,10 @@ def run_from_args(args):
             percent_slop=args.percent_slop,
             fixed_slop=args.fixed_slop,
             use_product=args.use_product,
-            include_genotypes=args.include_genotypes, 
-            weight_by_support=args.weight_by_support,
-            weight_by_samples=args.weight_by_samples)
+            include_genotypes=args.include_genotypes,
+            weighting_scheme=args.weighting_scheme)
+            #weight_by_support=args.weight_by_support,
+            #weight_by_samples=args.weight_by_samples)
 
 if __name__ == "__main__":
     parser = command_parser()
