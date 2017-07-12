@@ -140,22 +140,17 @@ def combine_pdfs(BP, c, use_product, weight_by_support=False, weight_by_samples=
     for c_i in range(len(c)):
 
         if weight_by_support:
-            #sys.stderr.write("support\n")
-            #sys.stderr.write(str(a_L[c_i])+"\n")
+
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
             wt=int(m['SU'])
-            #sys.stderr.write(str(wt)+"\t"+m['SNAME']+"\n")
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
-            #sys.stderr.write(str(a_L[c_i])+"\n")
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]
         elif weight_by_samples:
-            #sys.exit(1)
-            #sys.stderr.write("samples\n")
+
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
             wt=len(m['SNAME1'].split(','))
-            #sys.stderr.write(str(wt)+"\t"+m['SNAME']+"\n")
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]      
 
@@ -165,7 +160,6 @@ def combine_pdfs(BP, c, use_product, weight_by_support=False, weight_by_samples=
         for i in range(len(a_R[c_i])):
             p_R[i] += a_R[c_i][i]
 
-    #sys.exit(1)
     ALG = 'SUM'
     if use_product:
         pmax_i_L = p_L.index(max(p_L))
@@ -223,7 +217,6 @@ def combine_pdfs(BP, c, use_product, weight_by_support=False, weight_by_samples=
 
     p_L = [x/s_p_L for x in p_L]
     p_R = [x/s_p_R for x in p_R]
-
 
     return new_start_L, new_start_R, p_L, p_R, ALG
 
@@ -289,7 +282,6 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weight_by_support, weig
     var.set_info('CIEND', ','.join([str(x) for x in [-1*max_i_R, len(p_R) - max_i_R - 1]]))
     var.set_info('PRPOS', ','.join([str(x) for x in p_L]))
     var.set_info('PREND', ','.join([str(x) for x in p_R]))
-    #var.set_info('IMPRECISE', True)
 
     return var
 
@@ -327,7 +319,6 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
         if 'SNAME1' in m:
             s1_name_list.append(m['SNAME1'] + ':' + m['SU'])
             
-
         s_name_list.append(m['SNAME'] + ':' + A[2])
 
         if include_genotypes:
@@ -429,7 +420,6 @@ def write_var(var, vcf_out, include_genotypes=False):
         elif var.alt[-1] == ']':
             new_alt = 'N]' + var.chrom + ':' + str(var.pos) + ']'
 
-
         var.chrom=altstr[1]
         var.pos=int(altstr[2])        
         var.var_id=str(v_id)+'_2'
@@ -458,7 +448,6 @@ def write_var(var, vcf_out, include_genotypes=False):
             varstring='\t'.join(varstring.split('\t', 10)[:9])
 
         vcf_out.write(varstring+'\n')
-
 
     
 
