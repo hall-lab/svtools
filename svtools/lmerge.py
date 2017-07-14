@@ -121,7 +121,7 @@ def getCI95( p_L, p_R, max_i_L, max_i_R):
 
 
 
-def combine_pdfs(BP, c, use_product, weighting_scheme)
+def combine_pdfs(BP, c, use_product, weighting_scheme):
   
     L = []
     R = []
@@ -139,14 +139,15 @@ def combine_pdfs(BP, c, use_product, weighting_scheme)
 
     for c_i in range(len(c)):
 
-        if weighting_scheme is in ['carrier_wt']:
+        if weighting_scheme in ['carrier_wt']:
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
             wt=int(m['SU'])
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]
-        elif weighting_scheme is in ['evidence_wt']:
+
+        elif weighting_scheme in ['evidence_wt']:
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
@@ -328,6 +329,8 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
                 format_dict = dict(zip(A[8].split(':'), A[9].split(':')))
                 geno = ':'.join([format_dict.get(i, '.')  for i in var.format_list])
                 gt_dict[m['SNAME']] = geno
+        else:
+            var.format_dict=None
 
     var.set_info('SNAME', ','.join(s_name_list))
     if len(s1_name_list)>0:
@@ -403,7 +406,7 @@ def write_var(var, vcf_out, include_genotypes=False):
         
         varstring=var.get_var_string(use_cached_gt_string=True)
         if not include_genotypes: 
-            varstring='\t'.join(varstring.split('\t', 10)[:9])
+            varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
         altstr=re.split( '[\[\]:]', var.alt)
@@ -436,7 +439,7 @@ def write_var(var, vcf_out, include_genotypes=False):
 
         varstring=var.get_var_string(use_cached_gt_string=True)
         if not include_genotypes: 
-            varstring='\t'.join(varstring.split('\t', 10)[:9])
+            varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
 
@@ -444,7 +447,7 @@ def write_var(var, vcf_out, include_genotypes=False):
     else:
         varstring=var.get_var_string(use_cached_gt_string=True)
         if not include_genotypes: 
-            varstring='\t'.join(varstring.split('\t', 10)[:9])
+            varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
 
@@ -545,7 +548,12 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                     in_header=False
                     vcf.add_header(header)
                     vcf.add_info('ALG', '1', 'String', 'Algorithm used to merge this breakpoint')
-                    vcf_out.write(vcf.get_header()+'\n')
+        
+                    if include_genotypes:
+                        vcf_out.write(vcf.get_header()+'\n')
+                    else:
+                        vcf_out.write(vcf.get_header(False)+'\n')
+            
                 continue
 
             b = Breakpoint(l_bp.parse_vcf_record(line), percent_slop=percent_slop, fixed_slop=fixed_slop)
