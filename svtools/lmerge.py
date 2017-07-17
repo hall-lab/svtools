@@ -139,7 +139,7 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
 
     for c_i in range(len(c)):
 
-        if weighting_scheme in ['carrier_wt']:
+        if weighting_scheme in ['evidence_wt']:
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
@@ -147,11 +147,13 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]
 
-        elif weighting_scheme in ['evidence_wt']:
+        elif weighting_scheme in ['carrier_wt']:
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
-            wt=len(m['SNAME1'].split(','))
+            wt = 1
+            if 'SNAME1' in m:
+                wt=len(m['SNAME1'].split(','))
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]      
 
@@ -600,8 +602,7 @@ def run_from_args(args):
             use_product=args.use_product,
             include_genotypes=args.include_genotypes,
             weighting_scheme=args.weighting_scheme)
-            #weight_by_support=args.weight_by_support,
-            #weight_by_samples=args.weight_by_samples)
+
 
 if __name__ == "__main__":
     parser = command_parser()
