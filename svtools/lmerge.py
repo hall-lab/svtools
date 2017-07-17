@@ -139,15 +139,16 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
 
     for c_i in range(len(c)):
 
-        if weighting_scheme in ['evidence_wt']:
+        if weighting_scheme == 'evidence_wt':
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
             wt=int(m['SU'])
+            #sys.stderr.write("wt\t0\t"+str(wt)+"\n")
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]
 
-        elif weighting_scheme in ['carrier_wt']:
+        elif weighting_scheme == 'carrier_wt':
 
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
@@ -158,9 +159,11 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]      
 
         for i in range(len(a_L[c_i])):
+            #sys.stderr.write("L\t"+str(i)+"\t"+str(c_i)+"\t"+str(a_L[c_i][i])+"\n")
             p_L[i] += a_L[c_i][i]
 
         for i in range(len(a_R[c_i])):
+            #sys.stderr.write("R\t"+str(i)+"\t"+str(c_i)+"\t"+str(a_R[c_i][i])+"\n")
             p_R[i] += a_R[c_i][i]
 
     ALG = 'SUM'
@@ -220,7 +223,8 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
 
     p_L = [x/s_p_L for x in p_L]
     p_R = [x/s_p_R for x in p_R]
-
+    
+    #sys.exit(1)
     return new_start_L, new_start_R, p_L, p_R, ALG
 
 def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unweighted'):
