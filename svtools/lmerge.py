@@ -14,7 +14,7 @@ import re
 def null_format_string(format_string):
     null_list = []
     num_null_fields = len(format_string.split(':'))
-    if format_string.startswith('GT:'):
+    if format_string.startswith('GT'):
         null_list = ['./.']
         num_null_fields -= 1
     null_list.extend(list('.' * num_null_fields))
@@ -36,12 +36,18 @@ def merge_single_bp(BP, sample_order, v_id, use_product, vcf, vcf_out, include_g
         var.set_info('ALG', 'SUM')
 
     GTS = None
-    if include_genotypes:
+    if include_genotypes=='orig_GT':
         null_string = null_format_string(A[8])
         gt_dict = { sname: A[9] }
         GTS = '\t'.join([gt_dict.get(x, null_string) for x in sample_order])
         var.gts = None
         var.gts_string = GTS
+    elif include_genotypes=='dummy_GT':
+        var.format_string="GT"
+        var.format_dict = { 0 : "GT"}
+        var.gts = None
+        var.gts_string = "./."
+       
 
     return var
 
@@ -224,7 +230,6 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
     p_L = [x/s_p_L for x in p_L]
     p_R = [x/s_p_R for x in p_R]
     
-    #sys.exit(1)
     return new_start_L, new_start_R, p_L, p_R, ALG
 
 def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unweighted'):
@@ -321,9 +326,6 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
         SU += int(m['SU'])
         PE += int(m['PE'])
         SR += int(m['SR'])
-
-        if 'SNAME1' in m:
-            s1_name_list.append(m['SNAME1'] + ':' + m['SU'])
             
         s_name_list.append(m['SNAME'] + ':' + A[2])
 
@@ -339,15 +341,20 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
             var.format_dict=None
 
     var.set_info('SNAME', ','.join(s_name_list))
-    if len(s1_name_list)>0:
-        var.set_info('SNAME1', ','.join(s1_name_list))
 
     GTS = None
-    if include_genotypes:
+    if include_genotypes == 'orig_GT':
         null_string = null_format_string(format_string)
         GTS = '\t'.join([gt_dict.get(x, null_string) for x in sample_order])
         var.gts=None
         var.gts_string=GTS
+    elif include_genotypes == 'dummy_GT':
+        var.format_string="GT"
+        var.format_dict = { 0 : "GT"}
+        var.gts=None
+        var.gts_string = "./."
+
+        
 
     strand_types_counts = []
     for strand in strand_map:
@@ -390,7 +397,7 @@ def invtobnd(var):
     var.set_info('PREND', temppr )
 
 
-def write_var(var, vcf_out, include_genotypes=False):
+def write_var(var, vcf_out, include_genotypes):
 
     v_id=var.var_id
     if var.get_info('CIPOS95') != '0,0' or var.get_info('CIEND95') != '0,0':
@@ -411,7 +418,8 @@ def write_var(var, vcf_out, include_genotypes=False):
         var.info.pop('SVLEN', None)
         
         varstring=var.get_var_string(use_cached_gt_string=True)
-        if not include_genotypes: 
+        #if not include_genotypes: 
+        if include_genotypes == 'no_GT':
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
@@ -444,7 +452,7 @@ def write_var(var, vcf_out, include_genotypes=False):
         var.set_info('PREND', temppr )
 
         varstring=var.get_var_string(use_cached_gt_string=True)
-        if not include_genotypes: 
+        if include_genotypes == 'no_GT':
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
@@ -452,14 +460,14 @@ def write_var(var, vcf_out, include_genotypes=False):
 
     else:
         varstring=var.get_var_string(use_cached_gt_string=True)
-        if not include_genotypes: 
+        if include_genotypes == 'no_GT':
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
 
     
 
-def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
+def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme):
 
     if len(BP) == 1:  
        #merge a single breakpoint 
@@ -483,7 +491,7 @@ def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=F
     return v_id
 
 
-def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
+def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme):
     
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
@@ -513,7 +521,7 @@ def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genot
 
 
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted'):
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes='no_GT', weighting_scheme='unweighted', batch_name="MERGED"):
     
     v_id = 0
 
@@ -544,9 +552,13 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                         if headline[:8] == '##SAMPLE':
                             sample_order.append(headline.rstrip()[13:-1])
                     hline=''
-                    if include_genotypes :
+                    if include_genotypes == 'orig_GT' :
                         v.extend(sample_order)
                         hline='\t'.join(v)
+                    elif include_genotypes == 'dummy_GT':
+                         v=v[:8]
+                         v.extend(['FORMAT', batch_name])
+                         hline='\t'.join(v)
                     else :
                         v=v[:8]
                         hline='\t'.join(v)
@@ -570,14 +582,14 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                 BP_sv_type = b.sv_type
 
             else:
-                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
+                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme, batch_name)
                 BP_l = [b]
                 BP_max_end_l = b.end_l
                 BP_sv_type = b.sv_type
                 BP_chr_l = b.chr_l
 
         if len(BP_l) > 0:
-            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
+            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme, batch_name)
 
 def description():
     return 'merge LUMPY calls inside a single file from svtools lsort'
@@ -590,8 +602,10 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-p', '--percent-slop', metavar='<FLOAT>', type=float, default=0.0, help='increase the the breakpoint confidence interval both up and down stream by a given proportion of the original size')
     parser.add_argument('-f', '--fixed-slop', metavar='<INT>', type=int, default=0, help='increase the the breakpoint confidence interval both up and down stream by a given fixed size')
     parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
-    parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
-    parser.add_argument('-w', dest='weighting_scheme', metavar='<STRING>', default="unweighted", choices=['carrier_wt', 'evidence_wt'], help='weighting scheme (intended for use in tiered merging), options: unweighted, carrier_wt, evidence_wt')
+    #parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
+    parser.add_argument('-g', dest='include_genotypes', metavar='<STRING>', default="no_GT", choices=['no_GT', 'orig_GT', 'dummy_GT'], help='data to include in GT column.  By default, lmerge output 8 column vcf.  orig_GT includes original genotypes in output; when multiple variants are merged, the last will dictate the genotype field.  dummy_GT includes a column of missing genotypes, with names specified as the dummy colname; this option is useful for tiered merging.')
+    parser.add_argument('-b', dest='batch_colname', metavar='<STRING>', default="MERGED", help='Sample batch name; required when include_genotypes=dummy_GT; useful in tiered merging'.)
+    parser.add_argument('-w', dest='weighting_scheme', metavar='<STRING>', default="unweighted", choices=['unweighted', 'carrier_wt', 'evidence_wt'], help='weighting scheme (intended for use in tiered merging), options: unweighted, carrier_wt, evidence_wt')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -600,12 +614,14 @@ def command_parser():
     return parser
 
 def run_from_args(args):
+        
     l_cluster_by_line(args.inFile,
             percent_slop=args.percent_slop,
             fixed_slop=args.fixed_slop,
             use_product=args.use_product,
             include_genotypes=args.include_genotypes,
-            weighting_scheme=args.weighting_scheme)
+            weighting_scheme=args.weighting_scheme, 
+            batch_name=args.batch_colname)
 
 
 if __name__ == "__main__":
