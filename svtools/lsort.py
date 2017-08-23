@@ -16,13 +16,12 @@ def merge(*iterables):
        yield element.obj
 
 class Lsort(object):
-    def __init__(self, vcf_file_names, cname, tempdir=None, batchsize=200, include_ref=False, output_handle=sys.stdout):
+    def __init__(self, vcf_file_names, tempdir=None, batchsize=200, include_ref=False, output_handle=sys.stdout):
         if tempdir:
             self.tempdir = tempdir
         else:
             self.tempdir = gettempdir()
         self.batchsize = batchsize
-        self.colname = cname
         self.include_ref = include_ref
         self.vcf_file_names = vcf_file_names
         self.vcf_lines = []
@@ -64,12 +63,17 @@ class Lsort(object):
             os.remove(tmp.name)
 
     def write_header(self):
-        self.vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
+       
+        sname_in_header = False
+        for line in self.vcf_headers:
+           if "##INFO=<ID=SNAME" in line:
+              sname_in_header=True
+        if sname_in_header is False:
+           self.vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
             "Description=\"Source sample name\">\n")
         self.vcf_headers.append("##INFO=<ID=ALG,Number=1,Type=String," + \
             "Description=\"Evidence PDF aggregation algorithm\">\n")
-        self.vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
-            colname + "\n")
+        self.vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tVARIOUS\n")
         self.vcf_headers.sort(cmp=l_bp.header_line_cmp)
         self.output_handle.writelines(self.vcf_headers)
 
@@ -93,7 +97,6 @@ def epilog():
 
 def add_arguments_to_parser(parser):
     parser.add_argument('vcf_files', metavar='<VCF>', nargs='*', help='VCF files to combine and sort')
-    parser.add_argumnet('-c', '--colname', metavar='<STRING>', type=string, help='Name for VCF sample column', default='VARIOUS')
     parser.add_argument('-f', '--vcf-list', metavar='<FILE>', help='file containing a line-delimited list of VCF files to combine and sort')
     parser.add_argument('-r', '--include-reference', required=False, action='store_true', default=False, help='whether or not to include homozygous reference or missing calls in the output.')
     parser.add_argument('-t', '--tempdir', metavar='<DIRECTORY_PATH>', default=gettempdir(), help='temporary directory')
@@ -116,7 +119,7 @@ def run_from_args(args):
     if not vcf_files:
         sys.stderr.write("No input files provided.\n")
         sys.exit(1)
-    sorter = Lsort(vcf_files, colname=args.colname, tempdir=args.tempdir, batchsize=args.batchsize, include_ref=args.include_reference)
+    sorter = Lsort(vcf_files, tempdir=args.tempdir, batchsize=args.batchsize, include_ref=args.include_reference)
     sorter.execute()
 
 if __name__ == "__main__":

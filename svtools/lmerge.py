@@ -582,14 +582,14 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                 BP_sv_type = b.sv_type
 
             else:
-                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme, batch_name)
+                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
                 BP_l = [b]
                 BP_max_end_l = b.end_l
                 BP_sv_type = b.sv_type
                 BP_chr_l = b.chr_l
 
         if len(BP_l) > 0:
-            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme, batch_name)
+            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
 
 def description():
     return 'merge LUMPY calls inside a single file from svtools lsort'
@@ -604,7 +604,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
     #parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
     parser.add_argument('-g', dest='include_genotypes', metavar='<STRING>', default="no_GT", choices=['no_GT', 'orig_GT', 'dummy_GT'], help='data to include in GT column.  By default, lmerge output 8 column vcf.  orig_GT includes original genotypes in output; when multiple variants are merged, the last will dictate the genotype field.  dummy_GT includes a column of missing genotypes, with names specified as the dummy colname; this option is useful for tiered merging.')
-    parser.add_argument('-b', dest='batch_colname', metavar='<STRING>', default="MERGED", help='Sample batch name; required when include_genotypes=dummy_GT; useful in tiered merging'.)
+    parser.add_argument('-b', dest='batch_colname', metavar='<STRING>', default="MERGED", help='Sample batch name; required when include_genotypes=dummy_GT; useful in tiered merging.')
     parser.add_argument('-w', dest='weighting_scheme', metavar='<STRING>', default="unweighted", choices=['unweighted', 'carrier_wt', 'evidence_wt'], help='weighting scheme (intended for use in tiered merging), options: unweighted, carrier_wt, evidence_wt')
     parser.set_defaults(entry_point=run_from_args)
 
