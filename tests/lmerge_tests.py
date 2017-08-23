@@ -44,7 +44,7 @@ class LmergeIntegrationTest(TestCase):
             # FIXME this is pretty hacky
             temp_handle, sys.stdout = sys.stdout, output_handle
 
-            lmerge.l_cluster_by_line(input_file, 0.0, 20, True, True)
+            lmerge.l_cluster_by_line(input_file, 0.0, 20, True, 'orig_GT')
             output_handle.flush()
             expected_lines = open(expected_result).readlines()
             produced_lines = open(temp_output_path).readlines()
