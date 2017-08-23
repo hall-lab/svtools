@@ -562,12 +562,13 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                     else :
                         v=v[:8]
                         hline='\t'.join(v)
+                        
                     header.append(hline)                    
                     in_header=False
                     vcf.add_header(header)
                     vcf.add_info('ALG', '1', 'String', 'Algorithm used to merge this breakpoint')
         
-                    if include_genotypes:
+                    if include_genotypes in ['orig_GT', 'dummy_GT']:
                         vcf_out.write(vcf.get_header()+'\n')
                     else:
                         vcf_out.write(vcf.get_header(False)+'\n')
