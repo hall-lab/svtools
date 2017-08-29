@@ -22,8 +22,8 @@
 ##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
 ##INFO=<ID=NSAMP,Number=1,Type=Integer,Description="Number of samples with non-reference genotypes">
 ##INFO=<ID=MSQ,Number=1,Type=Float,Description="Mean sample quality of positively genotyped samples">
-##INFO=<ID=TEST_AF,Number=.,Type=Float,Description="Allele frequency(ies) for matching variants found in the TEST vcf (input_b.bed)">
-##INFO=<ID=TEST_VarID,Number=.,Type=Integer,Description="List of Variant ID(s) for matching variants found in the TEST vcf (input_b.bed)">
+##INFO=<ID=TEST_AF,Number=.,Type=Float,Description="Allele frequency(ies) for matching variants found in the TEST vcf (input_b1.bed)">
+##INFO=<ID=TEST_VarID,Number=.,Type=Integer,Description="List of Variant ID(s) for matching variants found in the TEST vcf (input_b1.bed)">
 ##ALT=<ID=DEL,Description="Deletion">
 ##ALT=<ID=DUP,Description="Duplication">
 ##ALT=<ID=INV,Description="Inversion">
