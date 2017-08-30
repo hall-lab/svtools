@@ -78,6 +78,9 @@ class BedpeTests(TestCase):
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'AF=0.2', 'AF=0.2' ]
         with self.assertRaises(SystemExit):
             b = Bedpe(entry2)
+        entry3 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND;AF=0.2;ORIG_SVTYPE=DEL', 'SVTYPE=BND;AF=0.2;ORIG_SVTYPE=DEL' ]
+        b3 = Bedpe(entry3)
+        self.assertEqual(b3.retrieve_svtype(), 'BND')
 
     def test_retrieve_af(self):
         entry1 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND;AF=0.2', 'SVTYPE=BND;AF=0.2' ]
@@ -86,6 +89,9 @@ class BedpeTests(TestCase):
         entry2 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND', 'SVTYPE=BND' ]
         b2 = Bedpe(entry2)
         self.assertIsNone(b2.retrieve_af())
+        entry3 = [ '1', '200', '300', '2', '300', '400', '777_1', '57', '+', '-', 'BND', 'PASS', '.', '.', '.', '.', '.', '.', 'SVTYPE=BND;AF=0.2;FIN_AF=0.01', 'SVTYPE=BND;AF=0.2;FIN_AF=0.01' ]
+        b3 = Bedpe(entry3)
+        self.assertEqual(b3.retrieve_af(), '0.2')
 
     def test_str(self):
         # Note that we are testing float to float equivalence. Actually passing in an integer will result in it being converted to float with

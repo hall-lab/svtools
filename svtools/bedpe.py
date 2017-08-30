@@ -121,14 +121,14 @@ class Bedpe(object):
 
     def retrieve_svtype(self):
         try:
-            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.info.split(';'))))[1]
+            svtype = re.split('=', ''.join(filter(lambda x: x.startswith('SVTYPE='), self.info.split(';'))))[1]
         except IndexError:
             raise ValueError('SVTYPE field not present in INFO field')
         return svtype
 
     def retrieve_af(self):
         try:
-            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.info.split(';'))))[1]
+            af = re.split('=', ''.join(filter(lambda x: x.startswith('AF='), self.info.split(';'))))[1]
         except IndexError:
             af = None
         return af
