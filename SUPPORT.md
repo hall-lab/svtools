@@ -1,13 +1,13 @@
 # Support Guidelines
+Support is requested by submitting an issue to our github repository.
 
 ## Before you submit
 Please ensure you've read the existing [README.md](README.md) and
 [Tutorial.md](Tutorial.md) as this is our best documentation of 
 how to use the software.
 
-## Information to include
-When submitting a possible bug report, the following information is extremely
-helpful:
+## Information to include in your issue
+The following information is extremely helpful:
 * The version of svtools you're using. 
 * The precise command line you used when you encountered the issue.
 * Any error output from svtools.
