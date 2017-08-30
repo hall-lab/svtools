@@ -27,7 +27,7 @@
    * [Scipy](https://www.scipy.org/)
    * [Pandas](http://pandas.pydata.org/)
    * [Statsmodels](http://statsmodels.sourceforge.net/)
-   * [Pysam](https://github.com/pysam-developers/pysam) (≥0.8.1)
+   * [Pysam](https://github.com/pysam-developers/pysam) (≥0.8.4)
  
 ## Installation
 We recommend you install using `conda`, but you may also install via `pip`. For more detailed instructions, see our [Installation guide](INSTALL.md).

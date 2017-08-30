@@ -1,0 +1,53 @@
+##fileformat=BEDPE
+##fileDate=20160412
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=POS,Number=1,Type=Integer,Description="Position of the variant described in this record">
+##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
+##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">
+##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
+##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
+##INFO=<ID=CIPOS95,Number=2,Type=Integer,Description="Confidence interval (95%) around POS for imprecise variants">
+##INFO=<ID=CIEND95,Number=2,Type=Integer,Description="Confidence interval (95%) around END for imprecise variants">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">
+##INFO=<ID=SECONDARY,Number=0,Type=Flag,Description="Secondary breakend in a multi-line variants">
+##INFO=<ID=SU,Number=.,Type=Integer,Description="Number of pieces of evidence supporting the variant across all samples">
+##INFO=<ID=PE,Number=.,Type=Integer,Description="Number of paired-end reads supporting the variant across all samples">
+##INFO=<ID=SR,Number=.,Type=Integer,Description="Number of split reads supporting the variant across all samples">
+##INFO=<ID=EV,Number=.,Type=String,Description="Type of LUMPY evidence contributing to the variant call">
+##INFO=<ID=PRPOS,Number=.,Type=String,Description="LUMPY probability curve of the POS breakend">
+##INFO=<ID=PREND,Number=.,Type=String,Description="LUMPY probability curve of the END breakend">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
+##INFO=<ID=TEST2_AF,Number=A,Type=Float,Description="Testing for Issue 209">
+##INFO=<ID=TEST1_AF,Number=A,Type=Float,Description="Testing for Issue 209">
+##INFO=<ID=NSAMP,Number=1,Type=Integer,Description="Number of samples with non-reference genotypes">
+##INFO=<ID=MSQ,Number=1,Type=Float,Description="Mean sample quality of positively genotyped samples">
+##ALT=<ID=DEL,Description="Deletion">
+##ALT=<ID=DUP,Description="Duplication">
+##ALT=<ID=INV,Description="Inversion">
+##ALT=<ID=DUP:TANDEM,Description="Tandem duplication">
+##ALT=<ID=INS,Description="Insertion of novel sequence">
+##ALT=<ID=CNV,Description="Copy number variable region">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=SU,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">
+##FORMAT=<ID=PE,Number=1,Type=Integer,Description="Number of paired-end reads supporting the variant">
+##FORMAT=<ID=SR,Number=1,Type=Integer,Description="Number of split reads supporting the variant">
+##FORMAT=<ID=BD,Number=1,Type=Integer,Description="Amount of BED evidence supporting the variant">
+##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">
+##FORMAT=<ID=SQ,Number=1,Type=Float,Description="Phred-scaled probability that this site is variant (non-reference in this sample">
+##FORMAT=<ID=GL,Number=G,Type=Float,Description="Genotype Likelihood, log10-scaled likelihoods of the data given the called genotype for each possible genotype generated from the reference and alternate alleles given the sample ploidy">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=RO,Number=1,Type=Integer,Description="Reference allele observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AO,Number=A,Type=Integer,Description="Alternate allele observations, with partial observations recorded fractionally">
+##FORMAT=<ID=QR,Number=1,Type=Integer,Description="Sum of quality of reference observations">
+##FORMAT=<ID=QA,Number=A,Type=Integer,Description="Sum of quality of alternate observations">
+##FORMAT=<ID=RS,Number=1,Type=Integer,Description="Reference allele split-read observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AS,Number=A,Type=Integer,Description="Alternate allele split-read observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=RP,Number=1,Type=Integer,Description="Reference allele paired-end observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AP,Number=A,Type=Integer,Description="Alternate allele paired-end observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AB,Number=A,Type=Float,Description="Allele balance, fraction of observations from alternate allele, QA/(QR+QA)">
+##FORMAT=<ID=CN,Number=1,Type=Float,Description="Copy number of structural variant segment.">
+#CHROM_A	START_A	END_A	CHROM_B	START_B	END_B	ID	QUAL	STRAND_A	STRAND_B	TYPE	FILTER	NAME_A	REF_A	ALT_A	NAME_B	REF_B	ALT_B	INFO_A	INFO_B	FORMAT	NA12891
+1	825935	826255	1	5727030	5727159	21	0.00	+	-	DEL	.	21	N	<DEL>	.	.	.	SVTYPE=DEL;POS=825945;SVLEN=-4901204;END=5727149;STRANDS=+-:7;IMPRECISE;CIPOS=-10,310;CIEND=-119,10;CIPOS95=-1,118;CIEND95=-47,3;SU=7;PE=7;SR=0;PRPOS=1.75119e-09,1.10399e-08,6.95943e-08,4.3869e-07,2.765e-06,1.74287e-05,0.000109867,0.000692463,0.00173726,0.0043587,0.0109344,0.0109198,0.0109044,0.010888,0.0108721,0.0108555,0.0108386,0.0108212,0.0108027,0.0107853,0.0107673,0.0107467,0.0107276,0.0107062,0.0106841,0.0106615,0.0106369,0.0106123,0.0105872,0.0105614,0.0105361,0.0105112,0.0104832,0.010455,0.0104275,0.0103981,0.0103684,0.0103365,0.0103053,0.0102737,0.0102393,0.0102045,0.0101696,0.0101318,0.0100923,0.0100534,0.0100129,0.00997247,0.00993099,0.00988705,0.009842,0.00979719,0.009748,0.00969817,0.00964861,0.00959346,0.00954137,0.00948783,0.00943121,0.00937643,0.009317,0.00925721,0.0091962,0.00913039,0.00906582,0.00900065,0.00893237,0.00886333,0.0087934,0.00872101,0.00864739,0.00857253,0.00849524,0.00841733,0.00833841,0.00825581,0.00817426,0.00809201,0.00800567,0.00791919,0.00782929,0.00773795,0.00764813,0.00755665,0.0074621,0.00736741,0.0072729,0.0071759,0.0070746,0.00697175,0.00686637,0.00676148,0.00665377,0.00654564,0.00643826,0.00632993,0.00621963,0.00610735,0.00599468,0.00588195,0.00576581,0.00564985,0.00553433,0.00541769,0.00529989,0.00518278,0.00506456,0.00494495,0.00482757,0.00470967,0.00459083,0.00447351,0.00435461,0.00423767,0.00411935,0.00400188,0.00388615,0.00377161,0.00365695,0.00354286,0.0034298,0.00331834,0.00320747,0.00309666,0.002988,0.0028805,0.00277276,0.00266855,0.00256652,0.00246543,0.00236594,0.00226834,0.00217362,0.00208151,0.0019896,0.00190124,0.00181447,0.00172923,0.00164805,0.00156786,0.00149001,0.00141568,0.00134309,0.00127319,0.00120626,0.00114171,0.00107927,0.00101913,0.000960961,0.000905238,0.000851818,0.000800255,0.000751464,0.000705235,0.000661024,0.000618575,0.000578858,0.000540886,0.000504425,0.000470257,0.000437751,0.00040729,0.000378619,0.000351297,0.000325922,0.000302136,0.000279562,0.000258397,0.000238561,0.000219952,0.000202526,0.000186205,0.000171029,0.00015679,0.000143534,0.000131487,0.000120002,0.000109515,0.000100004,9.0993e-05,8.28e-05,7.52341e-05,6.82163e-05,6.19012e-05,5.59686e-05,5.05925e-05,4.57348e-05,4.12637e-05,3.71904e-05,3.35038e-05,3.01327e-05,2.70445e-05,2.42431e-05,2.17122e-05,1.94337e-05,1.73791e-05,1.55082e-05,1.38596e-05,1.23729e-05,1.10096e-05,9.78044e-06,8.69833e-06,7.7248e-06,6.84336e-06,6.05836e-06,5.36452e-06,4.74885e-06,4.1974e-06,3.7019e-06,3.25982e-06,2.87146e-06,2.52472e-06,2.21519e-06,1.94169e-06,1.70303e-06,1.49001e-06,1.30032e-06,1.13555e-06,9.90154e-07,8.61737e-07,7.50049e-07,6.52106e-07,5.66718e-07,4.91249e-07,4.26232e-07,3.69878e-07,3.19664e-07,2.76005e-07,2.38337e-07,2.0545e-07,1.77222e-07,1.52257e-07,1.30516e-07,1.12675e-07,9.69119e-08,8.28488e-08,7.1089e-08,6.07378e-08,5.18819e-08,4.4471e-08,3.78033e-08,3.23305e-08,2.77137e-08,2.36316e-08,2.0243e-08,1.72538e-08,1.46488e-08,1.25009e-08,1.06463e-08,9.02865e-09,7.63747e-09,6.4858e-09,5.51067e-09,4.67305e-09,3.94381e-09,3.32852e-09,2.81687e-09,2.37248e-09,1.99328e-09,1.67525e-09,1.41209e-09,1.18687e-09,9.9358e-10,8.33668e-10,6.99058e-10,5.83309e-10,4.88121e-10,4.07429e-10,3.40053e-10,2.83431e-10,2.37499e-10,1.99101e-10,1.6621e-10,1.38386e-10,1.15181e-10,9.63099e-11,8.01505e-11,6.64361e-11,5.55742e-11,4.6348e-11,3.85855e-11,3.22568e-11,2.68707e-11,2.23542e-11,1.86379e-11,1.54434e-11,1.28397e-11,1.06477e-11,8.83176e-12,7.37065e-12,6.09607e-12,5.07415e-12,4.21811e-12,3.48705e-12,2.88694e-12,2.39647e-12,1.98203e-12,1.63364e-12,1.34383e-12,1.1083e-12,9.10269e-13,7.51527e-13,6.18635e-13,5.08092e-13,4.20799e-13,3.46668e-13,2.85339e-13,2.34266e-13,1.92905e-13,1.6031e-13,1.31045e-13,1.07316e-13,8.88331e-14,7.33266e-14,6.04064e-14,4.94675e-14,4.06457e-14,3.38269e-14,2.78362e-14,2.29935e-14,1.91086e-14;PREND=7.63087e-06,8.42134e-06,9.29201e-06,1.03194e-05,1.14145e-05,1.26169e-05,1.39322e-05,1.53388e-05,1.69194e-05,1.86662e-05,2.05391e-05,2.2644e-05,2.49046e-05,2.73256e-05,3.00515e-05,3.29432e-05,3.61933e-05,3.97937e-05,4.36777e-05,4.79567e-05,5.25391e-05,5.75849e-05,6.29111e-05,6.88527e-05,7.56487e-05,8.26687e-05,9.04477e-05,9.87915e-05,0.000108431,0.000118619,0.000129492,0.000141722,0.000154623,0.000168439,0.000184056,0.000200948,0.000219324,0.000238422,0.000260173,0.00028335,0.000307737,0.000333655,0.00036185,0.000393421,0.000425457,0.000460592,0.000498027,0.000540175,0.000584902,0.000629391,0.000681051,0.000735144,0.000793318,0.000859441,0.000924085,0.000998788,0.00108012,0.001163,0.00125715,0.00135318,0.00145368,0.00157057,0.00169202,0.0018175,0.00195613,0.00210598,0.00226612,0.00243634,0.00261014,0.00279627,0.00300478,0.00321909,0.00344782,0.00369214,0.00395134,0.0042265,0.00451502,0.00482488,0.00515322,0.00550028,0.00587266,0.00626609,0.00668029,0.00711048,0.00757644,0.00807113,0.00859186,0.00913483,0.00970509,0.0103154,0.0109383,0.0115984,0.0123077,0.0130576,0.0138444,0.0146506,0.0154953,0.0164035,0.0173462,0.0183408,0.0193781,0.0204854,0.0216512,0.0228466,0.0240885,0.0253876,0.0267508,0.0281528,0.0296188,0.0311878,0.032757,0.0344511,0.0361959,0.0379877,0.0398807,0.0417967,0.0438263,0.0459583,0.0480875,0.0503571,0.0209755,0.00872911,0.00363151,0.0015094,0.000626963,0.000260348,0.000107994,4.47788e-05,1.85617e-05,7.68556e-06;AF=0;NSAMP=0;MSQ=.;TEST2_AF=0.5;TEST1_AF=0.567	.	GT:SU:PE:SR:GQ:SQ:GL:DP:RO:AO:QR:QA:RS:AS:RP:AP:AB:CN	0/0:7:7:0:200:0.00:-12,-55,-234:286:265:21:265:21:0:0:265:21:0.073:1.99

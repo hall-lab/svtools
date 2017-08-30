@@ -1,8 +1,8 @@
-#Example analysis using `svtools`
+# Example analysis using `svtools`
 This tutorial will help you begin to explore the use of `svtools` to analyze an SV VCF.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and walk through basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
 
-##Table of Contents
+## Table of Contents
 1. Satisfy computing environment requirements
 2. Gather genomic data and generate needed helper files
 3. Use `svtools` to create a callset
@@ -19,6 +19,8 @@ This tutorial includes example commands that you can alter to refer to your samp
     7. Use `svtools prune` to filter out additional variant calls likely representing the same variant  
 4. Use `svtools classify` to refine genotypes and SV types
     1. Generate a repeat elements BED file
+        1. MEI file generation for hg19
+        2. MEI file generation for GRCh38
     2. Generate a file specifying the number of X chromosome copies in each person
     3. Download a file of high-quality, simple deletions and duplications
     4. Generate a VCF of training variants
@@ -63,7 +65,7 @@ svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 **Note:** `svtools lsort` will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
 
-###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
+### Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin -f 20 \
@@ -168,6 +170,7 @@ The classifier can be run in several modes depending on the sample size. For thi
 ### Generate a repeat elements BED file
 All `svtools classify` commands require a BED file of repeats for classifying Mobile Element Insertions (MEI). This can be created from the UCSC genome browser.
 
+#### MEI file generation for hg19
 ```
 curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
 | gzip -cdfq \
@@ -175,6 +178,16 @@ curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
 | sort -k1,1V -k2,2n -k3,3n \
 | awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
 | bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz
+```
+
+#### MEI file generation for GRCh38
+```
+curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz \
+| gzip -cdfq \
+| awk '{ if ($3<200) print $6,$7,$8,$12"|"$13"|"$11,$3,$10 }' OFS="\t" \
+| sort -k1,1V -k2,2n -k3,3n \
+| awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
+| bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.GRCh38.sorted.bed.gz```
 ```
 
 ### Generate a file specifying the number of X chromosome copies in each person

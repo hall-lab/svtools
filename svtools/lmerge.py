@@ -1,10 +1,15 @@
 import svtools.l_bp as l_bp
 from svtools.breakpoint import Breakpoint
 import svtools.logspace as ls
+from svtools.vcf.file import Vcf
+from svtools.vcf.variant import Variant
+import svtools.utils as su
 
 import sys
 import numpy as np
 import argparse
+import heapq
+import re
 
 def null_format_string(format_string):
     null_list = []
@@ -16,197 +21,36 @@ def null_format_string(format_string):
     null_string = ':'.join(null_list)
     return null_string
 
-def print_var_line(l, genotypes=None):
-    A = l.rstrip().split('\t')
 
-    if A[4] == '<INV>' and ('--:0' in A[7] or '++:0' in A[7]):
-        [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
-                l_bp.split_v(l)
+def merge_single_bp(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes):
 
-        STRAND_DICT = dict(x.split(':') for x in m['STRANDS'].split(','))
-        for o in STRAND_DICT.keys():
-            if STRAND_DICT[o] == '0':
-                del(STRAND_DICT[o])
-        STRANDS = ','.join(['%s:%s' % (o,STRAND_DICT[o]) for o in STRAND_DICT])
+    A = BP[0].l.rstrip().split('\t')
+    var = Variant(A,vcf)
+    sname = var.get_info('SNAME')
+    var.set_info('SNAME', sname + ':' + var.var_id)
+    var.var_id=str(v_id)
 
-        if STRANDS[:2] == '++':
-            ALT = 'N]' + chr_l + ':' + m['END'] + ']'
-        elif STRANDS[:2] == '--':
-            ALT = '[' + chr_l + ':' + m['END'] + '[N'
-
-        SVTYPE = 'BND'
-        CIPOS = m['CIEND']
-        CIEND = m['CIPOS']
-        CIPOS95 = m['CIEND95']
-        CIEND95 = m['CIPOS95']
-        IMPRECISE = 'IMPRECISE'
-        SU = m['SU']
-        PE = m['PE']
-        SR = m['SR']
-        PRPOS = m['PREND']
-        PREND = m['PRPOS']
-        SNAME = m['SNAME']
-        ALG = m['ALG']
-        EVENT = A[2]
-
-        A[4] = ALT
-        A[7] = ';'.join(['SVTYPE='   + str(SVTYPE),
-                         'STRANDS='  + str(STRANDS),
-                         'CIPOS='    + str(CIPOS),
-                         'CIEND='    + str(CIEND),
-                         'CIPOS95='  + str(CIPOS95),
-                         'CIEND95='  + str(CIEND95),
-                                       str(IMPRECISE),
-                         'SU='       + str(SU),
-                         'PE='       + str(PE),
-                         'SR='       + str(SR),
-                         'PRPOS='    + str(PRPOS),
-                         'PREND='    + str(PREND),
-                         'ALG='      + str(ALG),
-                         'SNAME='    + str(SNAME),
-                         'EVENT='    + str(EVENT)])
-
-        # reconstruct the line
-        l = '\t'.join(A)
-
-    if A[4] not in ['<DEL>', '<DUP>', '<INV>']:
-        [sv_type,chr_l,chr_r,strands,start_l,end_l,start_r,end_r,m] = \
-                l_bp.split_v(l)
-
-        CHROM = chr_r
-        POS = m['END']
-        ID = A[2] + '_2'
-        REF = 'N'
-        ALT = ''
-
-        if A[4][0] == '[':
-            ALT = '[' + chr_l + ':' + A[1] + '[N'
-        elif A[4][0] == ']':
-            ALT = 'N[' + chr_l + ':' + A[1] + '['
-        elif A[4][-1] == '[':
-            ALT = ']' + chr_l + ':' + A[1] + ']N'
-        elif A[4][-1] == ']':
-            ALT = 'N]' + chr_l + ':' + A[1] + ']'
-
-        QUAL = A[5]
-        FILTER = '.'
-        SVTYPE = 'BND'
-        STRANDS = m['STRANDS']
-        CIPOS = m['CIEND']
-        CIEND = m['CIPOS']
-        CIPOS95 = m['CIEND95']
-        CIEND95 = m['CIPOS95']
-        IMPRECISE = 'IMPRECISE'
-        SU = m['SU']
-        PE = m['PE']
-        SR = m['SR']
-        PRPOS = m['PREND']
-        PREND = m['PRPOS']
-        SNAME = m['SNAME']
-        EVENT = A[2]
-        ALG = m['ALG']
-        SECONDARY = 'SECONDARY'
-        MATEID=A[2] + '_1'
-
-        INFO = ';'.join(['SVTYPE='   + str(SVTYPE),
-                         'STRANDS='  + str(STRANDS),
-                         'CIPOS='    + str(CIPOS),
-                         'CIEND='    + str(CIEND),
-                         'CIPOS95='  + str(CIPOS95),
-                         'CIEND95='  + str(CIEND95),
-                                       str(IMPRECISE),
-                                       str(SECONDARY),
-                         'SU='       + str(SU),
-                         'PE='       + str(PE),
-                         'SR='       + str(SR),
-                         'PRPOS='    + str(PRPOS),
-                         'PREND='    + str(PREND),
-                         'ALG='      + str(ALG),
-                         'SNAME='    + str(SNAME),
-                         'EVENT='    + str(EVENT),
-                         'MATEID='   + str(MATEID)])
-
-        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
-
-        A[7] += ';MATEID=' + A[2] + '_2'
-        A[2] += '_1'
-        var1 = '\t'.join(A[:8])
-        var2 = '\t'.join([str(o) for o in O])
-        if genotypes != None:
-            var1 = '\t'.join([var1, genotypes])
-            var2 = '\t'.join([var2, genotypes])
-
-        print var1
-        print var2
-
+    if use_product:
+        var.set_info('ALG', 'PROD')
     else:
-        var = '\t'.join(A[:8])
-        if genotypes != None:
-            var = '\t'.join([var, genotypes])
-        print var
+        var.set_info('ALG', 'SUM')
 
-def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
-    if len(BP) == 1:
-        A = BP[0].l.rstrip().split('\t')
-        #tack on id to SNAME
-        s_start=A[7].find('SNAME=')
-        s_end=A[7].find(';',s_start)
-        sname = None
-        if (s_end > -1):
-            sname = A[7][s_start + 6:s_end]
-            A[7] = A[7][:s_start] + \
-                    A[7][s_start:s_end] + \
-                    ':' + A[2] + \
-                    A[7][s_end:]
-        else:
-            sname = A[7][s_start + 6:]
-            A[7]+= ':' + A[2]
+    GTS = None
+    if include_genotypes:
+        null_string = null_format_string(A[8])
+        gt_dict = { sname: A[9] }
+        GTS = '\t'.join([gt_dict.get(x, null_string) for x in sample_order])
+        var.gts = None
+        var.gts_string = GTS
 
-        # reset the id to be unique in this file
-        v_id += 1
-        A[2] = str(v_id)
+    return var
 
-        #clip out old mate id
-        s_start=A[7].find('MATEID=')
-        s_end=A[7].find(';',s_start)
-        if (s_end > -1):
-            A[7] = A[7][:s_start] + A[7][s_end+1:]
-        elif (s_start > -1):
-            A[7] = A[7][:s_start]
 
-        #clip out old event id
-        s_start=A[7].find('EVENT=')
-        s_end=A[7].find(';', s_start)
-        if (s_end > -1):
-            A[7] = A[7][:s_start] + A[7][s_end+1:]
-        elif (s_start > -1):
-            A[7] = A[7][:s_start]
-
-        #add new mate
-        A[7]+= ';EVENT=' + A[2]
-
-        #add new alg
-        if use_product:
-            A[7]+= ';ALG=PROD'
-        else:
-            A[7] += ';ALG=SUM'
-
-        GTS = None
-        if include_genotypes:
-            null_string = null_format_string(A[8])
-            gt_dict = { sname: A[9] }
-            GTS = '\t'.join([A[8]] + [gt_dict.get(x, null_string) for x in sample_order])
-        print_var_line('\t'.join(A), GTS)
-        return v_id
+def order_cliques(BP, C):
 
     #Sweep the set.  Find the largest intersecting set.  Remove it.  Continue.
-    import heapq
-
-    BP.sort(key=lambda x: x.start_l)
 
     BP_i = range(len(BP)) # index set of each node in the graph
-    C = []
-
     while len(BP_i) > 0:
         h_l = [] #heap of left breakpoint end coordinates and node id (index). heapq is a min heap and the end coord is what will be used for the sorting.
         max_c = []
@@ -240,280 +84,407 @@ def merge(BP, sample_order, v_id, use_product, include_genotypes=False):
         for c in max_c:
             BP_i.remove(c)
 
-    for c in C:
-        L = []
-        R = []
-        for b_i in c:
-            b = BP[b_i]
-            L.append([b.start_l,b.end_l,b.p_l])
-            R.append([b.start_r,b.end_r,b.p_r])
 
-        [start_R, end_R, a_R] = l_bp.align_intervals(R)
-        [start_L, end_L, a_L] = l_bp.align_intervals(L)
 
-        p_L = [0] * len(a_L[0])
-        p_R = [0] * len(a_R[0])
+def getCI95( p_L, p_R, max_i_L, max_i_R):
 
-        for c_i in range(len(c)):
-            for i in range(len(a_L[c_i])):
-                p_L[i] += a_L[c_i][i]
+    ninefive_i_L_start = max_i_L
+    ninefive_i_L_end = max_i_L
+    ninefive_i_L_total = p_L[max_i_L]
+    
+    while (ninefive_i_L_total < 0.95):
+        if (ninefive_i_L_start <= 0) and (ninefive_i_L_end >= (len(p_L)-1)):
+            break
+        ninefive_i_L_start = max(0, ninefive_i_L_start - 1)
+        ninefive_i_L_end = min(len(p_L)-1, ninefive_i_L_end +1)
+        ninefive_i_L_total = sum(p_L[ninefive_i_L_start:ninefive_i_L_end+1])
 
-            for i in range(len(a_R[c_i])):
-                p_R[i] += a_R[c_i][i]
+    ninefive_i_L_start = ninefive_i_L_start - max_i_L
+    ninefive_i_L_end = ninefive_i_L_end - max_i_L
 
-        ALG = 'SUM'
-        if use_product:
-            pmax_i_L = p_L.index(max(p_L))
-            pmax_i_R = p_R.index(max(p_R))
+    ninefive_i_R_start = max_i_R
+    ninefive_i_R_end = max_i_R
+    ninefive_i_R_total = p_R[max_i_R]
+    
+    while (ninefive_i_R_total < 0.95):
+        if (ninefive_i_R_start <= 0) and (ninefive_i_R_end >= len(p_R)-1):
+            break
+        ninefive_i_R_start = max(0, ninefive_i_R_start - 1)
+        ninefive_i_R_end = min(len(p_R)-1, ninefive_i_R_end +1)
+        ninefive_i_R_total = sum(p_R[ninefive_i_R_start:ninefive_i_R_end+1])
 
-            miss = 0
-            for c_i in range(len(c)):
-                if (a_L[c_i][pmax_i_L] == 0) or (a_R[c_i][pmax_i_R] == 0):
-                    miss += 1
-            if miss == 0:
-                ALG = "PROD"
-                ls_p_L = [ls.get_ls(1)] * len(a_L[0])
-                ls_p_R = [ls.get_ls(1)] * len(a_R[0])
-                for c_i in range(len(c)):
-                    for i in range(len(a_L[c_i])):
-                        ls_p_L[i] = ls.ls_multiply(ls_p_L[i], ls.get_ls(a_L[c_i][i]))
+    ninefive_i_R_end = ninefive_i_R_end - max_i_R
+    ninefive_i_R_start = ninefive_i_R_start - max_i_R
+    CIPOS95=str(ninefive_i_L_start) + ',' + str(ninefive_i_L_end)
+    CIEND95=str(ninefive_i_R_start) + ',' + str(ninefive_i_R_end)
+    return [CIPOS95, CIEND95]
 
-                    for i in range(len(a_R[c_i])):
-                        ls_p_R[i] = ls.ls_multiply(ls_p_R[i], ls.get_ls(a_R[c_i][i]))
 
-                ls_sum_L = ls.get_ls(0)
-                ls_sum_R = ls.get_ls(0)
 
-                for ls_p in ls_p_L:
-                    ls_sum_L = ls.ls_add(ls_sum_L, ls_p)
+def combine_pdfs(BP, c, use_product, weighting_scheme):
+  
+    L = []
+    R = []
+    for b_i in c:
+        b = BP[b_i]
+        L.append([b.start_l,b.end_l,b.p_l])
+        R.append([b.start_r,b.end_r,b.p_r])
 
-                for ls_p in ls_p_R:
-                    ls_sum_R = ls.ls_add(ls_sum_R, ls_p)
+    [start_R, end_R, a_R] = l_bp.align_intervals(R)
+    [start_L, end_L, a_L] = l_bp.align_intervals(L)
 
-                p_L = []
-                for ls_p in ls_p_L:
-                    p_L.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_L)))
+    p_L = [0] * len(a_L[0])
+    p_R = [0] * len(a_R[0])
+    wts = [1] * len(c)
 
-                p_R = []
-                for ls_p in ls_p_R:
-                    p_R.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_R)))
+    for c_i in range(len(c)):
 
-        sum_L = sum(p_L)
-        sum_R = sum(p_R)
-        p_L = [x/sum_L for x in p_L]
-        p_R = [x/sum_L for x in p_R]
+        if weighting_scheme == 'evidence_wt':
 
-        [clip_start_L, clip_end_L] = l_bp.trim(p_L)
-        [clip_start_R, clip_end_R] = l_bp.trim(p_R)
-
-        new_start_L = start_L + clip_start_L
-        new_end_L = end_L - clip_end_L
-
-        new_start_R = start_R + clip_start_R
-        new_end_R = end_R - clip_end_R
-
-        p_L = p_L[clip_start_L:len(p_L)-clip_end_L]
-        p_R = p_R[clip_start_R:len(p_R)-clip_end_R]
-
-        s_p_L = sum(p_L)
-        s_p_R = sum(p_R)
-
-        p_L = [x/s_p_L for x in p_L]
-        p_R = [x/s_p_R for x in p_R]
-
-        max_i_L = p_L.index(max(p_L))
-        max_i_R = p_R.index(max(p_R))
-
-        ninefive_i_L_start = max_i_L
-        ninefive_i_L_end = max_i_L
-        ninefive_i_L_total = p_L[max_i_L]
-        updated = 0
-        while (ninefive_i_L_total < 0.95):
-            if (ninefive_i_L_start <= 0) and (ninefive_i_L_end >= (len(p_L)-1)):
-                break
-            ninefive_i_L_start = max(0, ninefive_i_L_start - 1)
-            ninefive_i_L_end = min(len(p_L)-1, ninefive_i_L_end +1)
-            ninefive_i_L_total = sum(p_L[ninefive_i_L_start:ninefive_i_L_end+1])
-        ninefive_i_L_start = ninefive_i_L_start - max_i_L
-        ninefive_i_L_end = ninefive_i_L_end - max_i_L
-
-        ninefive_i_R_start = max_i_R
-        ninefive_i_R_end = max_i_R
-        ninefive_i_R_total = p_R[max_i_R]
-        updated = 0
-        while (ninefive_i_R_total < 0.95):
-            if (ninefive_i_R_start <= 0) and (ninefive_i_R_end >= len(p_R)-1):
-                break
-            ninefive_i_R_start = max(0, ninefive_i_R_start - 1)
-            ninefive_i_R_end = min(len(p_R)-1, ninefive_i_R_end +1)
-            ninefive_i_R_total = sum(p_R[ninefive_i_R_start:ninefive_i_R_end+1])
-        ninefive_i_R_end = ninefive_i_R_end - max_i_R
-        ninefive_i_R_start = ninefive_i_R_start - max_i_R
-        CIPOS95=str(ninefive_i_L_start) + ',' + str(ninefive_i_L_end)
-        CIEND95=str(ninefive_i_R_start) + ',' + str(ninefive_i_R_end)
-
-        CHROM = BP[c[0]].chr_l
-        POS = new_start_L + max_i_L
-        v_id += 1
-        ID = str(v_id)
-        REF = 'N'
-
-        ALT = ''
-        if BP[c[0]].sv_type == 'BND':
-            if BP[c[0]].strands[:2] == '++':
-                ALT = 'N]' + \
-                        BP[c[0]].chr_r + \
-                        ':' + \
-                        str(new_start_R + max_i_R) + \
-                        ']'
-            elif BP[c[0]].strands[:2] == '-+':
-                ALT = ']' + \
-                        BP[c[0]].chr_r + \
-                        ':' + \
-                        str(new_start_R + max_i_R) + \
-                        ']N'
-            elif BP[c[0]].strands[:2] == '+-':
-                ALT = 'N[' + \
-                        BP[c[0]].chr_r + \
-                        ':' + \
-                        str(new_start_R + max_i_R) + \
-                        '['
-            elif BP[c[0]].strands[:2] == '--':
-                ALT = '[' + \
-                        BP[c[0]].chr_r + \
-                        ':' + \
-                        str(new_start_R + max_i_R) + \
-                        '[N'
-
-        else:
-            ALT = '<' + BP[c[0]].sv_type + '>'
-        QUAL = 0.0
-        FILTER = '.'
-        FORMAT = BP[c[0]].l.split('\t')[8]
-        SVTYPE = BP[c[0]].sv_type
-
-        STRANDS = ''
-        strand_map = {}
-        e_type_map = {}
-
-        SU = 0
-        PE = 0
-        SR = 0
-
-        s_name_list = []
-
-        format_string = None
-        gt_dict = dict()
-
-        for b_i in c:
-            A = BP[b_i].l.rstrip().split('\t')
-            if A[5].isdigit():
-                QUAL += float(A[5])
-
+            A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
+            wt=int(m['SU'])
+            #sys.stderr.write("wt\t0\t"+str(wt)+"\n")
+            a_L[c_i]=[wt*ali for ali in a_L[c_i]]
+            a_R[c_i]=[wt*ari for ari in a_R[c_i]]
 
-            for strand_entry in m['STRANDS'].split(','):
-                s_type,s_count = strand_entry.split(':')
-                if s_type not in strand_map:
-                    strand_map[s_type] = 0
-                strand_map[s_type] += int(s_count)
+        elif weighting_scheme == 'carrier_wt':
 
-            SU += int(m['SU'])
-            PE += int(m['PE'])
-            SR += int(m['SR'])
+            A = BP[c[c_i]].l.rstrip().split('\t', 10)
+            m = l_bp.to_map(A[7])
+            wt = 1
+            if 'SNAME1' in m:
+                wt=len(m['SNAME1'].split(','))
+            a_L[c_i]=[wt*ali for ali in a_L[c_i]]
+            a_R[c_i]=[wt*ari for ari in a_R[c_i]]      
 
-            s_name_list.append(m['SNAME'] + ':' + A[2])
+        for i in range(len(a_L[c_i])):
+            #sys.stderr.write("L\t"+str(i)+"\t"+str(c_i)+"\t"+str(a_L[c_i][i])+"\n")
+            p_L[i] += a_L[c_i][i]
 
-            if include_genotypes:
-                if format_string == None:
-                    format_string = A[8]
+        for i in range(len(a_R[c_i])):
+            #sys.stderr.write("R\t"+str(i)+"\t"+str(c_i)+"\t"+str(a_R[c_i][i])+"\n")
+            p_R[i] += a_R[c_i][i]
 
-                if format_string == A[8]:
-                    gt_dict[m['SNAME']] = A[9]
-                else:
-                    longer = A[8]
-                    shorter = format_string
-                    if len(longer) < len(shorter):
-                        longer, shorter = shorter, longer
+    ALG = 'SUM'
+    if use_product:
+        pmax_i_L = p_L.index(max(p_L))
+        pmax_i_R = p_R.index(max(p_R))
 
-                    if longer.find(shorter) == 0:
-                        format_string = longer
-                        gt_dict[m['SNAME']] = A[9]
-                    else:
-                        sys.stderr.write('Unable to merge and include genotypes when FORMAT fields differ across VCF files\n')
-                        sys.stderr.write('Previous: {0} Current: {1}\n'.format(format_string, A[8]))
-                        sys.stderr.write('Variant: {0}\n'.format(m['SNAME'] + ':' + A[2]))
-                        sys.exit(1)
+        miss = 0
+        for c_i in range(len(c)):
+            if (a_L[c_i][pmax_i_L] == 0) or (a_R[c_i][pmax_i_R] == 0):
+                miss += 1
+        if miss == 0:
+            ALG = "PROD"
+            ls_p_L = [ls.get_ls(1)] * len(a_L[0])
+            ls_p_R = [ls.get_ls(1)] * len(a_R[0])
 
-        SNAME=','.join(s_name_list)
+            for c_i in range(len(c)):
+                for i in range(len(a_L[c_i])):
+                    ls_p_L[i] = ls.ls_multiply(ls_p_L[i], ls.get_ls(a_L[c_i][i]))
 
-        GTS = None
+                for i in range(len(a_R[c_i])):
+                    ls_p_R[i] = ls.ls_multiply(ls_p_R[i], ls.get_ls(a_R[c_i][i]))
+
+            ls_sum_L = ls.get_ls(0)
+            ls_sum_R = ls.get_ls(0)
+
+            for ls_p in ls_p_L:
+                ls_sum_L = ls.ls_add(ls_sum_L, ls_p)
+
+            for ls_p in ls_p_R:
+                ls_sum_R = ls.ls_add(ls_sum_R, ls_p)
+
+            p_L = []
+            for ls_p in ls_p_L:
+                p_L.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_L)))
+
+            p_R = []
+            for ls_p in ls_p_R:
+                p_R.append(ls.get_p(ls.ls_divide(ls_p, ls_sum_R)))
+
+    sum_L = sum(p_L)
+    sum_R = sum(p_R)
+    p_L = [x/sum_L for x in p_L]
+    p_R = [x/sum_L for x in p_R]
+
+    [clip_start_L, clip_end_L] = l_bp.trim(p_L)
+    [clip_start_R, clip_end_R] = l_bp.trim(p_R)
+
+    [ new_start_L, new_end_L ] = [ start_L + clip_start_L,  end_L - clip_end_L ]
+    [ new_start_R, new_end_R ] = [ start_R + clip_start_R, end_R - clip_end_R ]
+
+    p_L = p_L[clip_start_L:len(p_L)-clip_end_L]
+    p_R = p_R[clip_start_R:len(p_R)-clip_end_R]
+
+    s_p_L = sum(p_L)
+    s_p_R = sum(p_R)
+
+    p_L = [x/s_p_L for x in p_L]
+    p_R = [x/s_p_R for x in p_R]
+    
+    #sys.exit(1)
+    return new_start_L, new_start_R, p_L, p_R, ALG
+
+def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unweighted'):
+
+    new_start_L, new_start_R, p_L , p_R, ALG = combine_pdfs(BP, c, use_product, weighting_scheme)
+
+
+    max_i_L = p_L.index(max(p_L))
+    max_i_R = p_R.index(max(p_R))
+
+    [cipos95, ciend95]=getCI95( p_L, p_R, max_i_L, max_i_R)
+    new_pos_L = new_start_L + max_i_L
+    new_pos_R = new_start_R + max_i_R
+    BP0=BP[c[0]]
+    A=BP0.l.rstrip().split('\t', 10)
+
+    ALT = ''
+    if BP0.sv_type == 'BND':
+        if BP0.strands[:2] == '++':
+            ALT = 'N]' + BP0.chr_r + ':' + str(new_pos_R) + ']'
+        elif BP0.strands[:2] == '-+':
+            ALT =  ']' + BP0.chr_r + ':' + str(new_pos_R) + ']N'
+        elif BP0.strands[:2] == '+-':
+            ALT = 'N[' + BP0.chr_r + ':' + str(new_pos_R) + '['
+        elif BP0.strands[:2] == '--':
+            ALT =  '[' + BP0.chr_r + ':' + str(new_pos_R) + '[N'
+    else:
+        ALT = '<' + BP0.sv_type + '>'
+
+    var_list=[ BP0.chr_l, 
+               new_pos_L, 
+               str(v_id),
+               'N',
+               ALT,
+               0.0,
+               '.',
+               '',
+               A[8],
+               A[9] ]
+
+    var=Variant(var_list, vcf)
+    
+    var.set_info('SVTYPE', BP0.sv_type)
+    var.set_info('ALG', ALG)
+
+    if var.get_info('SVTYPE')=='DEL':
+        var.set_info('SVLEN', new_pos_L - new_pos_R)
+    elif BP0.chr_l == BP0.chr_r:
+        var.set_info('SVLEN', new_pos_R - new_pos_L)
+    else: 
+        SVLEN = None
+
+    if var.get_info('SVTYPE') == 'BND':
+        var.set_info('EVENT', str(v_id))
+    else:
+        var.set_info('END', new_pos_R )
+    
+    var.set_info('CIPOS95', cipos95)
+    var.set_info('CIEND95', ciend95)
+    var.set_info('CIPOS', ','.join([str(x) for x in [-1*max_i_L, len(p_L) - max_i_L - 1]]))
+    var.set_info('CIEND', ','.join([str(x) for x in [-1*max_i_R, len(p_R) - max_i_R - 1]]))
+    var.set_info('PRPOS', ','.join([str(x) for x in p_L]))
+    var.set_info('PREND', ','.join([str(x) for x in p_R]))
+
+    return var
+
+
+def combine_var_support(var, BP, c, include_genotypes, sample_order):
+    
+    strand_map = {}
+    qual = 0.0
+
+    [ SU, PE, SR ] = [0,0,0]
+
+    s_name_list = []
+    s1_name_list = []
+
+    format_string = var.get_format_string()
+    gt_dict = dict()
+
+    for b_i in c:
+        A = BP[b_i].l.rstrip().split('\t')
+        if A[5].isdigit():
+            qual += float(A[5])
+
+        m = l_bp.to_map(A[7])
+
+        for strand_entry in m['STRANDS'].split(','):
+            s_type,s_count = strand_entry.split(':')
+            if s_type not in strand_map:
+                strand_map[s_type] = 0
+            strand_map[s_type] += int(s_count)
+
+        SU += int(m['SU'])
+        PE += int(m['PE'])
+        SR += int(m['SR'])
+
+        if 'SNAME1' in m:
+            s1_name_list.append(m['SNAME1'] + ':' + m['SU'])
+            
+        s_name_list.append(m['SNAME'] + ':' + A[2])
+
         if include_genotypes:
-            null_string = null_format_string(format_string)
-            GTS = '\t'.join([format_string] + [gt_dict.get(x, null_string) for x in sample_order])
 
-        strand_types_counts = []
-        for strand in strand_map:
-            strand_types_counts.append(strand + ':' + str(strand_map[strand]))
-        STRANDS = ','.join(strand_types_counts)
-
-        if SVTYPE=='DEL':
-            SVLEN = (new_start_L + max_i_L) - (new_start_R + max_i_R)
+            if format_string == A[8]:
+                gt_dict[m['SNAME']] = A[9]
+            else:
+                format_dict = dict(zip(A[8].split(':'), A[9].split(':')))
+                geno = ':'.join([format_dict.get(i, '.')  for i in var.format_list])
+                gt_dict[m['SNAME']] = geno
         else:
-            SVLEN = (new_start_R + max_i_R) - (new_start_L + max_i_L)
+            var.format_dict=None
 
-        # Don't set SVLEN if we have an interchromosomal event. Doesn't make any sense.
-        if BP[c[0]].chr_l != BP[c[0]].chr_r:
-            SVLEN = None
+    var.set_info('SNAME', ','.join(s_name_list))
+    if len(s1_name_list)>0:
+        var.set_info('SNAME1', ','.join(s1_name_list))
 
-        END = new_start_R + max_i_R
-        CIPOS=','.join([str(x) for x in [-1*max_i_L, len(p_L) - max_i_L - 1]])
-        CIEND=','.join([str(x) for x in [-1*max_i_R, len(p_R) - max_i_R - 1]])
-        IMPRECISE='IMPRECISE'
-        PRPOS=','.join([str(x) for x in p_L])
-        PREND=','.join([str(x) for x in p_R])
+    GTS = None
+    if include_genotypes:
+        null_string = null_format_string(format_string)
+        GTS = '\t'.join([gt_dict.get(x, null_string) for x in sample_order])
+        var.gts=None
+        var.gts_string=GTS
+
+    strand_types_counts = []
+    for strand in strand_map:
+        strand_types_counts.append(strand + ':' + str(strand_map[strand]))
+
+    var.set_info('STRANDS', ','.join(strand_types_counts))
+
+    var.qual = qual
+    var.set_info('PE', str(PE))
+    var.set_info('SU', str(SU))
+    var.set_info('SR', str(SR))
+    
+
+def invtobnd(var):
+
+    strands=var.get_info('STRANDS')
+    strand_dict = dict(x.split(':') for x in strands.split(',')) 
+
+    for o in strand_dict.keys():
+        if strand_dict[o] == '0':
+            del(strand_dict[o])
+
+    strands=','.join(['%s:%s' % (o,strand_dict[o]) for o in strand_dict])
+    var.set_info('STRANDS', strands)
+
+    if strands[:2] == '++':
+        ALT = 'N]' + var.chrom + ':' + str(var.get_info('END')) + ']'
+    elif strands[:2] == '--':
+        ALT = '[' + var.chrom + ':' + str(var.get_info('END')) + '[N'
+
+    var.set_info('SVTYPE', 'BND')
+    var.alt = ALT
+    
+    [ tempci, temp95, temppr ] = [ var.get_info('CIPOS'), var.get_info('CIPOS95'), var.get_info('PRPOS')]
+    var.set_info('CIPOS', var.get_info('CIEND'))
+    var.set_info('CIEND', tempci)
+    var.set_info('CIPOS95', var.get_info('CIEND95'))
+    var.set_info('CIEND95', temp95 )
+    var.set_info('PRPOS', var.get_info('PREND'))
+    var.set_info('PREND', temppr )
 
 
-        if (int(CIPOS.split(',')[0]) > int(CIPOS95.split(',')[0])) or \
-            (int(CIPOS.split(',')[1]) < int(CIPOS95.split(',')[1])) or \
-            (int(CIEND.split(',')[0]) > int(CIEND95.split(',')[0])) or \
-            (int(CIEND.split(',')[1]) < int(CIEND95.split(',')[1])):
-            sys.stderr.write(CIPOS + "\t" + str(CIPOS95) + "\n")
-            sys.stderr.write(CIEND + "\t" + str(CIEND95) + "\n")
+def write_var(var, vcf_out, include_genotypes=False):
 
-        I = ['SVTYPE='   + str(SVTYPE),
-             'STRANDS='  + str(STRANDS)
-            ]
-        if SVLEN is not None:
-            I += ['SVLEN='    + str(SVLEN)]
-        I += ['CIPOS='    + str(CIPOS),
-             'CIEND='    + str(CIEND),
-             'CIPOS95='  + str(CIPOS95),
-             'CIEND95='  + str(CIEND95),
-                           str(IMPRECISE),
-             'SU='       + str(SU),
-             'PE='       + str(PE),
-             'SR='       + str(SR),
-             'PRPOS='    + str(PRPOS),
-             'PREND='    + str(PREND),
-             'ALG='      + str(ALG),
-             'SNAME='    + str(SNAME)]
+    v_id=var.var_id
+    if var.get_info('CIPOS95') != '0,0' or var.get_info('CIEND95') != '0,0':
+        var.set_info('IMPRECISE', True)
+    else:
+        var.set_info('IMPRECISE', False)
 
-        if BP[c[0]].sv_type == 'BND':
-            I.append('EVENT=' + str(ID))
-        else:
-            I.append('END=' + str(END))
+    if var.get_info('SVTYPE') == 'INV' and ('--:0' in var.get_info('STRANDS') or '++:0' in var.get_info('STRANDS')):
 
-        INFO = ';'.join(I)
+        invtobnd(var)
 
-        QUAL = str(QUAL)
+    if var.alt not in ['<DEL>', '<DUP>', '<INV>']:
 
-        O = [CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO]
+        var.var_id=str(v_id)+'_1'
+        var.set_info('EVENT', v_id)
+        var.set_info('MATEID', str(v_id)+'_2')
+        var.info.pop('END', None)
+        var.info.pop('SVLEN', None)
+        
+        varstring=var.get_var_string(use_cached_gt_string=True)
+        if not include_genotypes: 
+            varstring='\t'.join(varstring.split('\t', 10)[:8])
 
-        print_var_line('\t'.join([str(o) for o in O]), GTS)
+        vcf_out.write(varstring+'\n')
+        altstr=re.split( '[\[\]:]', var.alt)
+
+        new_alt = ''
+        
+        if var.alt[0] == '[':
+            new_alt = '[' + var.chrom + ':' + str(var.pos) + '[N'
+        elif var.alt[0] == ']':
+            new_alt = 'N[' + var.chrom + ':' + str(var.pos) + '['
+        elif var.alt[-1] == '[':
+            new_alt = ']' + var.chrom + ':' + str(var.pos) + ']N'
+        elif var.alt[-1] == ']':
+            new_alt = 'N]' + var.chrom + ':' + str(var.pos) + ']'
+
+        var.chrom=altstr[1]
+        var.pos=int(altstr[2])        
+        var.var_id=str(v_id)+'_2'
+        var.set_info('MATEID', str(v_id)+'_1')
+        var.set_info('SECONDARY', True)
+        var.alt=new_alt
+
+        [ tempci, temp95, temppr ] = [ var.get_info('CIPOS'), var.get_info('CIPOS95'), var.get_info('PRPOS')]
+        var.set_info('CIPOS', var.get_info('CIEND'))
+        var.set_info('CIEND', tempci)
+        var.set_info('CIPOS95', var.get_info('CIEND95'))
+        var.set_info('CIEND95', temp95 )
+        var.set_info('PRPOS', var.get_info('PREND'))
+        var.set_info('PREND', temppr )
+
+        varstring=var.get_var_string(use_cached_gt_string=True)
+        if not include_genotypes: 
+            varstring='\t'.join(varstring.split('\t', 10)[:8])
+
+        vcf_out.write(varstring+'\n')
+
+
+    else:
+        varstring=var.get_var_string(use_cached_gt_string=True)
+        if not include_genotypes: 
+            varstring='\t'.join(varstring.split('\t', 10)[:8])
+
+        vcf_out.write(varstring+'\n')
+
+    
+
+def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
+
+    if len(BP) == 1:  
+       #merge a single breakpoint 
+        v_id+=1
+        var=merge_single_bp(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes)
+        write_var(var, vcf_out, include_genotypes)
+
+    else:
+
+        BP.sort(key=lambda x: x.start_l)
+        ordered_cliques = []
+        order_cliques(BP, ordered_cliques)
+
+        #merge cliques
+        for cliq in ordered_cliques:
+            v_id+=1
+            var=create_merged_variant(BP, cliq, v_id, vcf, use_product, weighting_scheme)
+            combine_var_support(var, BP, cliq, include_genotypes, sample_order)
+            write_var(var, vcf_out, include_genotypes)
+
     return v_id
 
-def r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes=False):
+
+def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
+    
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.start_r)
     BP_l.sort(key=lambda x: x.chr_r)
@@ -530,80 +501,83 @@ def r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes=False):
             BP_max_end_r = max(BP_max_end_r, b.end_r)
             BP_chr_r = b.chr_r
         else:
-            v_id = merge(BP_r, sample_order, v_id, use_product, include_genotypes)
+            v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
             BP_r = [b]
             BP_max_end_r = b.end_r
             BP_chr_r = b.chr_r
 
     if len(BP_r) > 0:
-        v_id = merge(BP_r, sample_order, v_id, use_product, include_genotypes)
+        v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
 
     return v_id
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False):
+
+
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted'):
+    
     v_id = 0
-    vcf_lines = []
-    vcf_headers = list()
-    infile=open(file_name, 'r')
 
-    header = ''
-    samples = ''
+    in_header = True
+    header = []
+    vcf = Vcf()
+    vcf_out=sys.stdout
 
-    for l in infile:
-      if l[0] == '#':
-        if l[1] != '#':
-          samples = l.rstrip().split('\t')[9:]
-        else:
-          # ignore fileDate
-          if l[:10] == '##fileDate':
-            continue
-          if l not in vcf_headers:
-            vcf_headers.append(l)
-      if l[0] != '#':
-        break
+    with su.InputStream(file_name) as vcf_stream:
 
-    sample_order = []
-    for header in vcf_headers:
-      if header[:8] == '##SAMPLE':
-        sample_order.append(header.rstrip()[13:-1])
-      print header,
+        BP_l = []
+        BP_sv_type = ''
+        BP_max_end_l = -1
+        BP_chr_l = ''
+        sample_order = []
 
-    # Add in the sample names etc
-    chromosome_header_line = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO'
-    if include_genotypes:
-        sample_header = '\t'.join(sample_order)
-        chromosome_header_line += '\tFORMAT\t' + sample_header
-    print chromosome_header_line
+        for line in vcf_stream:
 
-    BP_l = []
-    BP_sv_type = ''
-    BP_max_end_l = -1
-    BP_chr_l = ''
+            if in_header:
 
-    b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
-    BP_l.append(b)
-    BP_max_end_l = max(BP_max_end_l, b.end_l)
-    BP_chr_l = b.chr_l
-    BP_sv_type = b.sv_type
+                if line.startswith('##'):
+                    header.append(line)
+                    continue
 
-    for l in infile:
-      b = Breakpoint(l_bp.parse_vcf_record(l), percent_slop=percent_slop, fixed_slop=fixed_slop)
-      if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
-        BP_l.append(b)
-        BP_max_end_l = max(BP_max_end_l, b.end_l)
-        BP_chr_l = b.chr_l
-        BP_sv_type = b.sv_type
-      else:
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes)
-        BP_l = [b]
-        BP_max_end_l = b.end_l
-        BP_sv_type = b.sv_type
-        BP_chr_l = b.chr_l
+                elif line.startswith('#CHROM'):
+                    v=line.rstrip().split('\t')
+                    for headline in header:
+                        if headline[:8] == '##SAMPLE':
+                            sample_order.append(headline.rstrip()[13:-1])
+                    hline=''
+                    if include_genotypes :
+                        v.extend(sample_order)
+                        hline='\t'.join(v)
+                    else :
+                        v=v[:8]
+                        hline='\t'.join(v)
+                    header.append(hline)                    
+                    in_header=False
+                    vcf.add_header(header)
+                    vcf.add_info('ALG', '1', 'String', 'Algorithm used to merge this breakpoint')
+        
+                    if include_genotypes:
+                        vcf_out.write(vcf.get_header()+'\n')
+                    else:
+                        vcf_out.write(vcf.get_header(False)+'\n')
+            
+                continue
 
-    if len(BP_l) > 0:
-        v_id = r_cluster(BP_l, sample_order, v_id, use_product, include_genotypes)
+            b = Breakpoint(l_bp.parse_vcf_record(line), percent_slop=percent_slop, fixed_slop=fixed_slop)
+            if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
+                BP_l.append(b)
+                BP_max_end_l = max(BP_max_end_l, b.end_l)
+                BP_chr_l = b.chr_l
+                BP_sv_type = b.sv_type
 
-    infile.close()
+            else:
+                v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
+                BP_l = [b]
+                BP_max_end_l = b.end_l
+                BP_sv_type = b.sv_type
+                BP_chr_l = b.chr_l
+
+        if len(BP_l) > 0:
+            v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
 
 def description():
     return 'merge LUMPY calls inside a single file from svtools lsort'
@@ -617,6 +591,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-f', '--fixed-slop', metavar='<INT>', type=int, default=0, help='increase the the breakpoint confidence interval both up and down stream by a given fixed size')
     parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
     parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
+    parser.add_argument('-w', dest='weighting_scheme', metavar='<STRING>', default="unweighted", choices=['carrier_wt', 'evidence_wt'], help='weighting scheme (intended for use in tiered merging), options: unweighted, carrier_wt, evidence_wt')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -629,7 +604,9 @@ def run_from_args(args):
             percent_slop=args.percent_slop,
             fixed_slop=args.fixed_slop,
             use_product=args.use_product,
-            include_genotypes=args.include_genotypes)
+            include_genotypes=args.include_genotypes,
+            weighting_scheme=args.weighting_scheme)
+
 
 if __name__ == "__main__":
     parser = command_parser()

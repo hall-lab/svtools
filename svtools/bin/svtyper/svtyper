@@ -8,7 +8,7 @@ from collections import Counter
 from argparse import RawTextHelpFormatter
 
 __author__ = "Colby Chiang (colbychiang@wustl.edu)"
-__version__ = "v0.1.2"
+__version__ = "v0.1.4"
 
 # --------------------------------------
 # define functions
@@ -22,10 +22,13 @@ description: Compute genotype of structural variants based on breakpoint depth")
     parser.add_argument('-i', '--input_vcf', metavar='FILE', type=argparse.FileType('r'), default=None, help='VCF input (default: stdin)')
     parser.add_argument('-o', '--output_vcf', metavar='FILE',  type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
     parser.add_argument('-B', '--bam', metavar='FILE', type=str, required=True, help='BAM or CRAM file(s), comma-separated if genotyping multiple samples')
+    parser.add_argument('-T', '--ref_fasta', metavar='FILE', type=str, required=False, default=None, help='Indexed reference FASTA file (recommended for reading CRAM files)')
     parser.add_argument('-S', '--split_bam', type=str, required=False, help=argparse.SUPPRESS)
     parser.add_argument('-l', '--lib_info', metavar='FILE', dest='lib_info_path', type=str, required=False, default=None, help='create/read JSON file of library information')
     parser.add_argument('-m', '--min_aligned', metavar='INT', type=int, required=False, default=20, help='minimum number of aligned bases to consider read as evidence [20]')
     parser.add_argument('-n', dest='num_samp', metavar='INT', type=int, required=False, default=1000000, help='number of reads to sample from BAM file for building insert size distribution [1000000]')
+    parser.add_argument('-q', '--sum_quals', action='store_true', required=False, help='add genotyping quality to existing QUAL (default: overwrite QUAL field)')
+    parser.add_argument('--max_reads', metavar='INT', type=int, default=None, required=False, help='maximum number of reads to assess at any variant (reduces processing time in high-depth regions, default: unlimited)')
     parser.add_argument('--split_weight', metavar='FLOAT', type=float, required=False, default=1, help='weight for split reads [1]')
     parser.add_argument('--disc_weight', metavar='FLOAT', type=float, required=False, default=1, help='weight for discordant paired-end reads [1]')
     parser.add_argument('-w', '--write_alignment', metavar='FILE', dest='alignment_outpath', type=str, required=False, default=None, help='write relevant reads to BAM file')
@@ -1298,16 +1301,18 @@ def prob_mapq(read):
 def gather_reads(sample,
                  chrom, pos, ci,
                  z,
-                 fragment_dict):
+                 fragment_dict,
+                 max_reads):
 
     # the distance to the left and right of the breakpoint to scan
     # (max of mean + z standard devs over all of a sample's libraries)
     fetch_flank = sample.get_fetch_flank(z)
     chrom_length = sample.bam.lengths[sample.bam.gettid(chrom)]
 
-    for read in sample.bam.fetch(chrom,
+    many = False
+    for i, read in enumerate(sample.bam.fetch(chrom,
                                  max(pos + ci[0] - fetch_flank, 0),
-                                 min(pos + ci[1] + fetch_flank, chrom_length)):
+                                 min(pos + ci[1] + fetch_flank, chrom_length))):
         lib = sample.get_lib(read.get_tag('RG')) # get the read's library
         if (read.is_unmapped
             or read.is_duplicate
@@ -1316,13 +1321,16 @@ def gather_reads(sample,
 
         # read.query_sequence = "*"
         # read.query_qualities = "*"
+        if max_reads is not None and i > max_reads:
+            many = True
+            break
 
         if read.query_name in fragment_dict:
             fragment_dict[read.query_name].add_read(read)
         else:
             fragment_dict[read.query_name] = SamFragment(read, lib)
 
-    return fragment_dict
+    return fragment_dict, many
 
 # ==================================================
 # Genotyping function
@@ -1337,10 +1345,22 @@ def sv_genotype(bam_string,
                 num_samp,
                 lib_info_path,
                 debug,
-                alignment_outpath):
+                alignment_outpath,
+                ref_fasta,
+                sum_quals,
+                max_reads):
 
     # parse the comma separated inputs
-    bam_list = [pysam.AlignmentFile(b, 'rb') for b in bam_string.split(',')]
+    bam_list = []
+    for b in bam_string.split(','):
+        if b.endswith('.bam'):
+            bam_list.append(pysam.AlignmentFile(b, mode='rb'))
+        elif b.endswith('.cram'):
+            bam_list.append(pysam.AlignmentFile(b, mode='rc', reference_filename=ref_fasta))
+        else:
+            sys.stderr.write('Error: %s is not a valid alignment file (*.bam or *.cram)\n' % b)
+            exit(1)
+            
     min_lib_prevalence = 1e-3 # only consider libraries that constitute at least this fraction of the BAM
 
     # parse lib_info_path JSON
@@ -1409,6 +1429,7 @@ def sv_genotype(bam_string,
                 in_header = False
                 vcf.add_header(header)
                 # if detailed:
+                vcf.add_info('SVTYPE', 1, 'String', 'Type of structural variant')
                 vcf.add_format('GQ', 1, 'Integer', 'Genotype quality')
                 vcf.add_format('SQ', 1, 'Float', 'Phred-scaled probability that this site is variant (non-reference in this sample')
                 vcf.add_format('GL', 'G', 'Float', 'Genotype Likelihood, log10-scaled likelihoods of the data given the called genotype for each possible genotype generated from the reference and alternate alleles given the sample ploidy')
@@ -1437,13 +1458,20 @@ def sv_genotype(bam_string,
         v = line.rstrip().split('\t')
         var = Variant(v, vcf)
         var_length = None # var_length should be None except for deletions
+        if not sum_quals:
+            var.qual = 0
 
         # genotype generic breakends
-        svtype = var.get_info('SVTYPE')
-
+        try:
+            svtype = var.get_info('SVTYPE')
+        except KeyError:
+            sys.stderr.write('Warning: SVTYPE missing at variant %s. Skipping.\n' % (var.var_id))
+            vcf_out.write(var.get_var_string() + '\n')
+            continue
+            
         # print original line if unsupported svtype
         if svtype not in ('BND', 'DEL', 'DUP', 'INV'):
-            sys.stderr.write('Warning: Unsupported SV type at variant %s (%s). Skipping.\n' % (var.var_id, svtype))
+            sys.stderr.write('Warning: Unsupported SVTYPE at variant %s (%s). Skipping.\n' % (var.var_id, svtype))
             vcf_out.write(var.get_var_string() + '\n')
             continue
 
@@ -1496,8 +1524,15 @@ def sv_genotype(bam_string,
         for sample in sample_list:
             # grab batch of reads from both sides of breakpoint
             read_batch = {}
-            read_batch = gather_reads(sample, chromA, posA, ciA, z, read_batch)
-            read_batch = gather_reads(sample, chromB, posB, ciB, z, read_batch)
+            read_batch, many = gather_reads(sample, chromA, posA, ciA, z, read_batch, max_reads)
+            if many:
+                var.genotype(sample.name).set_format('GT', './.')
+                continue
+
+            read_batch, many = gather_reads(sample, chromB, posB, ciB, z, read_batch, max_reads)
+            if many:
+                var.genotype(sample.name).set_format('GT', './.')
+                continue
 
             # initialize counts to zero
             ref_span, alt_span = 0, 0
@@ -1760,7 +1795,10 @@ def main():
                 args.num_samp,
                 args.lib_info_path,
                 args.debug,
-                args.alignment_outpath)
+                args.alignment_outpath,
+                args.ref_fasta,
+                args.sum_quals,
+                args.max_reads)
 
 # initialize the script
 if __name__ == '__main__':

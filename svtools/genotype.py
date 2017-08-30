@@ -8,13 +8,16 @@ class GenotypeVariants(ExternalCmd):
 
     @staticmethod
     def svtyper_option_lut():
-        opts = { 
+        opts = {
                 'input_vcf' : '-i',
                 'output_vcf' : '-o',
                 'bam' : '-B',
+                'ref_fasta' : '-T',
                 'lib_info' : '-l',
                 'min_aligned' : '-m',
                 'num_samp' : '-n',
+                'sum_quals' : '-q',
+                'max_reads' : '--max_reads',
                 'split_weight' : '--split_weight',
                 'disc_weight' : '--disc_weight',
                 'write_alignment' : '-w'
@@ -28,9 +31,12 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-i', '--input_vcf', help='VCF input (default: stdin)')
     parser.add_argument('-o', '--output_vcf', help='output VCF to write (default: stdout)')
     parser.add_argument('-B', '--bam', type=str, required=True, help='BAM or CRAM file(s), comma-separated if genotyping multiple BAMs')
+    parser.add_argument('-T', '--ref_fasta', type=str, required=False, default=None, help='Indexed reference FASTA file (recommended for reading CRAM files)')
     parser.add_argument('-l', '--lib_info', type=str, required=False, help='create/read JSON file of library information')
     parser.add_argument('-m', '--min_aligned', type=int, required=False, default=20, help='minimum number of aligned bases to consider read as evidence [20]')
     parser.add_argument('-n', dest='num_samp', type=int, required=False, default=1000000, help='number of pairs to sample from BAM file for building insert size distribution [1000000]')
+    parser.add_argument('-q', '--sum_quals', action='store_true', required=False, help='add genotyping quality to existing QUAL (default: overwrite QUAL field)')
+    parser.add_argument('--max_reads', type=int, default=None, required=False, help='maximum number of reads to assess at any variant (reduces processing time in high-depth regions, default: unlimited)')
     parser.add_argument('--split_weight', type=float, required=False, default=1, help='weight for split reads [1]')
     parser.add_argument('--disc_weight', type=float, required=False, default=1, help='weight for discordant paired-end reads [1]')
     parser.add_argument('-w', '--write_alignment', type=str, required=False, default=None, help='write relevant reads to BAM file')
@@ -50,7 +56,11 @@ def run_from_args(args):
     optlut = genotyper.svtyper_option_lut()
     for variable, value in argdict.iteritems():
         if variable != 'entry_point' and value not in (False, None):
-            opts.extend([optlut[variable], str(value)])
+            if value is not True:
+                opts.extend([optlut[variable], str(value)])
+            else:
+                opts.extend([optlut[variable]])
+
     genotyper.run_cmd_with_options(opts)
 
 if __name__ == "__main__":
