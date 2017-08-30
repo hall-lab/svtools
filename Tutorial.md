@@ -168,6 +168,7 @@ The classifier can be run in several modes depending on the sample size. For thi
 ### Generate a repeat elements BED file
 All `svtools classify` commands require a BED file of repeats for classifying Mobile Element Insertions (MEI). This can be created from the UCSC genome browser.
 
+#### MEI file generation for hg19
 ```
 curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
 | gzip -cdfq \
@@ -175,6 +176,16 @@ curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
 | sort -k1,1V -k2,2n -k3,3n \
 | awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
 | bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz
+```
+
+#### MEI file generation for GRCh38
+```
+curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz \
+| gzip -cdfq \
+| awk '{ if ($3<200) print $6,$7,$8,$12"|"$13"|"$11,$3,$10 }' OFS="\t" \
+| sort -k1,1V -k2,2n -k3,3n \
+| awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
+| bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.GRCh38.sorted.bed.gz```
 ```
 
 ### Generate a file specifying the number of X chromosome copies in each person
