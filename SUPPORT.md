@@ -1,14 +1,17 @@
 # Support Guidelines
 
+## Before you submit
 Please ensure you've read the existing [README.md](README.md) and
-[Tutorial.md](Tutorial.md).
+[Tutorial.md](Tutorial.md) as this is our best documentation of 
+how to use the software.
 
+## Information to include
 When submitting a possible bug report, the following information is extremely
 helpful:
-* The version of svtools you're using.  The precise command line you used when
-* you encountered the issue.  Any error output from the svtools.
+* The version of svtools you're using. 
+* The precise command line you used when you encountered the issue.
+* Any error output from svtools.
 
-If you are able to provide a small file that reproduces the error, then you are
-much more likely to get a quick fix as this gives the developers an easy way to
-reproduce the error.
-
+**NOTE** — While we understand that this is not feasible in all
+cases, please provide a small file that reproduces the error. This gives us
+a quick way to reproduce the error and start debugging.
