@@ -54,10 +54,10 @@ def svtools_cli_parser():
     vcftobedpe = subparsers.add_parser('vcftobedpe', help=svtools.vcftobedpe.description(), epilog=svtools.vcftobedpe.epilog())
     svtools.vcftobedpe.add_arguments_to_parser(vcftobedpe)
 
-    vcfsort = subparsers.add_parser('vcfsort', help=svtools.vcfsort.description())
+    vcfsort = subparsers.add_parser('vcfsort', help=svtools.vcfsort.description(), epilog=svtools.vcfsort.epilog())
     svtools.vcfsort.add_arguments_to_parser(vcfsort)
 
-    bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description())
+    bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description(), epilog=svtools.bedpesort.epilog())
     svtools.bedpesort.add_arguments_to_parser(bedpesort)
 
     prune = subparsers.add_parser('prune', help=svtools.prune.description(), epilog=svtools.prune.epilog())
