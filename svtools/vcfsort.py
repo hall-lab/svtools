@@ -9,6 +9,9 @@ class VcfSort(ExternalCmd):
 def description():
     return 'sort a VCF file'
 
+def epilog():
+    return 'To read in stdin and output to a file, use /dev/stdin or - as the first positional argument.'
+
 def add_arguments_to_parser(parser):
     parser.add_argument('input', metavar='<VCF>', nargs='?', help='VCF file to sort (default: stdin)')
     parser.add_argument('output', metavar='<VCF>', nargs='?', help='output file to write to (default: stdout)')
