@@ -19,6 +19,8 @@ This tutorial includes example commands that you can alter to refer to your samp
     7. Use `svtools prune` to filter out additional variant calls likely representing the same variant  
 4. Use `svtools classify` to refine genotypes and SV types
     1. Generate a repeat elements BED file
+        1. MEI file generation for hg19
+        2. MEI file generation for GRCh38
     2. Generate a file specifying the number of X chromosome copies in each person
     3. Download a file of high-quality, simple deletions and duplications
     4. Generate a VCF of training variants
