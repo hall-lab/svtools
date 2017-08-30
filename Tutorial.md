@@ -1,8 +1,8 @@
-#Example analysis using `svtools`
+# Example analysis using `svtools`
 This tutorial will help you begin to explore the use of `svtools` to analyze an SV VCF.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and walk through basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
 
-##Table of Contents
+## Table of Contents
 1. Satisfy computing environment requirements
 2. Gather genomic data and generate needed helper files
 3. Use `svtools` to create a callset
@@ -63,7 +63,7 @@ svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 **Note:** `svtools lsort` will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
 
-###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
+### Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin -f 20 \
