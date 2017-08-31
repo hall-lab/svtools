@@ -63,12 +63,17 @@ class Lsort(object):
             os.remove(tmp.name)
 
     def write_header(self):
-        self.vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
+       
+        sname_in_header = False
+        for line in self.vcf_headers:
+           if "##INFO=<ID=SNAME" in line:
+              sname_in_header=True
+        if sname_in_header is False:
+           self.vcf_headers.append("##INFO=<ID=SNAME,Number=.,Type=String," + \
             "Description=\"Source sample name\">\n")
         self.vcf_headers.append("##INFO=<ID=ALG,Number=1,Type=String," + \
             "Description=\"Evidence PDF aggregation algorithm\">\n")
-        self.vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
-            "VARIOUS\n")
+        self.vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tVARIOUS\n")
         self.vcf_headers.sort(cmp=l_bp.header_line_cmp)
         self.output_handle.writelines(self.vcf_headers)
 
