@@ -13,7 +13,7 @@ class BedpeTests(TestCase):
         self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;AF=0.2', 'SVTYPE='), 'BND')
         self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;SECONDARY;AF=0.2', 'SECONDARY'), True)
 
-    def test_parse_info_tag(self):
+    def test_update_info_tag(self):
         self.assertEqual(Bedpe.update_info_tag('SNAME=sample', 'SNAME=', 'sample,sample2'), 'SNAME=sample,sample2')
         self.assertEqual(Bedpe.update_info_tag('SNAME=sample;AF=0.75', 'SNAME=', 'sample,sample2'), 'SNAME=sample,sample2;AF=0.75')
         with self.assertRaises(ValueError):
@@ -124,6 +124,10 @@ class BedpeTests(TestCase):
         # Test to ensure we don't fail if no SNAME is present
         result2 = Bedpe._update_sname_field('AF=0.5', 'AF=0.1')
         self.assertEqual(result2, 'AF=0.5')
+
+        # Test if the first sample is missing SNAME
+        result2 = Bedpe._update_sname_field('AF=0.5', 'AF=0.1;SNAME=sample5:12')
+        self.assertEqual(result2, 'AF=0.5;SNAME=sample5:12')
 
 if __name__ == "__main__":
     main()
