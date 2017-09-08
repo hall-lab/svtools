@@ -109,6 +109,7 @@ class BedpeTests(TestCase):
         self.assertEqual(set(Bedpe._combine_sname_values('sample1:2', 'sample2:4,sample3:5').split(',')), set(['sample1:2', 'sample2:4', 'sample3:5']))
         self.assertEqual(Bedpe._combine_sname_values(None, 'sample2:4,sample3:5'), 'sample2:4,sample3:5')
         self.assertEqual(Bedpe._combine_sname_values('sample2:4,sample3:5', None), 'sample2:4,sample3:5')
+        self.assertEqual(Bedpe._combine_sname_values(None, None), None)
 
     def test__update_sname_field(self):
         expected = set(['sample2:4', 'sample3:12'])
@@ -117,6 +118,10 @@ class BedpeTests(TestCase):
         self.assertEqual(tag_name, 'SNAME')
         result_set = set(values.split(','))
         self.assertEqual(result_set, expected)
+
+        # Test to ensure we don't fail if no SNAME is present
+        result2 = Bedpe._update_sname_field('AF=0.5', 'AF=0.1')
+        self.assertEqual(result2, 'AF=0.5')
 
 if __name__ == "__main__":
     main()
