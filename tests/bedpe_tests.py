@@ -12,12 +12,12 @@ class BedpeTests(TestCase):
         self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;AF=0.2', 'AF='), '0.2')
         self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;AF=0.2', 'SVTYPE='), 'BND')
         self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;SECONDARY;AF=0.2', 'SECONDARY'), True)
+        self.assertEqual(Bedpe.parse_info_tag('SVTYPE=BND;SECONDARY;BAD_AF=0.3;AF=0.2', 'AF='), '0.2')
 
     def test_update_info_tag(self):
         self.assertEqual(Bedpe.update_info_tag('SNAME=sample', 'SNAME=', 'sample,sample2'), 'SNAME=sample,sample2')
         self.assertEqual(Bedpe.update_info_tag('SNAME=sample;AF=0.75', 'SNAME=', 'sample,sample2'), 'SNAME=sample,sample2;AF=0.75')
-        with self.assertRaises(ValueError):
-            Bedpe.update_info_tag('AF=0.75', 'SNAME=', 'sample,sample2')
+        self.assertEqual(Bedpe.update_info_tag('ASNAME=test;AF=0.75', 'SNAME=', 'sample,sample2'), 'ASNAME=test;AF=0.75;SNAME=sample,sample2')
 
         with self.assertRaises(ValueError):
             Bedpe.update_info_tag('SECONDARY;AF=0.5', 'SECONDARY', 'NEW_VALUE')
