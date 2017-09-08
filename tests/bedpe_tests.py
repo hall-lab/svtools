@@ -104,6 +104,8 @@ class BedpeTests(TestCase):
         self.assertEqual(Bedpe.sname_value('SNAME=sample1:2,sample2:3'), 'sample1:2,sample2:3')
         self.assertIsNone(Bedpe.sname_value('AF'))
         self.assertIsNone(Bedpe.sname_value('SNAME='))
+        self.assertEqual(Bedpe.sname_value('SNAME1=older_sample1:2,older_sample2:2;SNAME=sample1:2,sample2:3'), 'sample1:2,sample2:3')
+        self.assertEqual(Bedpe.sname_value('SNAME1=older_sample 1:2,older_sample2:2;SNAME=sample1:2,sample2:3;AF=1'), 'sample1:2,sample2:3')
 
     def test__combine_sname_values(self):
         self.assertEqual(set(Bedpe._combine_sname_values('sample1:2', 'sample2:4,sample3:5').split(',')), set(['sample1:2', 'sample2:4', 'sample3:5']))
@@ -112,8 +114,8 @@ class BedpeTests(TestCase):
         self.assertEqual(Bedpe._combine_sname_values(None, None), None)
 
     def test__update_sname_field(self):
-        expected = set(['sample2:4', 'sample3:12'])
-        result = Bedpe._update_sname_field('SNAME=sample2:4', 'SNAME=sample3:12')
+        expected = set(['sample 2:4', 'sample3:12'])
+        result = Bedpe._update_sname_field('SNAME=sample 2:4', 'SNAME=sample3:12')
         tag_name, values = result.split('=')
         self.assertEqual(tag_name, 'SNAME')
         result_set = set(values.split(','))
