@@ -1,0 +1,54 @@
+##fileformat=BEDPE
+##fileDate=20160412
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=POS,Number=1,Type=Integer,Description="Position of the variant described in this record">
+##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
+##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">
+##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
+##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
+##INFO=<ID=CIPOS95,Number=2,Type=Integer,Description="Confidence interval (95%) around POS for imprecise variants">
+##INFO=<ID=CIEND95,Number=2,Type=Integer,Description="Confidence interval (95%) around END for imprecise variants">
+##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">
+##INFO=<ID=SECONDARY,Number=0,Type=Flag,Description="Secondary breakend in a multi-line variants">
+##INFO=<ID=SU,Number=.,Type=Integer,Description="Number of pieces of evidence supporting the variant across all samples">
+##INFO=<ID=PE,Number=.,Type=Integer,Description="Number of paired-end reads supporting the variant across all samples">
+##INFO=<ID=SR,Number=.,Type=Integer,Description="Number of split reads supporting the variant across all samples">
+##INFO=<ID=EV,Number=.,Type=String,Description="Type of LUMPY evidence contributing to the variant call">
+##INFO=<ID=PRPOS,Number=.,Type=String,Description="LUMPY probability curve of the POS breakend">
+##INFO=<ID=PREND,Number=.,Type=String,Description="LUMPY probability curve of the END breakend">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
+##INFO=<ID=NSAMP,Number=1,Type=Integer,Description="Number of samples with non-reference genotypes">
+##INFO=<ID=MSQ,Number=1,Type=Float,Description="Mean sample quality of positively genotyped samples">
+##ALT=<ID=DEL,Description="Deletion">
+##ALT=<ID=DUP,Description="Duplication">
+##ALT=<ID=INV,Description="Inversion">
+##ALT=<ID=DUP:TANDEM,Description="Tandem duplication">
+##ALT=<ID=INS,Description="Insertion of novel sequence">
+##ALT=<ID=CNV,Description="Copy number variable region">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=SU,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">
+##FORMAT=<ID=PE,Number=1,Type=Integer,Description="Number of paired-end reads supporting the variant">
+##FORMAT=<ID=SR,Number=1,Type=Integer,Description="Number of split reads supporting the variant">
+##FORMAT=<ID=BD,Number=1,Type=Integer,Description="Amount of BED evidence supporting the variant">
+##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">
+##FORMAT=<ID=SQ,Number=1,Type=Float,Description="Phred-scaled probability that this site is variant (non-reference in this sample">
+##FORMAT=<ID=GL,Number=G,Type=Float,Description="Genotype Likelihood, log10-scaled likelihoods of the data given the called genotype for each possible genotype generated from the reference and alternate alleles given the sample ploidy">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=RO,Number=1,Type=Integer,Description="Reference allele observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AO,Number=A,Type=Integer,Description="Alternate allele observations, with partial observations recorded fractionally">
+##FORMAT=<ID=QR,Number=1,Type=Integer,Description="Sum of quality of reference observations">
+##FORMAT=<ID=QA,Number=A,Type=Integer,Description="Sum of quality of alternate observations">
+##FORMAT=<ID=RS,Number=1,Type=Integer,Description="Reference allele split-read observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AS,Number=A,Type=Integer,Description="Alternate allele split-read observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=RP,Number=1,Type=Integer,Description="Reference allele paired-end observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AP,Number=A,Type=Integer,Description="Alternate allele paired-end observation count, with partial observations recorded fractionally">
+##FORMAT=<ID=AB,Number=A,Type=Float,Description="Allele balance, fraction of observations from alternate allele, QA/(QR+QA)">
+##FORMAT=<ID=CN,Number=1,Type=Float,Description="Copy number of structural variant segment.">
+#CHROM_A	START_A	END_A	CHROM_B	START_B	END_B	ID	QUAL	STRAND_A	STRAND_B	TYPE	FILTER	NAME_A	REF_A	ALT_A	NAME_B	REF_B	ALT_B	INFO_A	INFO_B	FORMAT	NA12878	NA12891	NA12892
+1	3388802	3389096	1	3390470	3390861	15	955.01	-	+	DUP	.	15	N	<DUP>	.	.	.	SVTYPE=DUP;AF=0.003333;NSAMP=2;MSQ=491.67	.	GT:SU:PE:SR:GQ:SQ:GL:DP:RO:AO:QR:QA:RS:AS:RP:AP:AB:CN	0/1:24:24:0:18.45:955.01:-98,-2,-4:210:131:78:131:78:0:0:131:78:0.37:4.20	0/0:5:5:0:34.44:0.00:-6,-10,-25:132:121:10:121:10:0:0:121:10:0.076:2.26	0/1:5:0:5:28.32:28.32:-22,-19,-56:340:306:34:305:33:83:23:222:10:0.098:10.41
+1	3388909	3389094	1	3390063	3390138	16	955.01	-	+	DUP	.	15	N	<DUP>	.	.	.	SVTYPE=DUP;AF=0.003333;NSAMP=2;MSQ=491.67	.	GT:SU:PE:SR:GQ:SQ:GL:DP:RO:AO:QR:QA:RS:AS:RP:AP:AB:CN	0/1:24:24:0:18.45:955.01:-98,-2,-4:210:131:78:131:78:0:0:131:78:0.37:4.20	0/0:5:5:0:34.44:0.00:-6,-10,-25:132:121:10:121:10:0:0:121:10:0.076:2.26	0/1:5:0:5:28.32:28.32:-22,-19,-56:340:306:34:305:33:83:23:222:10:0.098:10.41
+1	3388915	3389142	1	3390260	3390334	17	955.01	-	+	DUP	.	15	N	<DUP>	.	.	.	SVTYPE=DUP;AF=0.003333;NSAMP=2;MSQ=491.67	.	GT:SU:PE:SR:GQ:SQ:GL:DP:RO:AO:QR:QA:RS:AS:RP:AP:AB:CN	0/1:24:24:0:18.45:955.01:-98,-2,-4:210:131:78:131:78:0:0:131:78:0.37:4.20	0/0:5:5:0:34.44:0.00:-6,-10,-25:132:121:10:121:10:0:0:121:10:0.076:2.26	0/1:5:0:5:28.32:28.32:-22,-19,-56:340:306:34:305:33:83:23:222:10:0.098:10.41
+1	3389166	3389398	1	3390014	3390449	18	955.01	-	+	DUP	.	15	N	<DUP>	.	.	.	SVTYPE=DUP;AF=0.3333;NSAMP=2;MSQ=491.67	.	GT:SU:PE:SR:GQ:SQ:GL:DP:RO:AO:QR:QA:RS:AS:RP:AP:AB:CN	0/1:24:24:0:18.45:955.01:-98,-2,-4:210:131:78:131:78:0:0:131:78:0.37:4.20	0/0:5:5:0:34.44:0.00:-6,-10,-25:132:121:10:121:10:0:0:121:10:0.076:2.26	0/1:5:0:5:28.32:28.32:-22,-19,-56:340:306:34:305:33:83:23:222:10:0.098:10.41
