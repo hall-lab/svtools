@@ -16,13 +16,12 @@ class Breakpoint:
         self.strands,
         self.start_l,
         self.end_l,
-        self.start_r, 
-        self.end_r, 
+        self.start_r,
+        self.end_r,
         m) = l_bp.split_v(line)
 
-        # TODO Handle missing PRPOS and PREND with intelligent message. Pull out into method.
-        self.p_l = [float(x) for x in m['PRPOS'].split(',')]
-        self.p_r = [float(x) for x in m['PREND'].split(',')]
+        self.p_l = self.floats_from_tag(m, 'PRPOS')
+        self.p_r = self.floats_from_tag(m, 'PREND')
 
         slop_prob = 1e-100 # FIXME This is a constant. Pull out to make more obvious
         if ((percent_slop > 0) or (fixed_slop > 0)):
@@ -62,7 +61,7 @@ class Breakpoint:
                                            self.end_l,
                                            self.chr_r,
                                            self.start_r,
-                                           self.end_r, 
+                                           self.end_r,
                                            self.sv_type,
                                            self.strands,
                                            self.p_l,
@@ -103,3 +102,10 @@ class Breakpoint:
             ovl_r += min(self.p_r[i + self_start_off_r], b.p_r[i + b_start_off_r])
 
         return ovl_l * ovl_r
+
+    @staticmethod
+    def floats_from_tag(info_dict, tag):
+        if tag in info_dict:
+            return [float(x) for x in info_dict[tag].split(',')]
+        else:
+            raise RuntimeError('Required tag {0} not found.'.format(tag))
