@@ -62,10 +62,9 @@ class Breakpoint:
             (self.chr_r != b.chr_r) or
             (self.sv_type != b.sv_type)):
                 return 0
-        #get left common interval
-        c_start_l, c_end_l = max(self.start_l, b.start_l), min(self.end_l, b.end_l)
-        #get right common interval
-        c_start_r, c_end_r = max(self.start_r, b.start_r), min(self.end_r, b.end_r)
+        #get common intervals
+        c_start_l, c_end_l = self.common_interval(self.start_l, b.start_l, self.end_l, b.end_l)
+        c_start_r, c_end_r = self.common_interval(self.start_r, b.start_r, self.end_r, b.end_r)
 
         c_l_len = c_end_l - c_start_l + 1
         c_r_len = c_end_r - c_start_r + 1
@@ -73,22 +72,23 @@ class Breakpoint:
         if (c_l_len < 1) or (c_r_len < 1):
             return 0
 
-        # TODO This should probably be a method as well
-        self_start_off_l = c_start_l - self.start_l
-        b_start_off_l = c_start_l - b.start_l
-
-        self_start_off_r = c_start_r - self.start_r
-        b_start_off_r = c_start_r - b.start_r
-
-        ovl_l = 0
-        for i in range(c_l_len):
-            ovl_l += min(self.p_l[i + self_start_off_l], b.p_l[i + b_start_off_l])
-
-        ovl_r = 0
-        for i in range(c_r_len):
-            ovl_r += min(self.p_r[i + self_start_off_r], b.p_r[i + b_start_off_r])
+        ovl_l = self.overlap_prob(c_l_len, c_start_l, self.start_l, b.start_l, self.p_l, b.p_l)
+        ovl_r = self.overlap_prob(c_r_len, c_start_r, self.start_r, b.start_r, self.p_r, b.p_r)
 
         return ovl_l * ovl_r
+
+    @staticmethod
+    def common_interval(start1, start2, end1, end2):
+        return max(start1, start2), min(end1, end2)
+
+    @staticmethod
+    def overlap_prob(c_len, c_start, start, b_start, p, b_p):
+        start_off = c_start - start
+        b_start_off = c_start - b_start
+        ovl = 0
+        for i in range(c_len):
+            ovl += min(p[i + start_off], b_p[i + b_start_off])
+        return ovl
 
     @staticmethod
     def floats_from_tag(info_dict, tag):
