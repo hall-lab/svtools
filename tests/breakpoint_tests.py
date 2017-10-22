@@ -15,34 +15,34 @@ class BreakpointTests(TestCase):
         bp = Breakpoint(self.entry, fixed_slop=1)
         self.assertEqual(bp.l, self.entry)
         self.assertEqual(bp.sv_type, 'BND')
-        self.assertEqual(bp.chr_l, '1')
-        self.assertEqual(bp.chr_r, '10')
+        self.assertEqual(bp.left.chrom, '1')
+        self.assertEqual(bp.right.chrom, '10')
         self.assertEqual(bp.strands, '++:5')
-        self.assertEqual(bp.start_l, 9572383 - 11)
-        self.assertEqual(bp.end_l, 9572383 + 11)
-        self.assertEqual(bp.start_r, 94079366 - 11)
-        self.assertEqual(bp.end_r, 94079366 + 11)
-        self.assertEqual(bp.p_l, self.prpos)
-        self.assertEqual(bp.p_r, self.prend)
+        self.assertEqual(bp.left.start, 9572383 - 11)
+        self.assertEqual(bp.left.end, 9572383 + 11)
+        self.assertEqual(bp.right.start, 94079366 - 11)
+        self.assertEqual(bp.right.end, 94079366 + 11)
+        self.assertEqual(bp.left.p, self.prpos)
+        self.assertEqual(bp.right.p, self.prend)
 
         # This was previously implemented in l_bp_tests, adding in here too
         test_line = '1	1000	2345_1	N	[2:1100[N	0.00	.	SVTYPE=BND;STRANDS=--:7;IMPRECISE;CIPOS=-2,2;CIEND=-2,2;CIPOS95=-1,1;CIEND95=-1,1;MATEID=2345_2;EVENT=2345;SU=7;PE=7;SR=0;PRPOS=0.025,0.25,0.45,0.25,0.025;PREND=0.025,0.25,0.45,0.25,0.025'
         no_slop = Breakpoint(test_line)
-        self.assertEqual(no_slop.p_l, [0.025, 0.25, 0.45, 0.25, 0.025])
-        self.assertEqual(no_slop.p_r, [0.025, 0.25, 0.45, 0.25, 0.025])
+        self.assertEqual(no_slop.left.p, [0.025, 0.25, 0.45, 0.25, 0.025])
+        self.assertEqual(no_slop.right.p, [0.025, 0.25, 0.45, 0.25, 0.025])
 
         fixed_slop = Breakpoint(test_line, fixed_slop = 1)
-        self.assertEqual(fixed_slop.p_l, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
-        self.assertEqual(fixed_slop.p_r, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+        self.assertEqual(fixed_slop.left.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+        self.assertEqual(fixed_slop.right.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
 
         percent_slop = Breakpoint(test_line, percent_slop = 0.2)
         print percent_slop
-        self.assertEqual(percent_slop.p_l, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
-        self.assertEqual(percent_slop.p_r, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+        self.assertEqual(percent_slop.left.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
+        self.assertEqual(percent_slop.right.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
 
         percent_and_fixed_slop = Breakpoint(test_line, percent_slop = 0.2, fixed_slop = 2)
-        self.assertEqual(percent_and_fixed_slop.p_l, [1e-100, 1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100, 1e-100])
-        self.assertEqual(percent_and_fixed_slop.p_r, [1e-100, 1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100, 1e-100])
+        self.assertEqual(percent_and_fixed_slop.left.p, [1e-100, 1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100, 1e-100])
+        self.assertEqual(percent_and_fixed_slop.right.p, [1e-100, 1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100, 1e-100])
 
     def test_str(self):
         bp = Breakpoint(self.entry, fixed_slop=1)
