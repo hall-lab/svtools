@@ -68,3 +68,11 @@ class BreakpointTests(TestCase):
         # It's correctness is unknown.
         self.assertEqual(bp.ovl(bp2), 1.0)
 
+    def test_floats_from_tag(self):
+        bp = Breakpoint(self.entry, fixed_slop=1)
+        info = { 'TAG': '1.2,1.3'}
+        self.assertEqual(bp.floats_from_tag(info, 'TAG'), [1.2, 1.3])
+        with self.assertRaises(RuntimeError):
+            bp.floats_from_tag(info, 'AG')
+
+
