@@ -31,11 +31,11 @@ class Breakpoint:
             self.start_l, self.end_l, new_p_l = self.pad_slop(self.start_l, self.end_l, self.p_l, percent_slop, fixed_slop)
             self.start_r, self.end_r, new_p_r = self.pad_slop(self.start_r, self.end_r, self.p_r, percent_slop, fixed_slop)
 
-            # chew off overhang if self.start_l or self.start_r less than 0 TODO This should also be a method
+            # chew off overhang if self.start_l or self.start_r less than 0
             self.start_l, new_p_l = self.trim_slop(self.start_l, new_p_l)
             self.start_r, new_p_r = self.trim_slop(self.start_r, new_p_r)
 
-            # normalize so each probability curve sums to 1. TODO Should be a method
+            # normalize so each probability curve sums to 1.
             self.p_l = self.normalize(new_p_l)
             self.p_r = self.normalize(new_p_r)
 
