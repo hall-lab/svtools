@@ -4,6 +4,9 @@ class Breakpoint:
     '''
     Class for storing information about Breakpoints for merging
     '''
+    # Constant value for slop padding
+    SLOP_PROB = 1e-100
+
     def __init__(self, line, percent_slop=0, fixed_slop=0):
         '''
         Initialize with slop for probabilities
@@ -23,34 +26,18 @@ class Breakpoint:
         self.p_l = self.floats_from_tag(m, 'PRPOS')
         self.p_r = self.floats_from_tag(m, 'PREND')
 
-        slop_prob = 1e-100 # FIXME This is a constant. Pull out to make more obvious
         if ((percent_slop > 0) or (fixed_slop > 0)):
 
-            l_slop = int(max(percent_slop * (self.end_l - self.start_l + 1), fixed_slop))
-            r_slop = int(max(percent_slop * (self.end_r - self.start_r + 1), fixed_slop))
-
-            # pad each interval with slop_prob on each side. TODO This should be a method
-            self.start_l = self.start_l - l_slop
-            self.end_l = self.end_l + l_slop
-            new_p_l = [slop_prob] * l_slop + self.p_l + [slop_prob] * l_slop
-
-            self.start_r = self.start_r - r_slop
-            self.end_r = self.end_r + r_slop
-            new_p_r = [slop_prob] * r_slop + self.p_r + [slop_prob] * r_slop
+            self.start_l, self.end_l, new_p_l = self.pad_slop(self.start_l, self.end_l, self.p_l, percent_slop, fixed_slop)
+            self.start_r, self.end_r, new_p_r = self.pad_slop(self.start_r, self.end_r, self.p_r, percent_slop, fixed_slop)
 
             # chew off overhang if self.start_l or self.start_r less than 0 TODO This should also be a method
-            if self.start_l < 0:
-                new_p_l = new_p_l[-self.start_l:]
-                self.start_l = 0
-            if self.start_r < 0:
-                new_p_r = new_p_r[-self.start_r:]
-                self.start_r = 0
+            self.start_l, new_p_l = self.trim_slop(self.start_l, new_p_l)
+            self.start_r, new_p_r = self.trim_slop(self.start_r, new_p_r)
 
             # normalize so each probability curve sums to 1. TODO Should be a method
-            sum_p_l = sum(new_p_l)
-            self.p_l = [float(x)/sum_p_l for x in new_p_l]
-            sum_p_r = sum(new_p_r)
-            self.p_r = [float(x)/sum_p_r for x in new_p_r]
+            self.p_l = self.normalize(new_p_l)
+            self.p_r = self.normalize(new_p_r)
 
     def __str__(self):
         '''
@@ -109,3 +96,24 @@ class Breakpoint:
             return [float(x) for x in info_dict[tag].split(',')]
         else:
             raise RuntimeError('Required tag {0} not found.'.format(tag))
+
+    @staticmethod
+    def pad_slop(start, end, p, percent_slop, fixed_slop):
+        slop = int(max(percent_slop * (end - start + 1), fixed_slop))
+        new_start = start - slop
+        new_end = end + slop
+        new_p = [Breakpoint.SLOP_PROB] * slop + p + [Breakpoint.SLOP_PROB] * slop
+        return (new_start, new_end, new_p)
+
+    @staticmethod
+    def trim_slop(start, p):
+        if start < 0:
+            new_p = p[-start:]
+            return (0, new_p)
+        else:
+            return (start, p)
+
+    @staticmethod
+    def normalize(p):
+        sum_p = sum(p)
+        return [float(x)/sum_p for x in p]
