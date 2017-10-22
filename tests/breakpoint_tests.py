@@ -10,7 +10,7 @@ class BreakpointTests(TestCase):
         prend = [1e-100, 9.80198e-21, 9.80198e-19, 9.80198e-17, 9.80198e-15, 9.80198e-13, 9.80198e-11, 9.80198e-09, 9.80198e-07, 9.80198e-05, 0.00980198, 0.980198, 0.00980198, 9.80198e-05, 9.80198e-07, 9.80198e-09, 9.80198e-11, 9.80198e-13, 9.80198e-15, 9.80198e-17, 9.80198e-19, 9.80198e-21, 1e-100]
         sum_prend = sum(prend)
         self.prend = [float(x) / sum_prend for x in prend]
-    
+
     def test_init(self):
         bp = Breakpoint(self.entry, fixed_slop=1)
         self.assertEqual(bp.l, self.entry)
@@ -47,7 +47,7 @@ class BreakpointTests(TestCase):
     def test_str(self):
         bp = Breakpoint(self.entry, fixed_slop=1)
         expected = [
-                '1', 
+                '1',
                 str(9572383 - 11),
                 str(9572383 + 11),
                 '10',
