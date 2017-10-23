@@ -1,6 +1,6 @@
 import l_bp
 
-class BreakpointInterval:
+class BreakpointInterval(object):
     '''
     Class for storing the range and probability distribution
     of a breakpoint
@@ -52,7 +52,7 @@ class BreakpointInterval:
         return ovl
 
 
-class Breakpoint:
+class Breakpoint(object):
     '''
     Class for storing information about Breakpoints for merging
     '''
