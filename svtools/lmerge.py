@@ -57,23 +57,23 @@ def order_cliques(BP, C):
         max_c_len = 0
         for i in BP_i:
             # remove anything in the heap that doesn't intersect with the current breakpoint
-            while (len(h_l) > 0) and (h_l[0][0] < BP[i].start_l):
+            while (len(h_l) > 0) and (h_l[0][0] < BP[i].left.start):
                 heapq.heappop(h_l)
 
-            heapq.heappush(h_l, (BP[i].end_l, i)) # add to the heap
+            heapq.heappush(h_l, (BP[i].left.end, i)) # add to the heap
 
             # at this point everything in h_l intersects on the left
             # but we need to take into account what is going on on the right
             h_r = [] # heap with rightmost starts
             h_l_i = [x[1] for x in h_l] # this is all of the node ids on the heap currently
-            h_l_i.sort(key=lambda x:BP[x].start_r) # sort them by their right start
+            h_l_i.sort(key=lambda x:BP[x].right.start) # sort them by their right start
             for j in h_l_i:
                 # remove anything in the heap that doesn't intersect with the current breakpoint on the right end
-                while (len(h_r) > 0) and (h_r[0][0] < BP[j].start_r):
+                while (len(h_r) > 0) and (h_r[0][0] < BP[j].right.start):
                     heapq.heappop(h_r)
 
                 # add something to the right heap
-                heapq.heappush(h_r, (BP[j].end_r, j))
+                heapq.heappush(h_r, (BP[j].right.end, j))
 
                 if max_c_len < len(h_r):
                     # max clique! Register what nodes we have
@@ -127,8 +127,8 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
     R = []
     for b_i in c:
         b = BP[b_i]
-        L.append([b.start_l,b.end_l,b.p_l])
-        R.append([b.start_r,b.end_r,b.p_r])
+        L.append([b.left.start, b.left.end, b.left.p])
+        R.append([b.right.start, b.right.end, b.right.p])
 
     [start_R, end_R, a_R] = l_bp.align_intervals(R)
     [start_L, end_L, a_L] = l_bp.align_intervals(L)
@@ -244,17 +244,17 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
     ALT = ''
     if BP0.sv_type == 'BND':
         if BP0.strands[:2] == '++':
-            ALT = 'N]' + BP0.chr_r + ':' + str(new_pos_R) + ']'
+            ALT = 'N]' + BP0.right.chrom + ':' + str(new_pos_R) + ']'
         elif BP0.strands[:2] == '-+':
-            ALT =  ']' + BP0.chr_r + ':' + str(new_pos_R) + ']N'
+            ALT =  ']' + BP0.right.chrom + ':' + str(new_pos_R) + ']N'
         elif BP0.strands[:2] == '+-':
-            ALT = 'N[' + BP0.chr_r + ':' + str(new_pos_R) + '['
+            ALT = 'N[' + BP0.right.chrom + ':' + str(new_pos_R) + '['
         elif BP0.strands[:2] == '--':
-            ALT =  '[' + BP0.chr_r + ':' + str(new_pos_R) + '[N'
+            ALT =  '[' + BP0.right.chrom + ':' + str(new_pos_R) + '[N'
     else:
         ALT = '<' + BP0.sv_type + '>'
 
-    var_list=[ BP0.chr_l, 
+    var_list=[ BP0.left.chrom, 
                new_pos_L, 
                str(v_id),
                'N',
@@ -272,7 +272,7 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
 
     if var.get_info('SVTYPE')=='DEL':
         var.set_info('SVLEN', new_pos_L - new_pos_R)
-    elif BP0.chr_l == BP0.chr_r:
+    elif BP0.left.chrom == BP0.right.chrom:
         var.set_info('SVLEN', new_pos_R - new_pos_L)
     else: 
         SVLEN = None
@@ -469,7 +469,7 @@ def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=F
 
     else:
 
-        BP.sort(key=lambda x: x.start_l)
+        BP.sort(key=lambda x: x.left.start)
         ordered_cliques = []
         order_cliques(BP, ordered_cliques)
 
@@ -486,8 +486,8 @@ def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=F
 def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
     
     # need to resort based on the right side, then extract clusters
-    BP_l.sort(key=lambda x: x.start_r)
-    BP_l.sort(key=lambda x: x.chr_r)
+    BP_l.sort(key=lambda x: x.right.start)
+    BP_l.sort(key=lambda x: x.right.chrom)
 
     BP_r = []
     BP_max_end_r = -1
@@ -495,16 +495,16 @@ def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genot
 
     for b in BP_l:
         if (len(BP_r) == 0) or \
-           ((b.start_r <= BP_max_end_r) and \
-           (b.chr_r == BP_chr_r)):
+           ((b.right.start <= BP_max_end_r) and \
+           (b.right.chrom == BP_chr_r)):
             BP_r.append(b)
-            BP_max_end_r = max(BP_max_end_r, b.end_r)
-            BP_chr_r = b.chr_r
+            BP_max_end_r = max(BP_max_end_r, b.right.end)
+            BP_chr_r = b.right.chrom
         else:
             v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
             BP_r = [b]
-            BP_max_end_r = b.end_r
-            BP_chr_r = b.chr_r
+            BP_max_end_r = b.right.end
+            BP_chr_r = b.right.chrom
 
     if len(BP_r) > 0:
         v_id = merge(BP_r, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
@@ -563,18 +563,18 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                 continue
 
             b = Breakpoint(l_bp.parse_vcf_record(line), percent_slop=percent_slop, fixed_slop=fixed_slop)
-            if (len(BP_l) == 0) or ((b.start_l <= BP_max_end_l) and (b.chr_l == BP_chr_l) and (b.sv_type == BP_sv_type)):
+            if (len(BP_l) == 0) or ((b.left.start <= BP_max_end_l) and (b.left.chrom == BP_chr_l) and (b.sv_type == BP_sv_type)):
                 BP_l.append(b)
-                BP_max_end_l = max(BP_max_end_l, b.end_l)
-                BP_chr_l = b.chr_l
+                BP_max_end_l = max(BP_max_end_l, b.left.end)
+                BP_chr_l = b.left.chrom
                 BP_sv_type = b.sv_type
 
             else:
                 v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
                 BP_l = [b]
-                BP_max_end_l = b.end_l
+                BP_max_end_l = b.left.end
                 BP_sv_type = b.sv_type
-                BP_chr_l = b.chr_l
+                BP_chr_l = b.left.chrom
 
         if len(BP_l) > 0:
             v_id = r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes, weighting_scheme)
