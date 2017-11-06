@@ -6,7 +6,7 @@ class Genotype(object):
     '''
     def __init__(self, variant, value_list):
         '''
-        Initialize the class. All instances have a GT field, 
+        Initialize the class. All instances have a GT field,
         but that is enforced in the Variant class.
         '''
         self.value_list = value_list
@@ -14,7 +14,7 @@ class Genotype(object):
 
     def __eq__(self, other):
         return self.get_gt_string() == other.get_gt_string()
-    
+
     def set_format(self, field, value):
         '''
         Set information for an individual format field.
@@ -52,9 +52,9 @@ class Genotype(object):
 
     def get_gt_string(self):
         '''
-        Convert object back to string. 
-        
-        If some values are missing (at the end for example) they are printed out as 
+        Convert object back to string.
+
+        If some values are missing (at the end for example) they are printed out as
         all format fields present in any Genotype instance in the Variant line
         are tracked.
         '''
