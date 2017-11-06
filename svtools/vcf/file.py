@@ -82,7 +82,7 @@ class Vcf(object):
                         'QUAL',
                         'FILTER',
                         'INFO']
-        if include_samples:
+        if include_samples and self.sample_list:
             header_array += ['FORMAT'] + self.sample_list
         return '\n'.join(header_meta_array + ['\t'.join(header_array)])
 
