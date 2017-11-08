@@ -133,6 +133,77 @@ class TestVariant(TestCase):
         variant = Variant(variant_line.split('\t'), vcf)
         self.assertEqual(variant.get_gt_string(), './.:9')
 
+class TestVariant8Col(TestCase):
+    def setUp(self):
+        header_lines = [
+                '##fileformat=VCFv4.2',
+                '##fileDate=20151202',
+                '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">',
+                '##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">',
+                '##INFO=<ID=IMAFLAG,Number=.,Type=Flag,Description="Test Flag code">',
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                '##FORMAT=<ID=SU,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">',
+                '##FORMAT=<ID=INACTIVE,Number=1,Type=Integer,Description="A format not in use">',
+                '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO' ]
+        self.vcf = Vcf()
+        self.vcf.add_header(header_lines)
+        self.variant_line = '1	820915	5838_1	N	]GL000232.1:20940]N	0.00	.	SVTYPE=BND;STRANDS=-+:9;IMAFLAG'
+        self.variant = Variant(self.variant_line.split('\t'), self.vcf)
+
+    def test_set_info(self):
+        self.variant.set_info('SVTYPE', 'INV')
+        self.assertEqual(self.variant.info['SVTYPE'], 'INV')
+        self.variant.set_info('IMAFLAG', False)
+        self.assertEqual(self.variant.info['IMAFLAG'], False)
+        with self.assertRaises(SystemExit) as cm:
+            self.variant.set_info('SUPER', True)
+
+    def test_get_info(self):
+        self.assertEqual(self.variant.get_info('IMAFLAG'), True)
+        self.assertEqual(self.variant.get_info('SVTYPE'), 'BND')
+        with self.assertRaises(KeyError) as cm:
+            self.variant.get_info('CALI')
+
+    def test_get_info_string(self):
+        self.assertEqual(self.variant.get_info_string(), 'SVTYPE=BND;STRANDS=-+:9;IMAFLAG')
+        self.variant.set_info('IMAFLAG', False)
+        self.assertEqual(self.variant.get_info_string(), 'SVTYPE=BND;STRANDS=-+:9')
+
+    def test_get_format_string(self):
+        self.assertEqual(self.variant.get_format_string(), None)
+
+    def test_get_format_string_caching(self):
+        header_lines = [
+                '##fileformat=VCFv4.2',
+                '##fileDate=20151202',
+                '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">',
+                '##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">',
+                '##INFO=<ID=IMAFLAG,Number=.,Type=Flag,Description="Test Flag code">',
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+                '##FORMAT=<ID=SU,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">',
+                '##FORMAT=<ID=AS,Number=1,Type=Integer,Description="Number of pieces of evidence supporting the variant">',
+                '##FORMAT=<ID=INACTIVE,Number=1,Type=Integer,Description="A format not in use">',
+                '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO' ]
+        vcf = Vcf()
+        vcf.add_header(header_lines)
+        variant_line = '1	820915	5838_1	N	]GL000232.1:20940]N	0.00	.	SVTYPE=BND;STRANDS=-+:9;IMAFLAG'
+        variant = Variant(variant_line.split('\t'), vcf)
+        self.assertEqual(variant.get_format_string(), None)
+
+        gts = variant.genotypes()
+        self.assertEqual(variant.get_format_string(), None)
+
+        self.assertEqual(variant.get_format_string(True), None)
+
+    def test_get_gt_string(self):
+        self.assertEqual(self.variant.get_gt_string(), None)
+
+    def test_genotypes(self):
+        self.assertEqual(self.variant.genotypes(), [])
+
+    def test_var_string(self):
+        self.assertEqual(self.variant.get_var_string(), self.variant_line)
+
 if __name__ == "__main__":
     main()
 
