@@ -148,7 +148,7 @@ class VcfToBedpeConverter(object):
 
 
 
-        return Bedpe(map(str,[
+        fields = map(str, [
             c1,
             max(s1, 0),
             max(e1, 0),
@@ -169,6 +169,8 @@ class VcfToBedpeConverter(object):
             orig_alt_b,
             info_a,
             info_b,
-            vcf_variant.get_format_string(),
-            vcf_variant.get_gt_string()]))
+            ])
+        if vcf_variant.get_format_string() is not None:
+            fields += [vcf_variant.get_format_string(), vcf_variant.get_gt_string()]
+        return Bedpe(fields)
 
