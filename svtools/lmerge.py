@@ -91,7 +91,7 @@ def getCI95( p_L, p_R, max_i_L, max_i_R):
     ninefive_i_L_start = max_i_L
     ninefive_i_L_end = max_i_L
     ninefive_i_L_total = p_L[max_i_L]
-    
+
     while (ninefive_i_L_total < 0.95):
         if (ninefive_i_L_start <= 0) and (ninefive_i_L_end >= (len(p_L)-1)):
             break
@@ -105,7 +105,7 @@ def getCI95( p_L, p_R, max_i_L, max_i_R):
     ninefive_i_R_start = max_i_R
     ninefive_i_R_end = max_i_R
     ninefive_i_R_total = p_R[max_i_R]
-    
+
     while (ninefive_i_R_total < 0.95):
         if (ninefive_i_R_start <= 0) and (ninefive_i_R_end >= len(p_R)-1):
             break
@@ -122,7 +122,7 @@ def getCI95( p_L, p_R, max_i_L, max_i_R):
 
 
 def combine_pdfs(BP, c, use_product, weighting_scheme):
-  
+
     L = []
     R = []
     for b_i in c:
@@ -156,7 +156,7 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
             if 'SNAME1' in m:
                 wt=len(m['SNAME1'].split(','))
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
-            a_R[c_i]=[wt*ari for ari in a_R[c_i]]      
+            a_R[c_i]=[wt*ari for ari in a_R[c_i]]
 
         for i in range(len(a_L[c_i])):
             #sys.stderr.write("L\t"+str(i)+"\t"+str(c_i)+"\t"+str(a_L[c_i][i])+"\n")
@@ -223,7 +223,7 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
 
     p_L = [x/s_p_L for x in p_L]
     p_R = [x/s_p_R for x in p_R]
-    
+
     #sys.exit(1)
     return new_start_L, new_start_R, p_L, p_R, ALG
 
@@ -254,8 +254,8 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
     else:
         ALT = '<' + BP0.sv_type + '>'
 
-    var_list=[ BP0.left.chrom, 
-               new_pos_L, 
+    var_list=[ BP0.left.chrom,
+               new_pos_L,
                str(v_id),
                'N',
                ALT,
@@ -266,7 +266,7 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
                A[9] ]
 
     var=Variant(var_list, vcf)
-    
+
     var.set_info('SVTYPE', BP0.sv_type)
     var.set_info('ALG', ALG)
 
@@ -274,14 +274,14 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
         var.set_info('SVLEN', new_pos_L - new_pos_R)
     elif BP0.left.chrom == BP0.right.chrom:
         var.set_info('SVLEN', new_pos_R - new_pos_L)
-    else: 
+    else:
         SVLEN = None
 
     if var.get_info('SVTYPE') == 'BND':
         var.set_info('EVENT', str(v_id))
     else:
         var.set_info('END', new_pos_R )
-    
+
     var.set_info('CIPOS95', cipos95)
     var.set_info('CIEND95', ciend95)
     var.set_info('CIPOS', ','.join([str(x) for x in [-1*max_i_L, len(p_L) - max_i_L - 1]]))
@@ -293,7 +293,7 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
 
 
 def combine_var_support(var, BP, c, include_genotypes, sample_order):
-    
+
     strand_map = {}
     qual = 0.0
 
@@ -324,7 +324,7 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
 
         if 'SNAME1' in m:
             s1_name_list.append(m['SNAME1'] + ':' + m['SU'])
-            
+
         s_name_list.append(m['SNAME'] + ':' + A[2])
 
         if include_genotypes:
@@ -359,12 +359,12 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
     var.set_info('PE', str(PE))
     var.set_info('SU', str(SU))
     var.set_info('SR', str(SR))
-    
+
 
 def invtobnd(var):
 
     strands=var.get_info('STRANDS')
-    strand_dict = dict(x.split(':') for x in strands.split(',')) 
+    strand_dict = dict(x.split(':') for x in strands.split(','))
 
     for o in strand_dict.keys():
         if strand_dict[o] == '0':
@@ -380,7 +380,7 @@ def invtobnd(var):
 
     var.set_info('SVTYPE', 'BND')
     var.alt = ALT
-    
+
     [ tempci, temp95, temppr ] = [ var.get_info('CIPOS'), var.get_info('CIPOS95'), var.get_info('PRPOS')]
     var.set_info('CIPOS', var.get_info('CIEND'))
     var.set_info('CIEND', tempci)
@@ -409,16 +409,16 @@ def write_var(var, vcf_out, include_genotypes=False):
         var.set_info('MATEID', str(v_id)+'_2')
         var.info.pop('END', None)
         var.info.pop('SVLEN', None)
-        
+
         varstring=var.get_var_string(use_cached_gt_string=True)
-        if not include_genotypes: 
+        if not include_genotypes:
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
         altstr=re.split( '[\[\]:]', var.alt)
 
         new_alt = ''
-        
+
         if var.alt[0] == '[':
             new_alt = '[' + var.chrom + ':' + str(var.pos) + '[N'
         elif var.alt[0] == ']':
@@ -429,7 +429,7 @@ def write_var(var, vcf_out, include_genotypes=False):
             new_alt = 'N]' + var.chrom + ':' + str(var.pos) + ']'
 
         var.chrom=altstr[1]
-        var.pos=int(altstr[2])        
+        var.pos=int(altstr[2])
         var.var_id=str(v_id)+'_2'
         var.set_info('MATEID', str(v_id)+'_1')
         var.set_info('SECONDARY', True)
@@ -444,7 +444,7 @@ def write_var(var, vcf_out, include_genotypes=False):
         var.set_info('PREND', temppr )
 
         varstring=var.get_var_string(use_cached_gt_string=True)
-        if not include_genotypes: 
+        if not include_genotypes:
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
@@ -452,17 +452,17 @@ def write_var(var, vcf_out, include_genotypes=False):
 
     else:
         varstring=var.get_var_string(use_cached_gt_string=True)
-        if not include_genotypes: 
+        if not include_genotypes:
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
 
-    
+
 
 def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
 
-    if len(BP) == 1:  
-       #merge a single breakpoint 
+    if len(BP) == 1:
+       #merge a single breakpoint
         v_id+=1
         var=merge_single_bp(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes)
         write_var(var, vcf_out, include_genotypes)
@@ -484,7 +484,7 @@ def merge(BP, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=F
 
 
 def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genotypes=False, weighting_scheme='unweighted'):
-    
+
     # need to resort based on the right side, then extract clusters
     BP_l.sort(key=lambda x: x.right.start)
     BP_l.sort(key=lambda x: x.right.chrom)
@@ -514,7 +514,7 @@ def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genot
 
 
 def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted'):
-    
+
     v_id = 0
 
     in_header = True
@@ -550,16 +550,16 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
                     else :
                         v=v[:8]
                         hline='\t'.join(v)
-                    header.append(hline)                    
+                    header.append(hline)
                     in_header=False
                     vcf.add_header(header)
                     vcf.add_info('ALG', '1', 'String', 'Algorithm used to merge this breakpoint')
-        
+
                     if include_genotypes:
                         vcf_out.write(vcf.get_header()+'\n')
                     else:
                         vcf_out.write(vcf.get_header(False)+'\n')
-            
+
                 continue
 
             b = Breakpoint(l_bp.parse_vcf_record(line), percent_slop=percent_slop, fixed_slop=fixed_slop)
