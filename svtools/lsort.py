@@ -28,6 +28,7 @@ class Lsort(object):
         self.vcf_headers = []
         self.temp_files = []
         self.output_handle = output_handle
+        self.has_genotypes = False
 
     def execute(self):
 
@@ -44,12 +45,14 @@ class Lsort(object):
             samples = l_bp.parse_vcf(input_stream, self.vcf_lines, self.vcf_headers, include_ref=self.include_ref)
             for sample in samples:
                 self.vcf_headers.append("##SAMPLE=<ID=" + sample + ">\n")
+                self.has_genotypes = True
             counter += 1
             if counter > self.batchsize:
                 self.vcf_lines.sort(key=l_bp.vcf_line_key)
                 self.write_temp_file()
                 counter = 0
         # no need to write the final batch to file
+        # FIXME Replace this with a new VCF class with the headers all added
         self.write_header()
 
         self.vcf_lines.sort(key=l_bp.vcf_line_key)
@@ -67,8 +70,10 @@ class Lsort(object):
             "Description=\"Source sample name\">\n")
         self.vcf_headers.append("##INFO=<ID=ALG,Number=1,Type=String," + \
             "Description=\"Evidence PDF aggregation algorithm\">\n")
-        self.vcf_headers.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\t" + \
-            "VARIOUS\n")
+        header_string = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO"
+        if self.has_genotypes:
+            header_string = '\t'.join([header_string, 'FORMAT', 'VARIOUS'])
+        self.vcf_headers.append(header_string + '\n')
         self.vcf_headers.sort(cmp=l_bp.header_line_cmp)
         self.output_handle.writelines(self.vcf_headers)
 
