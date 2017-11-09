@@ -26,8 +26,11 @@ def merge_single_bp(BP, sample_order, v_id, use_product, vcf, vcf_out, include_g
 
     A = BP[0].l.rstrip().split('\t')
     var = Variant(A,vcf)
-    sname = var.get_info('SNAME')
-    var.set_info('SNAME', sname + ':' + var.var_id)
+    try:
+        sname = var.get_info('SNAME')
+        var.set_info('SNAME', sname + ':' + var.var_id)
+    except KeyError:
+        pass
     var.var_id=str(v_id)
 
     if use_product:
@@ -261,9 +264,7 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
                ALT,
                0.0,
                '.',
-               '',
-               A[8],
-               A[9] ]
+               ''] + A[8:]
 
     var=Variant(var_list, vcf)
 
@@ -325,7 +326,8 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
         if 'SNAME1' in m:
             s1_name_list.append(m['SNAME1'] + ':' + m['SU'])
 
-        s_name_list.append(m['SNAME'] + ':' + A[2])
+        if 'SNAME' in m:
+            s_name_list.append(m['SNAME'] + ':' + A[2])
 
         if include_genotypes:
 
@@ -338,7 +340,8 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
         else:
             var.format_dict=None
 
-    var.set_info('SNAME', ','.join(s_name_list))
+    if s_name_list:
+        var.set_info('SNAME', ','.join(s_name_list))
     if len(s1_name_list)>0:
         var.set_info('SNAME1', ','.join(s1_name_list))
 
