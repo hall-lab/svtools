@@ -27,7 +27,7 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
                 if l not in vcf_headers:
                     vcf_headers.append(l)
         else:
-            A = l.split('\t')
+            A = l.rstrip().split('\t')
             if not include_ref and (len(A) > 8 and 'GT' in A[8]):
                 has_nonref = False
                 for sample_field in A[9:]:
@@ -41,7 +41,7 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
 
                 if add_sname and (samples != []):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
-                    l = '\t'.join(A)
+                    l = '\t'.join(A) + '\n'
 
 
                 if 'SVTYPE=BND' in A[7]:
@@ -67,14 +67,14 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
 
                         A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
                         A[4] = '<INV>'
-                        l = '\t'.join(A)
+                        l = '\t'.join(A) + '\n'
                 vcf_lines.append(l)
 
     return samples
 
 def parse_vcf_record(vcf_line):
 
-    A = vcf_line.split('\t')
+    A = vcf_line.rstrip().split('\t')
     if not 'SECONDARY' in A[7]:
 
         if 'SVTYPE=BND' in A[7]:
@@ -100,7 +100,7 @@ def parse_vcf_record(vcf_line):
 
                 A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
                 A[4] = '<INV>'
-                vcf_line='\t'.join(A)
+                vcf_line='\t'.join(A) + '\n'
 
     return vcf_line
 
@@ -108,7 +108,7 @@ def split_v(l):
     '''
     Split a VCF line into constituents and return a subset of values in an array
     '''
-    A = l.split('\t', 8)
+    A = l.rstrip().split('\t', 8)
     m = to_map(A[7])
 
     chr_l = A[0]
