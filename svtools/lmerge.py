@@ -156,8 +156,8 @@ def combine_pdfs(BP, c, use_product, weighting_scheme):
             A = BP[c[c_i]].l.rstrip().split('\t', 10)
             m = l_bp.to_map(A[7])
             wt = 1
-            if 'SNAME1' in m:
-                wt=len(m['SNAME1'].split(','))
+            if 'SNAME' in m:
+                wt=len(m['SNAME'].split(','))
             a_L[c_i]=[wt*ali for ali in a_L[c_i]]
             a_R[c_i]=[wt*ari for ari in a_R[c_i]]
 
