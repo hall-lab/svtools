@@ -42,10 +42,10 @@ class InputStreamTest(TestCase):
 
 class ParseBndAltStringTest(TestCase):
     def test_bnd_alt_string(self):
-        self.assertEqual(su.parse_bnd_alt_string('A[1:6['), ('[', '1', 6))
-        self.assertEqual(su.parse_bnd_alt_string('A]1:6]'), (']', '1', 6))
-        self.assertEqual(su.parse_bnd_alt_string(']1:6]A'), (']', '1', 6))
-        self.assertEqual(su.parse_bnd_alt_string(']HLA-DQB1*06:09:01:6]A'), (']', 'HLA-DQB1*06:09:01', 6))
+        self.assertEqual(su.parse_bnd_alt_string('A[1:6['), ('[', '1', '6'))
+        self.assertEqual(su.parse_bnd_alt_string('A]1:6]'), (']', '1', '6'))
+        self.assertEqual(su.parse_bnd_alt_string(']1:6]A'), (']', '1', '6'))
+        self.assertEqual(su.parse_bnd_alt_string(']HLA-DQB1*06:09:01:6]A'), (']', 'HLA-DQB1*06:09:01', '6'))
         with self.assertRaises(AssertionError):
             su.parse_bnd_alt_string(']1:6[A')
         with self.assertRaises(AssertionError):

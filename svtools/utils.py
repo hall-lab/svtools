@@ -47,5 +47,5 @@ def parse_bnd_alt_string(alt_string):
     sep1, region, sep2 = result[0]
     assert sep1 == sep2
     chrom2, breakpoint2 = region.rsplit(':', 1)
-    breakpoint2 = int(breakpoint2)
+    breakpoint2 = breakpoint2
     return sep1, chrom2, breakpoint2

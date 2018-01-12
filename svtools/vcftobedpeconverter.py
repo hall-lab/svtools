@@ -21,6 +21,7 @@ class VcfToBedpeConverter(object):
         breakpoint1 = vcf_variant.pos
         orientation1 = orientation2 = '+'
         sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
+        breakpoint2 = int(breakpoint2)
 
         if vcf_variant.alt.startswith(sep):
             orientation1 = '-'
