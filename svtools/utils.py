@@ -1,4 +1,5 @@
 import sys
+import re
 
 class InputStream(object):
     '''This class handles opening either stdin or a gzipped or non-gzipped file'''
@@ -35,3 +36,16 @@ class InputStream(object):
     def close(self):
         '''Close the underlying handle'''
         return self.handle.close()
+
+def parse_bnd_alt_string(alt_string):
+    '''
+    Parse the BND alt string and return separators and region
+    '''
+    # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
+    result = re.findall(r'([][])(.+?)([][])', alt_string)
+    assert result
+    sep1, region, sep2 = result[0]
+    assert sep1 == sep2
+    chrom2, breakpoint2 = region.rsplit(':', 1)
+    breakpoint2 = int(breakpoint2)
+    return sep1, chrom2, breakpoint2

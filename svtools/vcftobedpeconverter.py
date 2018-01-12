@@ -1,4 +1,5 @@
 from svtools.bedpe import Bedpe
+from svtools.utils import parse_bnd_alt_string
 import re
 
 class VcfToBedpeConverter(object):
@@ -10,20 +11,7 @@ class VcfToBedpeConverter(object):
         '''
         Initialize a new converter
         '''
-        # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
-        self.bnd_regex = re.compile(r'([][])(.+?)([][])')
-
-    def parse_bnd_alt_string(self, alt_string):
-        '''
-        Parse the BND alt string and return separators and region
-        '''
-        result = self.bnd_regex.findall(alt_string)
-        assert result
-        sep1, region, sep2 = result[0]
-        assert sep1 == sep2
-        chrom2, breakpoint2 = region.split(':')
-        breakpoint2 = int(breakpoint2)
-        return sep1, chrom2, breakpoint2
+        pass
 
     def bnd_breakpoints(self, vcf_variant):
         '''
@@ -32,7 +20,7 @@ class VcfToBedpeConverter(object):
         chrom1 = vcf_variant.chrom
         breakpoint1 = vcf_variant.pos
         orientation1 = orientation2 = '+'
-        sep, chrom2, breakpoint2 = self.parse_bnd_alt_string(vcf_variant.alt)
+        sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
 
         if vcf_variant.alt.startswith(sep):
             orientation1 = '-'
