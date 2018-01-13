@@ -82,7 +82,7 @@ class Vcf(object):
                         'QUAL',
                         'FILTER',
                         'INFO']
-        if include_samples:
+        if include_samples and self.sample_list:
             header_array += ['FORMAT'] + self.sample_list
         return '\n'.join(header_meta_array + ['\t'.join(header_array)])
 
@@ -125,7 +125,7 @@ class Vcf(object):
 
     def add_filter(self, id, desc):
         '''
-        Add meta info about a FILTER 
+        Add meta info about a FILTER
         '''
         if id not in [f.id for f in self.filter_list]:
             flt = self.Filter(id, desc)
@@ -170,7 +170,7 @@ class Vcf(object):
 
     class Alt(object):
         '''
-        Class for storing information about symbolic 
+        Class for storing information about symbolic
         ALTernate alleles
         '''
         def __init__(self, id, desc):
@@ -192,7 +192,7 @@ class Vcf(object):
 
     class Format(object):
         '''
-        Class for storing information about  
+        Class for storing information about
         Format fields
         '''
         def __init__(self, id, number, type, desc):
