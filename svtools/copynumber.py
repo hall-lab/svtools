@@ -86,7 +86,13 @@ def description():
     return 'add copynumber information using cnvnator'
 
 def epilog():
-    return '''As this program runs cnvnator you must provide its location and must remember to have the ROOT package installed and properly configured. The input VCF file may be gzipped. If the input VCF file is omitted then the tool reads from stdin. Note that the coordinates file must end with a line containing the word exit.'''
+    return (
+            'As this program runs cnvnator you must provide its location and '
+            'must remember to have the ROOT package installed and properly '
+            'configured. The input VCF file may be gzipped. If the input VCF '
+            'file is omitted then the tool reads from stdin. Note that the '
+            'coordinates file must end with a line containing the word exit.'
+            )
 
 def add_arguments_to_parser(parser):
     parser.add_argument('-c', '--coordinates', metavar='<FILE>', type=argparse.FileType('r'), required=True, default=None, help='file containing coordinate for which to retrieve copynumber (required)')
