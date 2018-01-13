@@ -1,6 +1,6 @@
 import argparse
 import sys
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 from svtools.vcf.file import Vcf
 import svtools.utils as su
 
