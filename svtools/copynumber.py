@@ -1,6 +1,6 @@
 import argparse
 import sys
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 from svtools.vcf.file import Vcf
 import svtools.utils as su
 
@@ -29,9 +29,6 @@ def update_line_copynumber(v, cn_list, i):
     """
     Updates an individual line's copynumber in place
     """
-    if cn_list[i] == -1:
-        sys.stderr.write('cnvnator produced a copynumber of -1 for variant {0} at coordinate {1}'.format(v[2], str(i + 1)))
-        sys.exit(1)
     if 'CN' not in v[8]:
         v[8] = v[8] + ':CN'
         v[9] = v[9] + ':' + str(cn_list[i])
@@ -48,6 +45,10 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
     vcf = Vcf()
     i = 0
     s_index = -1
+    cn_bad = -1 in cn_list
+    if cn_bad:
+        sys.stderr.write('cnvnator was unable to produce a copynumber value for one or more chromosomes. All copynumber values will be set to missing.')
+        cn_list = [ '.' ] * len(cn_list)
     for line in vcf_file:
         if in_header:
             if line[0] == '#' and line[1] == '#':
@@ -82,10 +83,16 @@ def write_copynumber(vcf_file, sample, vcf_out, cn_list):
     return
 
 def description():
-    return 'add copynumber information using cnvnator-multi'
+    return 'add copynumber information using cnvnator'
 
 def epilog():
-    return '''As this program runs cnvnator-multi you must provide its location and must remember to have the ROOT package installed and properly configured. The input VCF file may be gzipped. If the input VCF file is omitted then the tool reads from stdin. Note that the coordinates file must end with a line containing the word exit.'''
+    return (
+            'As this program runs cnvnator you must provide its location and '
+            'must remember to have the ROOT package installed and properly '
+            'configured. The input VCF file may be gzipped. If the input VCF '
+            'file is omitted then the tool reads from stdin. Note that the '
+            'coordinates file must end with a line containing the word exit.'
+            )
 
 def add_arguments_to_parser(parser):
     parser.add_argument('-c', '--coordinates', metavar='<FILE>', type=argparse.FileType('r'), required=True, default=None, help='file containing coordinate for which to retrieve copynumber (required)')
