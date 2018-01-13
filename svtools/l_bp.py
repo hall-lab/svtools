@@ -1,3 +1,4 @@
+from svtools.utils import parse_bnd_alt_string
 import re
 
 def find_all(a_str, sub):
@@ -45,8 +46,7 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
 
 
                 if 'SVTYPE=BND' in A[7]:
-                    m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
-                    o_chr,o_pos = m.group(2).split(':')
+                    sep, o_chr, o_pos = parse_bnd_alt_string(A[4])
 
                     if (o_chr == A[0]) and (('--:' in A[7]) != ('++' in A[7])):
                         neg_s = A[7].find('--:')
@@ -78,8 +78,7 @@ def parse_vcf_record(vcf_line):
     if not 'SECONDARY' in A[7]:
 
         if 'SVTYPE=BND' in A[7]:
-            m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
-            o_chr, o_pos=m.group(2).split(':')
+            sep, o_chr, o_pos = parse_bnd_alt_string(A[4])
 
             if (o_chr == A[0]) and (('--:' in A[7]) != ('++' in A[7])):
                 neg_s = A[7].find('--:')
@@ -117,11 +116,7 @@ def split_v(l):
     chr_r = A[0]
     pos_r = int(A[1])
     if m['SVTYPE'] == 'BND':
-        sep = '['
-        if not sep in A[4]:
-            sep = ']'
-        s,e = [x for x in find_all(A[4],sep)]
-        chr_r,pos_r = A[4][s+1:e].split(':')
+        sep, chr_r, pos_r = parse_bnd_alt_string(A[4])
         m['END'] = pos_r
         pos_r = int(pos_r)
     else:
