@@ -323,9 +323,6 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
         PE += int(m['PE'])
         SR += int(m['SR'])
 
-        if 'SNAME1' in m:
-            s1_name_list.append(m['SNAME1'] + ':' + m['SU'])
-
         if 'SNAME' in m:
             s_name_list.append(m['SNAME'] + ':' + A[2])
 
@@ -342,8 +339,6 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
 
     if s_name_list:
         var.set_info('SNAME', ','.join(s_name_list))
-    if s1_name_list:
-        var.set_info('SNAME1', ','.join(s1_name_list))
 
     GTS = None
     if include_genotypes:
