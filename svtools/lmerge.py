@@ -430,16 +430,10 @@ def write_var(var, vcf_out, include_genotypes=False):
         elif var.alt[-1] == ']':
             new_alt = 'N]' + var.chrom + ':' + str(var.pos) + ']'
 
-<<<<<<< HEAD
-        var.chrom=altstr[1]
-        var.pos=int(altstr[2])
-        var.var_id=str(v_id)+'_2'
-=======
         sep, chrom, pos = parse_bnd_alt_string(var.alt)
         var.chrom = chrom
         var.pos = int(pos)
         var.var_id = str(v_id)+'_2'
->>>>>>> 2057808c9f7218b648f0ba7412e65c101faacfca
         var.set_info('MATEID', str(v_id)+'_1')
         var.set_info('SECONDARY', True)
         var.alt = new_alt
