@@ -19,15 +19,6 @@ class TestVcfToBedpeConverter(TestCase):
         self.vcf = Vcf()
         self.vcf.add_header(header_lines)
 
-    def test_bnd_alt_string(self):
-        self.assertEqual(self.converter.parse_bnd_alt_string('A[1:6['), ('[', '1', 6))
-        self.assertEqual(self.converter.parse_bnd_alt_string('A]1:6]'), (']', '1', 6))
-        self.assertEqual(self.converter.parse_bnd_alt_string(']1:6]A'), (']', '1', 6))
-        with self.assertRaises(AssertionError):
-            self.converter.parse_bnd_alt_string(']1:6[A')
-        with self.assertRaises(AssertionError):
-            self.converter.parse_bnd_alt_string('1')
-
     def test_bnd_breakpoints(self):
         vcf_array1 = ['1', '20000', '235', 'T', 'A[1:6[', '0.00', '.', '.', 'GT', '0/0']
         v1 = Variant(vcf_array1, self.vcf)

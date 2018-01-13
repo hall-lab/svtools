@@ -3,7 +3,7 @@ from svtools.breakpoint import Breakpoint
 import svtools.logspace as ls
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
-import svtools.utils as su
+from svtools.utils import parse_bnd_alt_string, InputStream
 
 import sys
 import numpy as np
@@ -342,7 +342,7 @@ def combine_var_support(var, BP, c, include_genotypes, sample_order):
 
     if s_name_list:
         var.set_info('SNAME', ','.join(s_name_list))
-    if len(s1_name_list)>0:
+    if s1_name_list:
         var.set_info('SNAME1', ','.join(s1_name_list))
 
     GTS = None
@@ -418,7 +418,6 @@ def write_var(var, vcf_out, include_genotypes=False):
             varstring='\t'.join(varstring.split('\t', 10)[:8])
 
         vcf_out.write(varstring+'\n')
-        altstr=re.split( '[\[\]:]', var.alt)
 
         new_alt = ''
 
@@ -431,12 +430,13 @@ def write_var(var, vcf_out, include_genotypes=False):
         elif var.alt[-1] == ']':
             new_alt = 'N]' + var.chrom + ':' + str(var.pos) + ']'
 
-        var.chrom=altstr[1]
-        var.pos=int(altstr[2])
-        var.var_id=str(v_id)+'_2'
+        sep, chrom, pos = parse_bnd_alt_string(var.alt)
+        var.chrom = chrom
+        var.pos = int(pos)
+        var.var_id = str(v_id)+'_2'
         var.set_info('MATEID', str(v_id)+'_1')
         var.set_info('SECONDARY', True)
-        var.alt=new_alt
+        var.alt = new_alt
 
         [ tempci, temp95, temppr ] = [ var.get_info('CIPOS'), var.get_info('CIPOS95'), var.get_info('PRPOS')]
         var.set_info('CIPOS', var.get_info('CIEND'))
@@ -525,7 +525,7 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     vcf = Vcf()
     vcf_out=sys.stdout
 
-    with su.InputStream(file_name) as vcf_stream:
+    with InputStream(file_name) as vcf_stream:
 
         BP_l = []
         BP_sv_type = ''
