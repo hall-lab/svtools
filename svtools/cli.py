@@ -13,6 +13,7 @@ import svtools.genotype
 import svtools.prune
 import svtools.varlookup
 import svtools.sv_classifier
+from svtools.exceptions import SvtoolsException
 
 class SupportAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -76,6 +77,10 @@ def main():
     args = parser.parse_args()
     try:
         sys.exit(args.entry_point(args))
+    except SvtoolsException as e:
+        sys.stderr.write(str(e))
+        sys.stderr.write('\n')
+        sys.exit(1)
     except IOError as e:
         if e.errno == errno.EPIPE:
             sys.exit(141)
