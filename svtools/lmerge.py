@@ -4,6 +4,7 @@ import svtools.logspace as ls
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 from svtools.utils import parse_bnd_alt_string, InputStream
+from svtools.exceptions import MissingProbabilitiesException
 
 import sys
 import numpy as np
@@ -379,12 +380,20 @@ def invtobnd(var):
     var.set_info('SVTYPE', 'BND')
     var.alt = ALT
 
-    [ tempci, temp95, temppr ] = [ var.get_info('CIPOS'), var.get_info('CIPOS95'), var.get_info('PRPOS')]
+    [ tempci, temp95 ] = [var.get_info('CIPOS'), var.get_info('CIPOS95')]
+    try:
+        temppr = var.get_info('PRPOS')
+    except KeyError:
+        raise MissingProbabilitiesException('Required tag PRPOS not found.')
+
     var.set_info('CIPOS', var.get_info('CIEND'))
     var.set_info('CIEND', tempci)
     var.set_info('CIPOS95', var.get_info('CIEND95'))
     var.set_info('CIEND95', temp95 )
-    var.set_info('PRPOS', var.get_info('PREND'))
+    try:
+        var.set_info('PRPOS', var.get_info('PREND'))
+    except KeyError:
+        raise MissingProbabilitiesException('Required tag PREND not found.')
     var.set_info('PREND', temppr )
 
 
@@ -433,12 +442,19 @@ def write_var(var, vcf_out, include_genotypes=False):
         var.set_info('SECONDARY', True)
         var.alt = new_alt
 
-        [ tempci, temp95, temppr ] = [ var.get_info('CIPOS'), var.get_info('CIPOS95'), var.get_info('PRPOS')]
+        [ tempci, temp95 ] = [var.get_info('CIPOS'), var.get_info('CIPOS95')]
+        try:
+            temppr = var.get_info('PRPOS')
+        except KeyError:
+            raise MissingProbabilitiesException('Required tag PRPOS not found.')
         var.set_info('CIPOS', var.get_info('CIEND'))
         var.set_info('CIEND', tempci)
         var.set_info('CIPOS95', var.get_info('CIEND95'))
         var.set_info('CIEND95', temp95 )
-        var.set_info('PRPOS', var.get_info('PREND'))
+        try:
+            var.set_info('PRPOS', var.get_info('PREND'))
+        except KeyError:
+            raise MissingProbabilitiesException('Required tag PREND not found.')
         var.set_info('PREND', temppr )
 
         varstring=var.get_var_string(use_cached_gt_string=True)

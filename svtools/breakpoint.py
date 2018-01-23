@@ -1,4 +1,5 @@
 import l_bp
+from exceptions import MissingProbabilitiesException
 import sys
 
 class BreakpointInterval(object):
@@ -78,8 +79,7 @@ class Breakpoint(object):
             self.left = BreakpointInterval(chr_l, start_l, end_l, self.floats_from_tag(m, 'PRPOS'))
             self.right = BreakpointInterval(chr_r, start_r, end_r, self.floats_from_tag(m, 'PREND'))
         except RuntimeError as e:
-            sys.stderr.write(str(e) +  " Please ensure you've run lumpy with the -P option to emit breakpoint probabilities.\n")
-            sys.exit(1)
+            raise MissingProbabilitiesException(str(e))
 
         if ((percent_slop > 0) or (fixed_slop > 0)):
             self.left.pad_slop(percent_slop, fixed_slop)
