@@ -1,6 +1,5 @@
 import l_bp
 from exceptions import MissingProbabilitiesException
-import sys
 
 class BreakpointInterval(object):
     '''
