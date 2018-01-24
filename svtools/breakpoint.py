@@ -1,4 +1,5 @@
 import l_bp
+from exceptions import MissingProbabilitiesException
 
 class BreakpointInterval(object):
     '''
@@ -73,8 +74,11 @@ class Breakpoint(object):
         end_r,
         m) = l_bp.split_v(line)
 
-        self.left = BreakpointInterval(chr_l, start_l, end_l, self.floats_from_tag(m, 'PRPOS'))
-        self.right = BreakpointInterval(chr_r, start_r, end_r, self.floats_from_tag(m, 'PREND'))
+        try:
+            self.left = BreakpointInterval(chr_l, start_l, end_l, self.floats_from_tag(m, 'PRPOS'))
+            self.right = BreakpointInterval(chr_r, start_r, end_r, self.floats_from_tag(m, 'PREND'))
+        except RuntimeError as e:
+            raise MissingProbabilitiesException(str(e))
 
         if ((percent_slop > 0) or (fixed_slop > 0)):
             self.left.pad_slop(percent_slop, fixed_slop)
