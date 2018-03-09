@@ -620,7 +620,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-t', '--tSet', metavar='<STRING>', dest='tSet', type=str, default=None, required=False, help='high quality deletions & duplications training dataset[vcf], required by naive Bayes reclassification')
     parser.add_argument('-m', '--method', metavar='<STRING>', dest='method', type=str, default="large_sample", required=False, help='reclassification method, one of (large_sample, naive_bayes, hybrid)', choices=['large_sample', 'naive_bayes', 'hybrid'])
     parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str, default=None, required=False, help='text file to output method comparisons')
-    parser.add_argument('--sex-chrom', metavar='<STRING>', default='chrX,chrY', help='Comma-separated list of sex chromosome names [chrX, chrY]')
+    parser.add_argument('--sex-chrom', metavar='<STRING>', default='chrX,chrY', help='Comma-separated list of sex chromosome names [chrX,chrY]')
     parser.set_defaults(entry_point=run_from_args)
 
 def description():
