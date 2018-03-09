@@ -554,7 +554,20 @@ def get_ae_dict(ae_path):
     ae_bedfile.close()
     return ae_dict
 
-def run_reclassifier(vcf_file, vcf_out, sex_file, sex_chrom_names, ae_path, f_overlap, exclude_list, slope_threshold, rsquared_threshold, training_data, method, diag_outfile):
+def run_reclassifier(
+        vcf_file,
+        vcf_out,
+        sex_file,
+        sex_chrom_names,
+        ae_path,
+        f_overlap,
+        exclude_list,
+        slope_threshold,
+        rsquared_threshold,
+        training_data,
+        method,
+        diag_outfile
+        ):
 
     ae_dict = None
     params = None
@@ -621,7 +634,20 @@ def run_from_args(args):
     with su.InputStream(args.input) as stream:
         sex_chrom_names = set(args.sex_chrom.strip().split(','))
         sys.stderr.write('sex chromosome names are: {0}\n'.format(str(sex_chrom_names)))
-        run_reclassifier(stream, args.vcf_out, args.gender, sex_chrom_names, args.ae_path, args.f_overlap, args.exclude, args.slope_threshold, args.rsquared_threshold, args.tSet, args.method, args.diag_outfile)
+        run_reclassifier(
+                stream,
+                args.vcf_out,
+                args.gender,
+                sex_chrom_names,
+                args.ae_path,
+                args.f_overlap,
+                args.exclude,
+                args.slope_threshold,
+                args.rsquared_threshold,
+                args.tSet,
+                args.method,
+                args.diag_outfile
+                )
 
 if __name__ == '__main__':
     parser = command_parser()
