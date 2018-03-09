@@ -640,8 +640,9 @@ def run_from_args(args):
             parser.print_help()
             sys.exit(1)
     with su.InputStream(args.input) as stream:
-        sex_chrom_names = set(args.sex_chrom.strip().split(','))
-        for chrom in sex_chrom_names:
+        chrom_names = args.sex_chrom.strip().split(',')
+        sex_chrom_names = set(chrom_names)
+        for chrom in chrom_names:
             sex_chrom_names.add(chromosome_prefix(chrom))
         sys.stderr.write('sex chromosome names are: {0}\n'.format(str(sex_chrom_names)))
         run_reclassifier(
