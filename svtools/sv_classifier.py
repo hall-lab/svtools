@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-import argparse, sys, copy, gzip, time, math, re
+import argparse, sys, copy, gzip, math
 import numpy as np
 import pandas as pd
 from scipy import stats
-from collections import Counter, defaultdict, namedtuple
+from collections import namedtuple
 import statsmodels.formula.api as smf
 from operator import itemgetter
 import warnings
 from svtools.vcf.file import Vcf
-from svtools.vcf.genotype import Genotype
 from svtools.vcf.variant import Variant
 import svtools.utils as su
 
