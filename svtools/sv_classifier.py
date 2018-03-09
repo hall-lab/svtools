@@ -63,6 +63,7 @@ def to_bnd_strings(var, fixed_gts):
     var.info['CIPOS95'] = old_ciend95
     var.info['CIEND95'] = old_cipos95
     var.pos = old_end
+    var.info['POS'] = old_end
     var.info['SECONDARY'] = True
     if old_type == 'DEL':
         var.alt = ']%s:%s]N' % (var.chrom, old_pos)

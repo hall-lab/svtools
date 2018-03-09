@@ -33,13 +33,10 @@ class IntegrationTest_sv_classify(TestCase):
             expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
             produced_lines = open(temp_output_path).readlines()
             diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
+            os.remove(temp_output_path)
+            os.remove(diags_file)
             result = ''.join(diff)
-            if result != '':
-                for line in result:
-                    sys.stdout.write(line)
-                self.assertFalse(result)
-        os.remove(temp_output_path)
-        os.remove(diags_file)
+            self.assertEqual(result, '')
 
     def test_integration_ls(self):
         test_directory = os.path.dirname(os.path.abspath(__file__))
@@ -62,13 +59,10 @@ class IntegrationTest_sv_classify(TestCase):
             expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
             produced_lines = open(temp_output_path).readlines()
             diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
+            os.remove(temp_output_path)
+            os.remove(diags_file)
             result = ''.join(diff)
-            if result != '':
-                for line in result:
-                   sys.stdout.write(line)
-                self.assertFalse(result)
-        os.remove(temp_output_path)
-        os.remove(diags_file)
+            self.assertEqual(result, '')
 
 
 
@@ -92,14 +86,10 @@ class IntegrationTest_sv_classify(TestCase):
             expected_lines[1] = '##fileDate=' + time.strftime('%Y%m%d') + '\n'
             produced_lines = open(temp_output_path).readlines()
             diff = difflib.unified_diff(produced_lines, expected_lines, fromfile=temp_output_path, tofile=expected_result)
+            os.remove(temp_output_path)
+            os.remove(diags_file)
             result = ''.join(diff)
-            if result != '':
-                for line in result:
-                    sys.stdout.write(line)
-                self.assertFalse(result)
-        os.remove(temp_output_path)
-        os.remove(diags_file)
-
+            self.assertEqual(result, '')
 
 
 if __name__ == "__main__":
