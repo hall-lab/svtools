@@ -21,7 +21,7 @@ CN_rec = namedtuple ('CN_rec', 'var_id sample svtype svlen AF GT CN AB log_len l
 def mad(arr):
     """ Median Absolute Deviation: a "Robust" version of standard deviation.
         Indices variabililty of the sample.
-        https://en.wikipedia.org/wiki/Median_absolute_deviation 
+        https://en.wikipedia.org/wiki/Median_absolute_deviation
     """
     arr = np.ma.array(arr).compressed() # should be faster to not use masked arrays.
     med = np.median(arr)
@@ -124,7 +124,7 @@ def annotation_intersect(var, ae_dict, threshold):
 
     # dictionary with number of bases of overlap for each class
     class_overlap = {}
-    
+
     # first check for reciprocal overlap
     if var.chrom in ae_dict:
         var_start = var.pos
@@ -174,7 +174,7 @@ def calc_params(vcf_path):
     tSet = list()
     epsilon=0.1
     header=[]
-    
+
     in_header = True
     vcf = Vcf()
     if vcf_path.endswith('.gz'):
@@ -204,7 +204,7 @@ def calc_params(vcf_path):
                 continue
 
             var = Variant(v, vcf)
-    
+
             for sample in vcf_samples:
                 sample_genotype = var.genotype(sample)
                 if sample_genotype.get_format('GT') != './.':
@@ -240,7 +240,7 @@ def calc_params(vcf_path):
     df1.loc[:,'log2r_adj']=df1.loc[:,'log2r']
     df1=df1.append(small_dels)
     params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean,np.var, len]).reset_index()
-    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()    
+    params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()
     params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'var0', 'var1', 'var2', 'len0', 'len1', 'len2']
     params['std_pooled']=np.sqrt((params['var0']*params['len0']+params['var1']*params['len1']+params['var2']*params['len2'])/(params['len0']+params['len1']+params['len2']))
     #params.to_csv('./params.csv')
@@ -252,13 +252,13 @@ def rd_support_nb(temp, p_cnv):
     temp = pd.merge(temp, tr, on='GT', how='left')
     temp['p_mix'] = temp['lld0'] * temp['p0'] + temp['lld1'] * temp['p1'] + temp['lld2'] * temp['p2']
     return np.log(p_cnv)+np.sum(np.log(temp['p_mix'])) > np.log(1-p_cnv)+np.sum(np.log(temp['lld0']))
-   
+
 
 def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5):
     svtype=test_set['svtype'][0]
     svlen=test_set['svlen'][0]
     log_len=test_set['log_len'][0]
-    
+
     if svtype == 'DEL' and svlen<1000:
         params1=params[params.svtype=='DEL'].copy()
         if svlen<50:
@@ -305,12 +305,12 @@ def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5
     mm.loc[:,'lld0'] = mm.apply(lambda row:lld(row["log2r"], row["mean0"],row["std_pooled"]), axis=1)
     mm.loc[:,'lld1'] = mm.apply(lambda row:lld(row["log2r"], row["mean1_adj"],row["std_pooled"]), axis=1)
     mm.loc[:,'lld2'] = mm.apply(lambda row:lld(row["log2r"], row["mean2_adj"],row["std_pooled"]), axis=1)
-   
+
     return  rd_support_nb(mm, p_cnv)
 
 
 def load_df(var, exclude, sex):
-    
+
     epsilon=0.1
     test_set = list()
 
@@ -331,7 +331,7 @@ def load_df(var, exclude, sex):
 def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
 
     mad_quorum = 0.5 # this fraction of the pos. genotyped results must meet the mad_threshold
-    
+
     hom_ref_cn=test_set[test_set.GT=="0/0"]['CN'].values.astype(float)
     hom_het_alt_cn=test_set[(test_set.GT=="0/1") | (test_set.GT=="1/1")]['CN'].values.astype(float)
 
@@ -352,7 +352,7 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
     #if test_set['svtype'][0]=='DEL':
     if test_set.loc[0, 'svtype']=='DEL':
         resid=-resid
-    
+
     resid=resid[(resid > (cn_mad * mad_threshold) ) & (resid>absolute_cn_diff)]
 
     if float(len(resid))/len(hom_het_alt_cn)>mad_quorum:
@@ -362,10 +362,10 @@ def has_low_freq_depth_support(test_set, mad_threshold=2, absolute_cn_diff=0.5):
 
 # test whether variant has read depth support by regression
 def has_high_freq_depth_support(df, slope_threshold, rsquared_threshold):
-    
+
     rd = df[[ 'AB', 'CN']][df['AB']!='.'].values.astype(float)
     if len(np.unique(rd[:,0])) > 1 and len(np.unique(rd[:,1])) > 1:
-        
+
         (slope, intercept, r_value, p_value, std_err) = stats.linregress(rd)
         if df['svtype'][0] == 'DEL':
             slope=-slope
@@ -386,7 +386,7 @@ def has_rd_support_by_ls(df, slope_threshold, rsquared_threshold, num_pos_samps,
     return False
 
 def has_rd_support_hybrid(df, het_del_fit, hom_del_fit, params, p_cnv, slope_threshold, rsquared_threshold, num_pos_samps):
-  
+
     hybrid_support=False
     nb_support=has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params, p_cnv)
     ls_support=has_rd_support_by_ls(df, slope_threshold, rsquared_threshold, num_pos_samps)
@@ -442,7 +442,7 @@ def sv_classify(vcf_in, vcf_out, gender_file, exclude_file, ae_dict, f_overlap, 
         if svtype not in ['DEL', 'DUP']:
             vcf_out.write(line)
             continue
-        
+
         var = Variant(v, vcf)
 
         # check intersection with mobile elements
@@ -535,7 +535,7 @@ def run_reclassifier(vcf_file, vcf_out, sex_file, ae_path, f_overlap, exclude_li
     if ae_path is not None:
         sys.stderr.write("loading annotations\n")
         ae_dict=get_ae_dict(ae_path)
-    
+
     if(method!="large_sample"):
           sys.stderr.write("calculating parameters\n")
           #calculate per-sample CN profiles on training set
@@ -553,7 +553,7 @@ def run_reclassifier(vcf_file, vcf_out, sex_file, ae_path, f_overlap, exclude_li
                 p_cnv,
                 het_del_fit,
                 hom_del_fit,
-                params, 
+                params,
                 diag_outfile,
                 method)
 
