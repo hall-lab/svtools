@@ -601,6 +601,13 @@ def run_reclassifier(
                 diag_outfile,
                 method)
 
+def chromosome_prefix(chrom):
+    if chrom.startswith('chr'):
+        # Add a non-chr version
+        return chrom[3:]
+    else:
+        return 'chr' + chrom
+
 def add_arguments_to_parser(parser):
     parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input')
     parser.add_argument('-o', '--output', metavar='<VCF>', dest='vcf_out', type=argparse.FileType('w'), default=sys.stdout, help='VCF output [stdout]')
@@ -633,6 +640,8 @@ def run_from_args(args):
             sys.exit(1)
     with su.InputStream(args.input) as stream:
         sex_chrom_names = set(args.sex_chrom.strip().split(','))
+        for chrom in sex_chrom_names:
+            sex_chrom_names.add(chromosome_prefix(chrom))
         sys.stderr.write('sex chromosome names are: {0}\n'.format(str(sex_chrom_names)))
         run_reclassifier(
                 stream,

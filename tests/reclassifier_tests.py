@@ -9,6 +9,10 @@ import gzip
 
 class IntegrationTest_sv_classify(TestCase):
 
+    def test_chromosome_prefix(self):
+        self.assertEqual(svtools.sv_classifier.chromosome_prefix('chrBLAH'), 'BLAH')
+        self.assertEqual(svtools.sv_classifier.chromosome_prefix('BLAH'), 'chrBLAH')
+
     def test_integration_nb(self):
         test_directory = os.path.dirname(os.path.abspath(__file__))
         test_data_dir = os.path.join(test_directory, 'test_data', 'sv_classifier')
