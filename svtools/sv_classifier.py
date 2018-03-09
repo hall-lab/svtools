@@ -169,7 +169,7 @@ def lld(xx, mean, sd):
     ll = 1 / sd * math.exp(-(xx-mean) * (xx-mean) / (2*sd*sd))
     return ll
 
-def calc_params(vcf_path):
+def calc_params(vcf_path, sex_chrom_names):
 
     tSet = list()
     epsilon=0.1
@@ -200,7 +200,7 @@ def calc_params(vcf_path):
                     svtype = x.split('=')[1]
                     break
 
-            if svtype not in ['DEL', 'DUP'] or v[0]=="X" or v[0]=="Y":
+            if svtype not in ['DEL', 'DUP'] or v[0] in sex_chrom_names:
                 continue
 
             var = Variant(v, vcf)
@@ -320,17 +320,17 @@ def has_rd_support_by_nb(test_set, het_del_fit, hom_del_fit, params, p_cnv = 0.5
     return  rd_support_nb(mm, p_cnv)
 
 
-def load_df(var, exclude, sex):
+def load_df(var, exclude, sex, sex_chrom_names):
 
-    epsilon=0.1
+    epsilon = 0.1
     test_set = list()
 
     for s in var.sample_list:
         if s in exclude:
             continue
         cn = var.genotype(s).get_format('CN')
-        if (var.chrom == 'X' or var.chrom == 'Y') and sex[s] == 1:
-            cn=str(float(cn)*2)
+        if (var.chrom in sex_chrom_names) and sex[s] == 1:
+            cn = str(float(cn) * 2)
         log2r = math.log((float(cn)+epsilon)/2, 2)  # to avoid log(0)
         test_set.append(CN_rec(var.var_id, s, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
              var.genotype(s).get_format('GT'),  cn , var.genotype(s).get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
@@ -412,7 +412,7 @@ def has_rd_support_hybrid(df, het_del_fit, hom_del_fit, params, p_cnv, slope_thr
 
 
 # primary function
-def sv_classify(vcf_in, vcf_out, gender_file, exclude_file, ae_dict, f_overlap, slope_threshold, rsquared_threshold, p_cnv, het_del_fit, hom_del_fit, params, diag_outfile, method):
+def sv_classify(vcf_in, vcf_out, gender_file, sex_chrom_names, exclude_file, ae_dict, f_overlap, slope_threshold, rsquared_threshold, p_cnv, het_del_fit, hom_del_fit, params, diag_outfile, method):
 
     vcf = Vcf()
     header = []
@@ -483,14 +483,14 @@ def sv_classify(vcf_in, vcf_out, gender_file, exclude_file, ae_dict, f_overlap, 
         if num_pos_samps == 0:
             vcf_out.write(line)
         else:
-            df=load_df(var, exclude, sex)
-            if method=='large_sample':
+            df = load_df(var, exclude, sex, sex_chrom_names)
+            if method == 'large_sample':
                 ls_support = has_rd_support_by_ls(df, slope_threshold, rsquared_threshold, num_pos_samps)
-                has_rd_support=ls_support
-            elif method=='naive_bayes':
+                has_rd_support = ls_support
+            elif method == 'naive_bayes':
                 nb_support = has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params, p_cnv)
-                has_rd_support=nb_support
-            elif method=='hybrid':
+                has_rd_support = nb_support
+            elif method == 'hybrid':
                 ls_support, nb_support, hybrid_support = has_rd_support_hybrid(
                         df,
                         het_del_fit,
@@ -554,7 +554,7 @@ def get_ae_dict(ae_path):
     ae_bedfile.close()
     return ae_dict
 
-def run_reclassifier(vcf_file, vcf_out, sex_file, ae_path, f_overlap, exclude_list, slope_threshold, rsquared_threshold, training_data, method, diag_outfile):
+def run_reclassifier(vcf_file, vcf_out, sex_file, sex_chrom_names, ae_path, f_overlap, exclude_list, slope_threshold, rsquared_threshold, training_data, method, diag_outfile):
 
     ae_dict = None
     params = None
@@ -569,12 +569,13 @@ def run_reclassifier(vcf_file, vcf_out, sex_file, ae_path, f_overlap, exclude_li
     if(method!="large_sample"):
           sys.stderr.write("calculating parameters\n")
           #calculate per-sample CN profiles on training set
-          [params, het_del_fit, hom_del_fit]=calc_params(training_data)
+          [params, het_del_fit, hom_del_fit] = calc_params(training_data, sex_chrom_names)
 
     sys.stderr.write("reclassifying\n")
     sv_classify(vcf_file,
                 vcf_out,
                 sex_file,
+                sex_chrom_names,
                 exclude_list,
                 ae_dict,
                 f_overlap,
@@ -589,7 +590,6 @@ def run_reclassifier(vcf_file, vcf_out, sex_file, ae_path, f_overlap, exclude_li
 
 def add_arguments_to_parser(parser):
     parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input')
-    #parser.add_argument('-i', '--input', metavar='<STRING>', dest='vcf_in', type=argparse.FileType('r'), default=None, help='VCF input [stdin]')
     parser.add_argument('-o', '--output', metavar='<VCF>', dest='vcf_out', type=argparse.FileType('w'), default=sys.stdout, help='VCF output [stdout]')
     parser.add_argument('-g', '--gender', metavar='<FILE>', dest='gender', type=argparse.FileType('r'), required=True, default=None, help='tab delimited file of sample genders (male=1, female=2)\nex: SAMPLE_A\t2')
     parser.add_argument('-a', '--annotation', metavar='<BED>', dest='ae_path', type=str, default=None, help='BED file of annotated elements')
@@ -600,6 +600,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-t', '--tSet', metavar='<STRING>', dest='tSet', type=str, default=None, required=False, help='high quality deletions & duplications training dataset[vcf], required by naive Bayes reclassification')
     parser.add_argument('-m', '--method', metavar='<STRING>', dest='method', type=str, default="large_sample", required=False, help='reclassification method, one of (large_sample, naive_bayes, hybrid)', choices=['large_sample', 'naive_bayes', 'hybrid'])
     parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str, default=None, required=False, help='text file to output method comparisons')
+    parser.add_argument('--sex-chrom', metavar='<STRING>', default='chrX,chrY', help='Comma-separated list of sex chromosome names [chrX, chrY]')
     parser.set_defaults(entry_point=run_from_args)
 
 def description():
@@ -618,7 +619,9 @@ def run_from_args(args):
             parser.print_help()
             sys.exit(1)
     with su.InputStream(args.input) as stream:
-        run_reclassifier(stream, args.vcf_out, args.gender, args.ae_path, args.f_overlap, args.exclude, args.slope_threshold, args.rsquared_threshold, args.tSet, args.method, args.diag_outfile)
+        sex_chrom_names = set(args.sex_chrom.strip().split(','))
+        sys.stderr.write('sex chromosome names are: {0}\n'.format(str(sex_chrom_names)))
+        run_reclassifier(stream, args.vcf_out, args.gender, sex_chrom_names, args.ae_path, args.f_overlap, args.exclude, args.slope_threshold, args.rsquared_threshold, args.tSet, args.method, args.diag_outfile)
 
 if __name__ == '__main__':
     parser = command_parser()
