@@ -209,8 +209,19 @@ def calc_params(vcf_path):
                 sample_genotype = var.genotype(sample)
                 if sample_genotype.get_format('GT') != './.':
                     log2r = math.log((float(sample_genotype.get_format('CN'))+ epsilon)/2,2)  #to avoid log(0)
-                    tSet.append(CN_rec(var.var_id, sample, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-                        sample_genotype.get_format('GT'),  sample_genotype.get_format('CN'), sample_genotype.get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
+                    tSet.append(
+                            CN_rec(
+                                var.var_id,
+                                sample,
+                                var.info['SVTYPE'],
+                                abs(float(var.info['SVLEN'])),
+                                var.info['AF'],
+                                sample_genotype.get_format('GT'),
+                                sample_genotype.get_format('CN'),
+                                sample_genotype.get_format('AB'),
+                                math.log(abs(float(var.info['SVLEN']))), log2r
+                                )
+                            )
 
     df=pd.DataFrame(tSet, columns=CN_rec._fields)
     #exclude from training data, DELs and DUPs with CN in the tails of the distribution
@@ -242,7 +253,7 @@ def calc_params(vcf_path):
     params=df1.groupby(['sample', 'svtype', 'GT'])['log2r_adj'].aggregate([np.mean,np.var, len]).reset_index()
     params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()
     params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'var0', 'var1', 'var2', 'len0', 'len1', 'len2']
-    params['std_pooled']=np.sqrt((params['var0']*params['len0']+params['var1']*params['len1']+params['var2']*params['len2'])/(params['len0']+params['len1']+params['len2']))
+    params['std_pooled'] = np.sqrt((params['var0']*params['len0']+params['var1']*params['len1']+params['var2']*params['len2'])/(params['len0']+params['len1']+params['len2']))
     #params.to_csv('./params.csv')
     return (params, het_del_fit, hom_del_fit)
 
@@ -480,7 +491,15 @@ def sv_classify(vcf_in, vcf_out, gender_file, exclude_file, ae_dict, f_overlap, 
                 nb_support = has_rd_support_by_nb(df, het_del_fit, hom_del_fit, params, p_cnv)
                 has_rd_support=nb_support
             elif method=='hybrid':
-                ls_support, nb_support, hybrid_support = has_rd_support_hybrid(df, het_del_fit, hom_del_fit, params, p_cnv, slope_threshold, rsquared_threshold, num_pos_samps)
+                ls_support, nb_support, hybrid_support = has_rd_support_hybrid(
+                        df,
+                        het_del_fit,
+                        hom_del_fit,
+                        params, p_cnv,
+                        slope_threshold,
+                        rsquared_threshold,
+                        num_pos_samps
+                        )
                 has_rd_support=hybrid_support
 
             if has_rd_support:
@@ -491,7 +510,18 @@ def sv_classify(vcf_in, vcf_out, gender_file, exclude_file, ae_dict, f_overlap, 
 
             if diag_outfile is not None:
               svlen=df['svlen'][0]
-              outf.write(var.var_id+"\t"+svtype+"\t"+str(svlen)+"\t"+str(num_pos_samps)+"\t"+str(nb_support)+"\t"+str(ls_support)+"\t"+str(hybrid_support)+"\t"+str(has_rd_support)+"\n")
+              outf.write(
+                      '\t'.join((
+                          var.var_id,
+                          svtype,
+                          str(svlen),
+                          str(num_pos_samps),
+                          str(nb_support),
+                          str(ls_support),
+                          str(hybrid_support),
+                          str(has_rd_support)
+                          )) + "\n"
+                      )
 
     vcf_out.close()
     if diag_outfile is not None:
