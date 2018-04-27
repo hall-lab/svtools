@@ -124,7 +124,7 @@ mkdir -p cn
 Then run `svtools copynumber` to add in copynumber values to non-BND variants.
 ```
 svtools copynumber \
---cnvnator cnvnator-multi \
+--cnvnator cnvnator \
 -s NA12877 \
 -w 100 \
 -r /temp/cnvnator-temp/NA12877.bam.hist.root \
@@ -132,7 +132,7 @@ svtools copynumber \
  -i gt/NA12877.vcf \
 > cn/NA12877.vcf
 ```
-**Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
+**Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator executable included as part of SpeedSeq. This example assumes that you used cnvnator and it is installed system-wide. Older versions of SpeedSeq used cnvnator-multi. You should use whichever version of cnvnator that was used to generate your root files.
 
 ### Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
