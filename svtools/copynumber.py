@@ -99,7 +99,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-r', '--root', metavar='<FILE>', required=True, help='CNVnator .root histogram file (required)')
     parser.add_argument('-w', '--window', metavar='<INT>', required=True, help='CNVnator window size (required)')
     parser.add_argument('-s', '--sample', metavar='<STRING>', required=True, help='sample to annotate (required)')
-    parser.add_argument('--cnvnator', metavar='<PATH>', required=True, help='path to cnvnator-multi binary (required)')
+    parser.add_argument('--cnvnator', metavar='<PATH>', required=True, help='path to cnvnator binary for the cnvnator used by speedseq (required)')
     parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input')
     parser.add_argument('-o', '--output', metavar='<PATH>', type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
     parser.set_defaults(entry_point=run_from_args)
