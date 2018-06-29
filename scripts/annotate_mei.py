@@ -41,6 +41,7 @@ if __name__ == '__main__':
     with su.InputStream(args.input) as stream:
         variant_stream = VCFReader(stream)
         args.vcf_out.write(variant_stream.vcf_obj.get_header())
+        args.vcf_out.write('\n')
         for v in variant_stream:
             svtype = v.get_info('SVTYPE')
             if svtype == 'DEL':
