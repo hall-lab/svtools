@@ -56,7 +56,7 @@ Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-l
 ## Use `svtools` to create a callset
 ### Use `svtools lsort` to combine and sort variants from multiple samples
 `svtools lsort` takes a space separated list of all of the LUMPY VCF files generated in the previous step as arguments or a file containing a single column with the paths to the LUMPY VCF files.
-The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.
+The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.  This works well, even for thousands of samples, but for very large callsets (> 10,000 samples), we recommend a tiered merging strategy as described [here](TieredMerging.md).
 ```
 svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 | bgzip -c > sorted.vcf.gz
@@ -66,6 +66,8 @@ svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 This will cause the sorted VCF to have fewer variant lines than the input.
 
 ### Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
+This works well, even for thousands of samples, but for very large callsets (> 10,000 samples), we recommend a tiered merging strategy as described [here](TieredMerging.md).
+
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin -f 20 \
