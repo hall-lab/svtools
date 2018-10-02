@@ -27,7 +27,7 @@
    * [Scipy](https://www.scipy.org/)
    * [Pandas](http://pandas.pydata.org/)
    * [Statsmodels](http://statsmodels.sourceforge.net/)
-   * [SVTyper](https://github.com/hall-lab/svtyper) (0.5.2)
+   * [SVTyper](https://github.com/hall-lab/svtyper) (0.7.0)
 
 ## Installation
 We recommend you install using `conda`, but you may also install via `pip`. For more detailed instructions, see our [Installation guide](INSTALL.md).

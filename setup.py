@@ -31,7 +31,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
 
-    install_requires=['svtyper==0.5.2', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
+    install_requires=['svtyper==0.7.0', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
     scripts=['scripts/create_coordinates'],
 
     entry_points={
