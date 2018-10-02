@@ -1,6 +1,5 @@
 #include external scripts
 include svtools/bin/bedpesort
 include svtools/bin/vcfsort
-include svtools/bin/svtyper/svtyper
 include versioneer.py
 include svtools/_version.py
