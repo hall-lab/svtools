@@ -83,15 +83,22 @@ These instructions assume you have committed no additional changes after tagging
 1. Build the new release and test by uploading to the PyPI test server.
   
   ```
-  python setup.py sdist bdist_wheel upload -r pypitest
+  pip install --user twine
+  python setup.py sdist bdist_wheel
+  twine upload --repository-url https://test.pypi.org/legacy/ dist/*
   ```
-2. Verify that the package appears and information looks correct at https://testpypi.python.org/pypi
-3. Build and upload the package to PyPI itself.
+2. Verify that the package appears and information looks correct at https://test.pypi.org/
+3. Verify that the test package installs correctly.
+
+   ```
+   pip install --user --extra-index-url https://pypi.org/simple --index-url https://test.pypi.org/simple svtools
+   ```
+4. Build and upload the package to PyPI itself.
   
   ```
-  python setup.py sdist bdist_wheel upload
+  twine upload dist/*
   ```
-4. In a fresh virtual environment, verify that the new package installs.
+5. In a fresh virtual environment, verify that the new package installs.
   
   ```
   pyenv virtualenv 2.7.9 test_new_package
