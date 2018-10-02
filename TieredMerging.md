@@ -22,7 +22,7 @@ svtools lsort -f batch_of_lumpy_vcfs.txt
 ```
 
 ## Final sorting and merging
-After this step you will have one output file per batch. However, these files will _not_ contain genotypes so you'll need to specify additional options to ensure that they are properly combined. In the example below, we assume the input is a file containing the paths to each merged batch.
+After this step you will have one output file per batch. However, these files will _not_ contain genotypes so you'll need to specify additional options to ensure that they are properly combined. In the example below, we assume the input is a file containing the paths to each merged batch. **NOTE:** This step _requires_ that the SNAME field be present in your input files in order to weight the merging correctly.
 
 ```
 svtools lsort -r -f file_of_merged_batches --batch-size 1
