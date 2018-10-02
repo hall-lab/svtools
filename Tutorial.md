@@ -1,8 +1,8 @@
-#Example analysis using `svtools`
+# Example analysis using `svtools`
 This tutorial will help you begin to explore the use of `svtools` to analyze an SV VCF.  It will help you to satisfy the computing environment requirements, gather the required genomic data, and walk through basic analysis using `svtools`.
 This tutorial includes example commands that you can alter to refer to your sample names.
 
-##Table of Contents
+## Table of Contents
 1. Satisfy computing environment requirements
 2. Gather genomic data and generate needed helper files
 3. Use `svtools` to create a callset
@@ -19,6 +19,8 @@ This tutorial includes example commands that you can alter to refer to your samp
     7. Use `svtools prune` to filter out additional variant calls likely representing the same variant  
 4. Use `svtools classify` to refine genotypes and SV types
     1. Generate a repeat elements BED file
+        1. MEI file generation for hg19
+        2. MEI file generation for GRCh38
     2. Generate a file specifying the number of X chromosome copies in each person
     3. Download a file of high-quality, simple deletions and duplications
     4. Generate a VCF of training variants
@@ -54,7 +56,7 @@ Follow the documentation on the [SpeedSeq Github page](https://github.com/hall-l
 ## Use `svtools` to create a callset
 ### Use `svtools lsort` to combine and sort variants from multiple samples
 `svtools lsort` takes a space separated list of all of the LUMPY VCF files generated in the previous step as arguments or a file containing a single column with the paths to the LUMPY VCF files.
-The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.
+The example below shows us combining three samples.  The output of this step is one sorted and compressed VCF file containing all variants detected in the three input files.  This works well, even for thousands of samples, but for very large callsets (> 10,000 samples), we recommend a tiered merging strategy as described [here](TieredMerging.md).
 ```
 svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 | bgzip -c > sorted.vcf.gz
@@ -63,7 +65,9 @@ svtools lsort NA12877.sv.vcf.gz NA12878.sv.vcf.gz NA12879.sv.vcf.gz \
 **Note:** `svtools lsort` will remove variants with the SECONDARY tag in the INFO field.
 This will cause the sorted VCF to have fewer variant lines than the input.
 
-###Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
+### Use `svtools lmerge` to merge variant calls likely representing the same variant in the sorted VCF
+This works well, even for thousands of samples, but for very large callsets (> 10,000 samples), we recommend a tiered merging strategy as described [here](TieredMerging.md).
+
 ```
 zcat sorted.vcf.gz \
 | svtools lmerge -i /dev/stdin -f 20 \
@@ -122,7 +126,7 @@ mkdir -p cn
 Then run `svtools copynumber` to add in copynumber values to non-BND variants.
 ```
 svtools copynumber \
---cnvnator cnvnator-multi \
+--cnvnator cnvnator \
 -s NA12877 \
 -w 100 \
 -r /temp/cnvnator-temp/NA12877.bam.hist.root \
@@ -130,7 +134,7 @@ svtools copynumber \
  -i gt/NA12877.vcf \
 > cn/NA12877.vcf
 ```
-**Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator-multi executable included as part of SpeedSeq. This example assumes cnvnator-multi is installed system-wide. 
+**Note:** The argument to the `--cnvnator` option of `svtools copynumber` may need to be the full path to the cnvnator executable included as part of SpeedSeq. This example assumes that you used cnvnator and it is installed system-wide. Older versions of SpeedSeq used cnvnator-multi. You should use whichever version of cnvnator that was used to generate your root files.
 
 ### Use `svtools vcfpaste` to construct a VCF that pastes together the individual genotyped and copynumber annotated vcfs
 `svtools vcfpaste` takes the list of the VCFs generated that contain the additional information for every sample that we have been building up step by step.  In this tutorial we call that file cn.list and it contains one column that holds the path to the VCF files generated in the previous step.
@@ -168,6 +172,7 @@ The classifier can be run in several modes depending on the sample size. For thi
 ### Generate a repeat elements BED file
 All `svtools classify` commands require a BED file of repeats for classifying Mobile Element Insertions (MEI). This can be created from the UCSC genome browser.
 
+#### MEI file generation for hg19
 ```
 curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
 | gzip -cdfq \
@@ -175,6 +180,16 @@ curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz \
 | sort -k1,1V -k2,2n -k3,3n \
 | awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
 | bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.b37.sorted.bed.gz
+```
+
+#### MEI file generation for GRCh38
+```
+curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz \
+| gzip -cdfq \
+| awk '{ if ($3<200) print $6,$7,$8,$12"|"$13"|"$11,$3,$10 }' OFS="\t" \
+| sort -k1,1V -k2,2n -k3,3n \
+| awk '$4~"LINE" || $4~"SINE" || $4~"SVA"' \
+| bgzip -c > repeatMasker.recent.lt200millidiv.LINE_SINE_SVA.GRCh38.sorted.bed.gz```
 ```
 
 ### Generate a file specifying the number of X chromosome copies in each person

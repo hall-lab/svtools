@@ -13,7 +13,7 @@ setup(
 
     description='Tools for processing and analyzing structural variants',
     long_description=__doc__,
-    
+
     url='https://github.com/hall-lab/svtools',
     author='Ira Hall lab',
     author_email='dlarson@genome.wustl.edu',
@@ -31,9 +31,9 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
 
-    install_requires=['pysam>=0.8.1', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
+    install_requires=['svtyper==0.7.0', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools'],
     scripts=['scripts/create_coordinates'],
-    
+
     entry_points={
         'console_scripts': [
             'svtools=svtools.cli:main',

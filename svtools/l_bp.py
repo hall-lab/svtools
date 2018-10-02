@@ -1,3 +1,4 @@
+from svtools.utils import parse_bnd_alt_string
 import re
 
 def find_all(a_str, sub):
@@ -27,8 +28,8 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
                 if l not in vcf_headers:
                     vcf_headers.append(l)
         else:
-            A = l.split('\t')
-            if not include_ref and ('GT' in A[8]):
+            A = l.rstrip().split('\t')
+            if not include_ref and (len(A) > 8 and 'GT' in A[8]):
                 has_nonref = False
                 for sample_field in A[9:]:
                     if not (sample_field.startswith('0/0') or sample_field.startswith('./.')):
@@ -39,14 +40,13 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
 
             if not 'SECONDARY' in A[7]:
 
-                if add_sname and (samples != ''):
+                if add_sname and (samples != []):
                     A[7] += ';' + 'SNAME=' + ','.join(samples)
-                    l = '\t'.join(A)
+                    l = '\t'.join(A) + '\n'
 
 
                 if 'SVTYPE=BND' in A[7]:
-                    m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
-                    o_chr,o_pos = m.group(2).split(':')
+                    sep, o_chr, o_pos = parse_bnd_alt_string(A[4])
 
                     if (o_chr == A[0]) and (('--:' in A[7]) != ('++' in A[7])):
                         neg_s = A[7].find('--:')
@@ -67,19 +67,18 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
 
                         A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
                         A[4] = '<INV>'
-                        l = '\t'.join(A)
+                        l = '\t'.join(A) + '\n'
                 vcf_lines.append(l)
 
     return samples
 
 def parse_vcf_record(vcf_line):
 
-    A = vcf_line.split('\t')
+    A = vcf_line.rstrip().split('\t')
     if not 'SECONDARY' in A[7]:
 
         if 'SVTYPE=BND' in A[7]:
-            m = re.search(r"(\[|\])(.*)(\[|\])",A[4])
-            o_chr, o_pos=m.group(2).split(':')
+            sep, o_chr, o_pos = parse_bnd_alt_string(A[4])
 
             if (o_chr == A[0]) and (('--:' in A[7]) != ('++' in A[7])):
                 neg_s = A[7].find('--:')
@@ -100,7 +99,7 @@ def parse_vcf_record(vcf_line):
 
                 A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
                 A[4] = '<INV>'
-                vcf_line='\t'.join(A)
+                vcf_line='\t'.join(A) + '\n'
 
     return vcf_line
 
@@ -108,7 +107,7 @@ def split_v(l):
     '''
     Split a VCF line into constituents and return a subset of values in an array
     '''
-    A = l.split('\t', 8)
+    A = l.rstrip().split('\t', 8)
     m = to_map(A[7])
 
     chr_l = A[0]
@@ -117,11 +116,7 @@ def split_v(l):
     chr_r = A[0]
     pos_r = int(A[1])
     if m['SVTYPE'] == 'BND':
-        sep = '['
-        if not sep in A[4]:
-            sep = ']'
-        s,e = [x for x in find_all(A[4],sep)]
-        chr_r,pos_r = A[4][s+1:e].split(':')
+        sep, chr_r, pos_r = parse_bnd_alt_string(A[4])
         m['END'] = pos_r
         pos_r = int(pos_r)
     else:

@@ -10,7 +10,7 @@
 ### <a name="python-env"></a> Preparing your Python environment
 `svtools` requires Python 2.7.  Before proceeding you need to prepare your Python environment, we highly recommend that you manage your installation of `svtools` with the [conda][1] package manager. Using conda helps avoid installation difficulties with scientific python packages (Numpy, SciPy).
 
-For those not using conda, we recommend that you manage your installation with the [pip][2] package manager as shown below.  Using pip will allow you to uninstall `svtools` easily.  You might want to use [pyenv virtualenv][4] to create a virtual environment. There are instructions for setting up a virtualenv on the [pyenv github site](https://github.com/yyuu/pyenv/blob/master/README.md). pyenv installs pip by default.  
+For those not using conda, we recommend that you manage your installation with the [pip][2] package manager as shown below.  Using pip will allow you to uninstall `svtools` easily.  You might want to use [pyenv virtualenv][4] to create a virtual environment. There are instructions for setting up a virtualenv on the [pyenv github site](https://github.com/yyuu/pyenv/blob/master/README.md). pyenv installs pip by default.
 
 The creation of the pyenv virtual environment and activation looks like this:
 
@@ -27,16 +27,12 @@ Once you have your Python environment set up you should be able to install the `
 
     pip install svtools
 
-_note:_ On older systems you may encounter an [error during pysam installation](https://github.com/pysam-developers/pysam/issues/262). This can be solved by specifying a version of [pysam][10] greater than 0.8.1 and less than 0.9.0
-
-    pip install 'pysam>=0.8.1,<0.9.0'
-
 You can spot check your `svtools` install by running:
 
     svtools --version
 
 ### <a name="git-install"></a> Installing directly from the git repo
-Once you have your Python environment set up you will want to clone `svtools` from the [hall-lab github repository][5].  
+Once you have your Python environment set up you will want to clone `svtools` from the [hall-lab github repository][5].
 
     git clone https://github.com/hall-lab/svtools.git svtools_test
     cd svtools_test
@@ -53,16 +49,7 @@ _note:_ you can ignore the warning about "You are in 'detached HEAD' state."
 
 OR, you can just proceed to install from master.
 
-Now install the dependencies suggested in the requirements file
-
-    pip install statsmodels
-
-Installing statsmodels can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
-_note:_ On older systems you may encounter an [error during pysam installation](https://github.com/pysam-developers/pysam/issues/262). This can be solved by specifying a version of [pysam][10] greater than 0.8.1 and less than 0.9.0 
-
-    pip install 'pysam>=0.8.1,<0.9.0'
-
-Now we can use pip to install `svtools` from within the repo. If you are not already in the directory
+We can use pip to install `svtools` from within the repo. If you are not already in the directory
 
     cd svtools_test
 
@@ -81,23 +68,15 @@ Once you have your python environment set up, visit the [svtools releases github
 Navigate to the download location on your filesystem and use the tar command:
 
     tar -xvzf svtools-0.2.0b1.tar.gz
-    
-to expand the archive.  [While you wait, enjoy this cartoon from xkcd][7]. 
+
+to expand the archive.  [While you wait, enjoy this cartoon from xkcd][7].
 
 Now enter the directory that has been created.
 
     cd svtools-0.2.0b1
-
-Now install the dependencies suggested in the requiremnts files:
-
-    pip install statsmodels
-
-Installing statsmodel can take a few minutes, but it satisfies the requirement for numpy, pandas, and scipy.
-
-In our environment we need to specify [pysam][10] versions greater than 0.8.1 and less than 0.9.0:
-
-    pip install 'pysam>=0.8.1,<0.9.0'
     pip install .
+
+Installing the dependencies can take a few minutes, please be patient!
 
 Finally we can spot check our `svtools` installation and observe the version number with the following command:
 

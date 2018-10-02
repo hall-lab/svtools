@@ -1,6 +1,13 @@
 import re
 import sys
 
+def find_tag(info_string, tag):
+    tag_start = info_string.find(tag)
+    while tag_start != -1 and (tag_start > 0 and info_string[tag_start-1] != ';'):
+        tag_start = info_string.find(tag, tag_start+1)
+    return tag_start
+
+
 class Bedpe(object):
     def __init__(self, bed_list):
         self.c1 = bed_list[0]
@@ -54,7 +61,7 @@ class Bedpe(object):
         non-boolean tag
         '''
 
-        tag_start = info_string.find(tag)
+        tag_start = find_tag(info_string, tag)
         if tag_start == -1:
             # If you were looking for a flag then this is the right value.
             # Otherwise your tag doesn't exist. Client code must know how to
@@ -75,9 +82,13 @@ class Bedpe(object):
         Accessory method to update a tag's value. Like parse_info_tag, make sure to include the equals sign.
         '''
 
-        tag_start = info_string.find(tag)
+        tag_start = find_tag(info_string, tag)
         if tag_start == -1:
-            raise ValueError("Tag {0} doesn't exist".format(tag))
+            new_tag = ';' + str(tag);
+            new_tag += str(new_value)
+            new_info_string = info_string + new_tag
+            return new_info_string
+            #raise ValueError("Tag {0} doesn't exist".format(tag))
 
         tag_end = info_string.find(';', tag_start)
         value_start = tag_start + len(tag)
@@ -121,14 +132,14 @@ class Bedpe(object):
 
     def retrieve_svtype(self):
         try:
-            svtype = re.split('=', ''.join(filter(lambda x: 'SVTYPE=' in x, self.info.split(';'))))[1]
+            svtype = re.split('=', ''.join(filter(lambda x: x.startswith('SVTYPE='), self.info.split(';'))))[1]
         except IndexError:
             raise ValueError('SVTYPE field not present in INFO field')
         return svtype
 
     def retrieve_af(self):
         try:
-            af = re.split('=', ''.join(filter(lambda x: 'AF=' in x, self.info.split(';'))))[1]
+            af = re.split('=', ''.join(filter(lambda x: x.startswith('AF='), self.info.split(';'))))[1]
         except IndexError:
             af = None
         return af

@@ -13,6 +13,7 @@ import svtools.genotype
 import svtools.prune
 import svtools.varlookup
 import svtools.sv_classifier
+from svtools.exceptions import SvtoolsException
 
 class SupportAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -54,10 +55,10 @@ def svtools_cli_parser():
     vcftobedpe = subparsers.add_parser('vcftobedpe', help=svtools.vcftobedpe.description(), epilog=svtools.vcftobedpe.epilog())
     svtools.vcftobedpe.add_arguments_to_parser(vcftobedpe)
 
-    vcfsort = subparsers.add_parser('vcfsort', help=svtools.vcfsort.description())
+    vcfsort = subparsers.add_parser('vcfsort', help=svtools.vcfsort.description(), epilog=svtools.vcfsort.epilog())
     svtools.vcfsort.add_arguments_to_parser(vcfsort)
 
-    bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description())
+    bedpesort = subparsers.add_parser('bedpesort', help=svtools.bedpesort.description(), epilog=svtools.bedpesort.epilog())
     svtools.bedpesort.add_arguments_to_parser(bedpesort)
 
     prune = subparsers.add_parser('prune', help=svtools.prune.description(), epilog=svtools.prune.epilog())
@@ -76,9 +77,15 @@ def main():
     args = parser.parse_args()
     try:
         sys.exit(args.entry_point(args))
+    except SvtoolsException as e:
+        sys.stderr.write(str(e))
+        sys.stderr.write('\n')
+        sys.exit(1)
     except IOError as e:
         if e.errno == errno.EPIPE:
             sys.exit(141)
+        else:
+            raise
 
 if __name__ == '__main__':
     main()

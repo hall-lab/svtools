@@ -1,4 +1,5 @@
 from svtools.bedpe import Bedpe
+from svtools.utils import parse_bnd_alt_string
 import re
 
 class VcfToBedpeConverter(object):
@@ -10,20 +11,7 @@ class VcfToBedpeConverter(object):
         '''
         Initialize a new converter
         '''
-        # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
-        self.bnd_regex = re.compile(r'([][])(.+?)([][])')
-
-    def parse_bnd_alt_string(self, alt_string):
-        '''
-        Parse the BND alt string and return separators and region
-        '''
-        result = self.bnd_regex.findall(alt_string)
-        assert result
-        sep1, region, sep2 = result[0]
-        assert sep1 == sep2
-        chrom2, breakpoint2 = region.split(':')
-        breakpoint2 = int(breakpoint2)
-        return sep1, chrom2, breakpoint2
+        pass
 
     def bnd_breakpoints(self, vcf_variant):
         '''
@@ -32,7 +20,8 @@ class VcfToBedpeConverter(object):
         chrom1 = vcf_variant.chrom
         breakpoint1 = vcf_variant.pos
         orientation1 = orientation2 = '+'
-        sep, chrom2, breakpoint2 = self.parse_bnd_alt_string(vcf_variant.alt)
+        sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
+        breakpoint2 = int(breakpoint2)
 
         if vcf_variant.alt.startswith(sep):
             orientation1 = '-'
@@ -133,6 +122,8 @@ class VcfToBedpeConverter(object):
                 orig_name_b = secondary_variant.var_id
                 orig_ref_b = secondary_variant.ref
                 orig_alt_b = secondary_variant.alt
+                sc1, ss1, se1, sc2, ss2, se2, so1, so2 = parser(secondary_variant)
+                s2, e2 = self.adjust_coordinate(secondary_variant, 'CIPOS', ss1, se1)
 
         # For MANTA single-ended BNDs, EVENT is not present.
         # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache?
@@ -140,8 +131,13 @@ class VcfToBedpeConverter(object):
         name = vcf_variant.var_id
         if 'EVENT' in vcf_variant.info:
             name = vcf_variant.info['EVENT']
+        elif 'MATEID' in vcf_variant.info and vcf_variant.var_id.startswith('Manta'):
+            # Specifically handle Manta
+            name, end = vcf_variant.var_id.rsplit(':', 1)
 
-        return Bedpe(map(str,[
+
+
+        fields = map(str, [
             c1,
             max(s1, 0),
             max(e1, 0),
@@ -162,6 +158,8 @@ class VcfToBedpeConverter(object):
             orig_alt_b,
             info_a,
             info_b,
-            vcf_variant.get_format_string(),
-            vcf_variant.get_gt_string()]))
+            ])
+        if vcf_variant.get_format_string() is not None:
+            fields += [vcf_variant.get_format_string(), vcf_variant.get_gt_string()]
+        return Bedpe(fields)
 

@@ -9,6 +9,9 @@ class BedpeSort(ExternalCmd):
 def description():
     return 'sort a BEDPE file'
 
+def epilog():
+    return 'To read in stdin and output to a file, use /dev/stdin or - as the first positional argument.'
+
 def add_arguments_to_parser(parser):
     parser.add_argument('input', metavar='<BEDPE file>', nargs='?', help='BEDPE file to sort')
     parser.add_argument('output', metavar='<output file>', nargs='?', help='output file to write to')

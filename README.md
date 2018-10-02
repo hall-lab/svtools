@@ -1,7 +1,7 @@
 # svtools - Comprehensive utilities to explore structural variations in genomes
 
 [![License](https://img.shields.io/github/license/hall-lab/svtools.svg)](LICENSE.txt)
-[![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools) 
+[![Build Status](https://travis-ci.org/hall-lab/svtools.svg?branch=master)](https://travis-ci.org/hall-lab/svtools)
 [![Coverage Status](https://coveralls.io/repos/github/hall-lab/svtools/badge.svg?branch=master)](https://coveralls.io/github/hall-lab/svtools?branch=master)
 
 [![bioconda-badge](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io)
@@ -27,8 +27,8 @@
    * [Scipy](https://www.scipy.org/)
    * [Pandas](http://pandas.pydata.org/)
    * [Statsmodels](http://statsmodels.sourceforge.net/)
-   * [Pysam](https://github.com/pysam-developers/pysam) (≥0.8.1)
- 
+   * [SVTyper](https://github.com/hall-lab/svtyper) (0.7.0)
+
 ## Installation
 We recommend you install using `conda`, but you may also install via `pip`. For more detailed instructions, see our [Installation guide](INSTALL.md).
 

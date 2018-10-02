@@ -22,7 +22,7 @@ class Variant(object):
         self.sample_list = vcf.sample_list
         self.info_list = vcf.info_list
         self.info = dict()
-        self.format_list = vcf.format_list
+        self.format_list = vcf.format_list  # NOTE - This always will contain GT because that's added in the VCF file class
         self.format_set = {i.id for i in vcf.format_list}
         self.gts = None
 
@@ -31,14 +31,20 @@ class Variant(object):
             sys.stderr.write('\nError: VCF file must have at least 8 columns\n')
             exit(1)
 
-        # make a genotype for each sample at variant
-        self.format_string = var_list[8]
-        self.format_dict = { key: index for index, key in enumerate(self.format_string.split(':')) }
-        self.gts_string = '\t'.join(var_list[9:])
+        if len(var_list) == 8:
+            # 8 column VCF. No genotypes or format field
+            self.format_string = None
+            self.format_dict = None
+            self.gts_string = None
+        else:
+            # make a genotype for each sample at variant
+            self.format_string = var_list[8]  # FIXME Invalid with 8 column VCF
+            self.format_dict = { key: index for index, key in enumerate(self.format_string.split(':')) }
+            self.gts_string = '\t'.join(var_list[9:])  # FIXME Invalid with 8 column VCF
 
-        if 'GT' not in self.format_dict:
-            self.format_dict['GT'] = len(self.format_dict) #add GT if it doesn't exist
-            self._uncache_gts()
+            if 'GT' not in self.format_dict:
+                self.format_dict['GT'] = len(self.format_dict) #add GT if it doesn't exist
+                self._uncache_gts() # FIXME This will die if 8 column VCF
 
         self.info = dict()
         i_split = [a.split('=') for a in var_list[7].split(';')] # temp list of split info column
@@ -93,6 +99,7 @@ class Variant(object):
     def get_format_string(self, use_cached_format_string=False):
         '''
         Construct the FORMAT field containing the names of the fields in the Genotype columns
+        If 8-column VCF then format_string will be None
         '''
         if use_cached_format_string or self.gts is None:
             return self.format_string
@@ -106,6 +113,7 @@ class Variant(object):
     def get_gt_string(self, use_cached_gt_string=False):
         '''
         Construct the genotype string.
+        If 8-column VCF then this returns None
         '''
         if self.gts:
             if use_cached_gt_string:
@@ -118,16 +126,21 @@ class Variant(object):
     def _uncache_gts(self):
         '''
         Parse genotypes if they are requested
+        This is a no-op if gts are already uncached or if 8-column VCF
         '''
-        if self.gts is None:
+        if self.gts is None and self.gts_string is not None:
             self.gts = self._parse_genotypes(self.gts_string.split('\t'))
 
     def genotypes(self):
         '''
         Return a list of all genotype data in the Variant line
+        Returns an empty list if 8-column VCF
         '''
         self._uncache_gts()
-        return self.gts.values()
+        if self.gts is not None:
+            return self.gts.values()
+        else:
+            return list()
 
     def genotype(self, sample_name):
         '''
@@ -144,6 +157,8 @@ class Variant(object):
         '''
         Set the Genotype object for the given sample. Programmer needs to be
         very careful about what gets added here as there is no error checking.
+
+        This will throw an error if 8-column VCF
         '''
         self._uncache_gts()
         try:

@@ -55,12 +55,15 @@ class Pruner(object):
                     pruned_clusters = []
                     while i < (len(matched_clusters) - 1):
                         j = i + 1
+                        to_delete = set()
                         while j < len(matched_clusters):
                             if matched_clusters[i].can_add(matched_clusters[j].elements[0], max_distance):
                                 matched_clusters[i].add(matched_clusters[j].elements[0], eval_param)
                                 pruned_clusters.append(matched_clusters[j])
-                                del matched_clusters[j]
+                                to_delete.add(j)
                             j += 1
+                        for index in sorted(to_delete, reverse=True):
+                            del matched_clusters[index]
                         i += 1
                     if pruned_clusters:
                         self.cluster_list = [cluster for cluster in self.cluster_list if cluster not in pruned_clusters]

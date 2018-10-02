@@ -1,5 +1,6 @@
 import re
 import time
+import sys
 
 class Vcf(object):
     '''
@@ -9,7 +10,7 @@ class Vcf(object):
     def __init__(self):
         '''
         Initialize a new object
-        
+
         The GT format field is added as the Genotype class always adds this field
         '''
         self.file_format = 'VCFv4.2'
@@ -56,7 +57,11 @@ class Vcf(object):
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
                 for i in xrange(0, len(self.sample_list)):
-                    self.sample_indices[self.sample_list[i]] = i + 9
+                    if self.sample_list[i] not in self.sample_indices:
+                        self.sample_indices[self.sample_list[i]] = i + 9
+                    else:
+                        sys.stderr.write('\nError: Duplicate sample ({0}) detected in input VCF. Make certain all sample names are unique.\n'.format(self.sample_list[i]))
+                        sys.exit(1)
 
     # return the VCF header
     def get_header(self, include_samples=True):
@@ -77,7 +82,7 @@ class Vcf(object):
                         'QUAL',
                         'FILTER',
                         'INFO']
-        if include_samples:
+        if include_samples and self.sample_list:
             header_array += ['FORMAT'] + self.sample_list
         return '\n'.join(header_meta_array + ['\t'.join(header_array)])
 
@@ -92,7 +97,7 @@ class Vcf(object):
     def add_info_after(self, insert_id, id, number, type, desc):
         '''
         Add new meta information about an INFO tag/field after another field
-        
+
         This matters as the order of tags is used to determine the order of their output
         during string construction.
         '''
@@ -120,7 +125,7 @@ class Vcf(object):
 
     def add_filter(self, id, desc):
         '''
-        Add meta info about a FILTER 
+        Add meta info about a FILTER
         '''
         if id not in [f.id for f in self.filter_list]:
             flt = self.Filter(id, desc)
@@ -139,7 +144,7 @@ class Vcf(object):
         Get the VCF column index of a sample. This is zero-based, like python arrays
         '''
         return self.sample_indices[sample]
-        
+
 
     class Info(object):
         '''
@@ -165,7 +170,7 @@ class Vcf(object):
 
     class Alt(object):
         '''
-        Class for storing information about symbolic 
+        Class for storing information about symbolic
         ALTernate alleles
         '''
         def __init__(self, id, desc):
@@ -187,7 +192,7 @@ class Vcf(object):
 
     class Format(object):
         '''
-        Class for storing information about  
+        Class for storing information about
         Format fields
         '''
         def __init__(self, id, number, type, desc):
@@ -222,7 +227,7 @@ class Vcf(object):
             if self.desc.startswith('"') and self.desc.endswith('"'):
                 self.desc = self.desc[1:-1]
             self.hstring = '##FILTER=<ID=' + self.id + ',Description=\"' + self.desc + '\">'
-        
+
         def __eq__(self, other):
             '''
             Compare two lines
