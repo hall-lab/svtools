@@ -22,7 +22,7 @@ class CNClusterExact:
     self.nmads=nmads
 
   def get_chunk_data(self, chunkstart, chunkstop):
-    cn=self.cndata[(self.cndata.varstart==chunkstart) & (self.cndata.varstop==chunkstop)].reset_index()
+    cn=self.cndata[(self.cndata.varstart==chunkstart) & (self.cndata.varstop==chunkstop)].copy().reset_index(drop=True)
     cn['chunkstart']=chunkstart
     cn['chunkstop']=chunkstop
     cn['clus_id']=self.clus_id
@@ -44,7 +44,7 @@ class CNClusterExact:
       fit=self.fit_one_window(self.clus_info.varstart.values[ii], self.clus_info.varstop.values[ii],  self.clus_info.info_ncarriers.values[ii])
       fits.append(fit)
     fits=np.concatenate(fits)
-    self.make_call_mixture(fits)
+    return self.make_call_mixture(fits)
 
 
   def make_call_mixture(self, fits):
@@ -54,10 +54,14 @@ class CNClusterExact:
                              'nocl':'int64', 'bic':'float64', 'mm':'float64', 'kk':'float64', 'cn_med':'float64',  'cn_mad':'float64',
                              'info_ncarriers':'int64', 'nocl_sel':'int64'})
     fits1['is_rare']=False
-    fits1=fits1.loc[fits1.nocl==fits1.nocl_sel] #contains one call per variant
+    fits1=fits1[fits1.nocl==fits1.nocl_sel].copy().reset_index(drop=True) #contains one call per variant
     nocl_max=np.max(fits1['nocl'])
     fits1['corr']=1.0*fits1['nocl']/nocl_max
     fits1['mm_corr']=fits1['mm']*fits1['corr']
+    fits1['dist']=fits1['mm']
+    fits1=fits1[['comp', 'clus_id', 'dist_clus_id', 'chunkstart', 'chunkstop',
+                        'nocl', 'bic', 'mm', 'kk', 'cn_med', 'cn_mad', 'info_ncarriers',
+                        'is_rare', 'mm_corr', 'dist']].copy()
     if nocl_max>1:
       fits1=self.get_cis(fits1, 'mm_corr')
     else:
@@ -70,10 +74,11 @@ class CNClusterExact:
     fits['kk']=0
     fits['bic']=0
     fits['nocl']=0
-    fits=fits[['comp', 'clus_id', 'dist_clus_id', 'chunkstart', 'chunkstop', 'nocl',
-               'carrier_med', 'cn_med', 'cn_mad', 'dist', 'n_outliers', 'ncarriers',
-               'info_ncarriers_var', 'is_rare', 'mm', 'kk', 'bic']]
-                                                            
+    fits['mm_corr']=1.0
+    fits.rename(columns={'info_ncarriers_var':'info_ncarriers'}, inplace=True)
+    fits=fits[['comp', 'clus_id', 'dist_clus_id', 'chunkstart', 'chunkstop',
+                        'nocl', 'bic', 'mm', 'kk', 'cn_med', 'cn_mad', 'info_ncarriers',
+                        'is_rare', 'mm_corr', 'dist']].copy()
     fits=self.get_cis(fits, 'dist')
     return fits
 
@@ -88,13 +93,13 @@ class CNClusterExact:
       fits['ptsend']="0"
       fits['prpos']="1"
       fits['prend']="1"
-      fits["is_winner"]="winner"
+      fits['is_winner']="winner"
     else:
       startpt=np.min(fits.loc[fits[score]==np.max(fits[score]), 'chunkstart'])
       stoppt=np.max(fits.loc[fits[score]==np.max(fits[score]), 'chunkstop'])
-      starts=fits[['chunkstart', score]].rename(columns={'chunkstart': 'pos'}).reset_index(drop=True)
+      starts=fits[['chunkstart', score]].rename(columns={'chunkstart': 'pos'}).copy().reset_index(drop=True)
       starts['end']='start'
-      stops=fits[['chunkstop', score]].rename(columns={'chunkstop': 'pos'}).reset_index(drop=True)
+      stops=fits[['chunkstop', score]].rename(columns={'chunkstop': 'pos'}).copy().reset_index(drop=True)
       stops['end']='stop'
       bks1=pd.concat([starts, stops], axis=0)
       bks1['endpt']=np.where(bks1.end=='start', startpt, stoppt)
@@ -102,13 +107,13 @@ class CNClusterExact:
       bks1[score]=1.0*bks1[score]
 
       bks1_ag=bks1.groupby(['pos', 'end', 'diff'])[score].aggregate([np.sum]).reset_index().sort_values(by=['pos'])
-      bks1_ag_left1=bks1_ag.loc[(bks1_ag.diff<=0) & (bks1_ag.end=='start')]
+      bks1_ag_left1=bks1_ag[(bks1_ag.diff<=0) & (bks1_ag.end=='start')].copy()
       bks1_ag_left1['pr']=np.cumsum( bks1_ag_left1['sum'])/np.sum( bks1_ag_left1['sum'])
-      bks1_ag_left2=bks1_ag.loc[(bks1_ag.diff>=0) & (bks1_ag.end=='start')]
+      bks1_ag_left2=bks1_ag[(bks1_ag.diff>=0) & (bks1_ag.end=='start')].copy()
       bks1_ag_left2['pr']=np.cumsum(bks1_ag_left2['sum'].values[::-1])[::-1]/np.sum(bks1_ag_left2['sum'])
-      bks1_ag_right1=bks1_ag.loc[(bks1_ag.diff<=0) & (bks1_ag.end=='stop')]
+      bks1_ag_right1=bks1_ag[(bks1_ag.diff<=0) & (bks1_ag.end=='stop')].copy()
       bks1_ag_right1['pr']=np.cumsum( bks1_ag_right1['sum'])/np.sum(bks1_ag_right1['sum'])
-      bks1_ag_right2=bks1_ag.loc[(bks1_ag.diff>=0) & (bks1_ag.end=='stop')]
+      bks1_ag_right2=bks1_ag[(bks1_ag.diff>=0) & (bks1_ag.end=='stop')].copy()
       bks1_ag_right2['pr']=np.cumsum(bks1_ag_right2['sum'].values[::-1])[::-1]/np.sum(bks1_ag_right2['sum'])
       bks2=pd.concat([bks1_ag_left1, bks1_ag_left2, bks1_ag_right1, bks1_ag_right2], axis=0).drop_duplicates()
 
@@ -121,63 +126,48 @@ class CNClusterExact:
     
 
   def fit_generic(self, outf1, outf2):
-    #print(str(self.ncarriers)+"\t"+str(self.nsamp))
     if self.ncarriers>0.0025*self.nsamp and self.ncarriers>=10:
       fit=self.fit_mixture()
     else:   
       print("try rare")
       fit=self.check_outliers_all()
-    #np.savetxt(outf1, fit, delimiter="\t", fmt="%.0f\t%.0f\t%.0f\t%.0f\t%.0f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f")
-    return fit
+    np.savetxt(outf2, fit, fmt="%d\t%d\t%d\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%f\t%f\t%d\t%s\t%s\t%s\t%s\t%s\t%s")
+    fit=fit.loc[fit.is_winner=="winner"]
+    np.savetxt(outf1, fit, delimiter="\t", fmt="%d\t%d\t%d\t%d\t%d\t%d\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%f\t%f\t%d\t%s\t%s\t%s\t%s\t%s\t%s")
+    return
 
   def check_outliers_all(self):
-    dd=[]
-    fits=[]
-    for ii in range(self.clus_info.shape[0]):
-      cn1=self.get_chunk_data(self.clus_info.varstart.values[ii], self.clus_info.varstop.values[ii])
-      cn1['varid']=self.clus_info.varid.values[ii]
-      cn1['info_ncarriers_var']=self.clus_info.info_ncarriers.values[ii]
-      dd.append(cn1)
-    dd=pd.concat(dd)
-    #dd is copy number data for all variants in cluster
+
+    dd=self.cndata[['id', 'cn1', 'varstart', 'varstop']].copy()
+    dd=dd.merge(self.clus_info, on=['varstart', 'varstop']).reset_index(drop=True)
+    dd=dd.rename(columns={'cn1':'cn', 'varstart':'chunkstart', 'varstop':'chunkstop', 'info_ncarriers':'info_ncarriers_var', 'cluster':'clus_id', 'dist_cluster':'dist_clus_id'})
+    dd.drop(['size', 'cluster_nvar', 'cluster_start', 'cluster_stop', 'cluster_mean_size', 'cluster_info_ncarriers'], axis=1, inplace=True)
+    
     cn1=dd.merge(self.carriers,  on=['varid', 'id', 'comp'], how='left')
     cn1['carrier']=np.where(cn1['info_ncarriers'].isnull(), 'non', 'carrier')
     #number of carriers of any variant in cluster
     ncar=cn1.loc[cn1.carrier=="carrier"].shape[0]
     if ncar > 0:
       cn1_ag=cn1.groupby(['varid', 'carrier', 'clus_id', 'dist_clus_id', 'comp', 'chunkstart', 'chunkstop', 'info_ncarriers_var'])['cn'].agg({'cn_med': np.median, 'cn_mad':robust.stand_mad}).reset_index()
-      ag_carriers=cn1_ag.loc[cn1_ag.carrier=="carrier"][['varid', 'clus_id', 'dist_clus_id', 'comp', 'cn_med', 'chunkstart', 'chunkstop', 'info_ncarriers_var']].rename(columns={'cn_med':'carrier_med'})
-      ag_non=cn1_ag.loc[cn1_ag.carrier=="non"]   
+      ag_carriers=cn1_ag.loc[cn1_ag.carrier=="carrier", ['varid', 'clus_id', 'dist_clus_id', 'comp', 'cn_med', 'chunkstart', 'chunkstop', 'info_ncarriers_var']].copy()
+      ag_carriers.rename(columns={'cn_med':'carrier_med'}, inplace=True)
+      ag_non=cn1_ag.loc[cn1_ag.carrier=="non"].copy()
       ag=ag_non.merge(ag_carriers, on=['varid', 'clus_id', 'dist_clus_id', 'comp', 'chunkstart', 'chunkstop', 'info_ncarriers_var'])
       ag['ll']=ag['cn_med']-self.nmads*ag['cn_mad']
       ag['ul']=ag['cn_med']+self.nmads*ag['cn_mad']
       ag['dist']=(ag['cn_med']-ag['carrier_med'])/ag['cn_mad']
-      ag['n_outliers']=0
       ag['ncarriers']=ncar
-      #ag1=ag.loc[(ag.dist>self.nmads) | (ag.dist < -1*self.nmads) ]
-      #ag.to_csv('ag.csv')
-      #exit(1)
-      ag1=ag.loc[np.abs(ag.dist)>self.nmads]
-      rare=False
-      if ag1.shape[0]>0:
-        ag.to_csv('ag.csv')
-        dd.to_csv('dd.csv')
-        exit(1)
-        for varid in ag1['varid'].values:
-          cn2=dd.loc[dd.varid == varid]
-          cn2=cn2.merge(ag1[['varid', 'll', 'ul', 'dist']], on=['varid'])
-          if cn2['dist'].values[0]<0:
-            cn2=cn2.loc[cn2.cn>cn2.ul]
-          else:
-            cn2=cn2.loc[cn2.cn<cn2.ll]
-          n_outlier=cn2.shape[0]
-          ag.loc[ag.varid==varid, 'n_outliers']=n_outlier
-          if n_outlier<0.01*self.nsamp:
-            rare=True
-            print("rare variant")
-      if rare:
-        self.make_call_rare(ag)
-        return 
+      if ag.loc[np.abs(ag.dist)>self.nmads].shape[0]>0:
+        eps=1e-6
+        dd2=dd[['id', 'cn', 'varid']].merge(ag, on='varid')
+        dd2['outlier_up']=np.where(dd2['cn']>dd2['ul']-eps, "outlier", "not")
+        dd2['outlier_down']=np.where(dd2['cn']<dd2['ll']+eps, "outlier", "not")
+        dd2['is_outlier']=np.where(dd2['dist']<0, dd2['outlier_up'], dd2['outlier_down'])
+        cts=dd2.groupby(['varid', 'is_outlier'])['comp'].count().reset_index().rename(columns={'comp':'n_outliers'})
+        ag=ag.merge(cts.loc[cts.is_outlier=='outlier',['varid', 'n_outliers']].copy(), on='varid')
+        if np.min(ag.n_outliers)<0.01*self.nsamp:
+          print("rare variant")
+          return self.make_call_rare(ag)
     return self.fit_mixture()
     
     

@@ -5,14 +5,15 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import scipy.spatial.distance as ssd
 import pysam
 
-sys.path.append('/gscmnt/gc2802/halllab/sv_aggregate/dev/svtools/scripts/cncluster_utils')
-import CNClusterExact3
+sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
+import CNClusterExact3a
 
 def find_connected_subgraphs(varinfo):
-  varinfo.reset_index(drop=True, inplace=True)
-  varinfo=varinfo.sort_values(['varstart', 'varstop'], ascending=[True, True]).reset_index()
+  
   #merge duplicate calls
   varinfo=varinfo.groupby(['chr', 'varstart', 'varstop']).agg({'varid': np.min, 'info_ncarriers': np.sum}).reset_index()
+  varinfo.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
+  varinfo.reset_index(inplace=True, drop=True)
   varinfo['comp']=0
   maxpos=0
   clus_id=1
@@ -47,14 +48,10 @@ def min_frac_overlap(a, b, minfrac=0.5):
 def cluster(comp, cn_comp, info_comp):
 
   cnvsub1=cn_comp.merge(info_comp, on=['comp', 'chr', 'varstart', 'varstop'])
-  #cnvsub1=cnvsub.merge(carriers_comp, on=['varid', 'id', 'comp'], how='left')
-  #cnvsub1['carrier']=np.where(cnvsub1['info_ncarriers_y'].isnull(), 'non', 'carrier')
-  #cnvsub1.rename(columns={'info_ncarriers_x':'info_ncarriers', 'cn1':'cn'}, inplace=True)
   cnvsub1.rename(columns={'cn1':'cn'}, inplace=True)
   cnag=cnvsub1.groupby(['varid']).agg({'cn' : np.var }).reset_index()
   cnag.columns=['varid', 'cnvar']
-  cnag1=cnag.loc[cnag.cnvar>0].reset_index()
-  print(str(cnag1))
+  cnag1=cnag.loc[cnag.cnvar>0].copy().reset_index()
   cnvsub2=cnvsub1.merge(cnag1, on=['varid']).reset_index()
   info_comp=info_comp.merge(cnag1, on=['varid'])
   
@@ -68,7 +65,7 @@ def cluster(comp, cn_comp, info_comp):
     nvar=1+np.sum(np.cumsum(dd/np.sum(dd))<0.95)
     Z=linkage(ar, method='complete', metric='correlation')
     df2['cluster']=fcluster(Z, nvar, criterion='maxclust')
-    df2=df2[['varid', 'varstart', 'varstop', 'info_ncarriers', 'cluster']]
+    df2=df2[['varid', 'varstart', 'varstop', 'info_ncarriers', 'cluster']].copy()
     df2['dist_cluster']=0
     minfrac=0.5
     for clus in df2.cluster.unique():
@@ -92,13 +89,13 @@ def cluster(comp, cn_comp, info_comp):
         Z=linkage(distArray, method='average')
         df2.loc[temp.index, 'dist_cluster']=fcluster(Z, 1-minfrac, criterion='distance')
     cnvsub2=cnvsub2.merge(df2, on=['varid', 'varstart', 'varstop', 'info_ncarriers'])
-  return cnvsub2[['varid', 'id', 'cn', 'varstart', 'varstop','comp', 'info_ncarriers', 'cluster', 'dist_cluster']]
+  return cnvsub2[['varid', 'id', 'cn', 'varstart', 'varstop','comp', 'info_ncarriers', 'cluster', 'dist_cluster']].copy()
 
 
 def summarize_clusters(cn_clustered):
-  gpsub=cn_clustered[['varid', 'info_ncarriers', 'varstart', 'varstop', 'comp', 'cluster', 'dist_cluster']].drop_duplicates()
+
+  gpsub=cn_clustered.drop(['id', 'cn'], axis=1).drop_duplicates()
   gpsub['size']=gpsub['varstop']-gpsub['varstart']
-  gpsub=gpsub[['varid', 'info_ncarriers', 'varstart', 'varstop', 'comp', 'cluster', 'dist_cluster',  'size']]
   ag=gpsub.groupby(['comp', 'cluster', 'dist_cluster']).agg({'info_ncarriers' : [np.size,  np.sum ] }).reset_index()
   ag.columns=['comp', 'cluster', 'dist_cluster', 'cluster_nvar', 'cluster_info_ncarriers']
   gpsub=gpsub.merge(ag, on=['comp', 'cluster', 'dist_cluster'])
@@ -130,30 +127,35 @@ args=parser.parse_args()
 info=pd.read_table(args.info_file, names=['chr', 'varstart', 'varstop', 'varid', 'info_ncarriers'])
 info=info.groupby(['chr', 'varstart', 'varstop']).agg({'varid': np.min, 'info_ncarriers': np.sum}).reset_index()
 info['svlen']=info['varstop']-info['varstart']
-info_large=info.loc[(info.svlen>100000) & (info.info_ncarriers<20)]
-info=info.loc[(info.svlen<=100000) | (info.info_ncarriers>=20)]
+info_large=info.loc[(info.svlen>100000) & (info.info_ncarriers<20)].copy().reset_index(drop=True)
+info=info.loc[(info.svlen<=100000) | (info.info_ncarriers>=20)].copy().reset_index(drop=True)
 info_large=find_connected_subgraphs(info_large)
 info=find_connected_subgraphs(info)
 info['gp']="info"
 info_large['gp']="info_large"
 info=pd.concat([info, info_large], ignore_index=True)
-info=info.sort_values(['varstart', 'varstop'], ascending=[True, True])
+info.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
 info.reset_index(drop=True, inplace=True)
-ord=info[['comp', 'gp']].drop_duplicates()
+ord=info[['comp', 'gp']].copy().drop_duplicates()
 ord['rank']=range(ord.shape[0])
 info=info.merge(ord, on=['comp', 'gp'])
-info=info[['chr', 'varstart', 'varstop', 'varid', 'info_ncarriers', 'rank']].rename(columns={'rank':'comp'})
+info.drop(['comp', 'gp'], axis=1, inplace=True)
+info.rename(columns={'rank':'comp'}, inplace=True)
 component_pos=info.groupby(['comp']).agg({'chr': 'first', 'varstart': np.min, 'varstop': np.max}).reset_index()
 
 carriers=pd.read_table(args.carriers_file, names=['chr', 'varstart', 'varstop', 'id'])
-carriers=carriers.merge(info, on=['chr', 'varstart', 'varstop'])[['varid', 'id', 'info_ncarriers', 'comp']].drop_duplicates()
+carriers=carriers.merge(info, on=['chr', 'varstart', 'varstop'])
+carriers.drop(['varstart', 'varstop', 'chr'], axis=1, inplace=True)
+carriers.drop_duplicates(inplace=True)
 
 cntab=pysam.TabixFile(args.cnfile)
 tabixit=cntab.fetch( component_pos.chr.values[0], max(0, component_pos.varstart.values[0]-10000), min(component_pos.varstop.values[100]+10000, np.max(component_pos.varstop)))
 s = StringIO.StringIO("\n".join(tabixit))
 cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn1'])
-cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])[['id', 'cn1', 'chr', 'varstart', 'varstop', 'comp']].drop_duplicates()
-nind=cn.loc[cn.comp==0]['id'].unique().size
+cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])
+cn.drop([ 'varid', 'info_ncarriers'], axis=1, inplace=True)
+cn.drop_duplicates(inplace=True)
+nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
 
 outf1=open(args.outfile, "w")
 outf2=open(args.diag_outfile, "w")
@@ -165,24 +167,26 @@ for comp in component_pos.comp.unique():
     tabixit=cntab.fetch( component_pos.chr.values[comp], max(0, component_pos.varstart.values[comp]-10000), min(component_pos.varstop.values[lastcomp]+10000, np.max(component_pos.varstop)))
     s = StringIO.StringIO("\n".join(tabixit))
     cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn1'])
-    cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])[['id', 'cn1', 'chr', 'varstart', 'varstop', 'comp']].drop_duplicates()
+    cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])
+    cn.drop([ 'varid', 'info_ncarriers'], axis=1, inplace=True)
+    cn.drop_duplicates(inplace=True)
                       
   print("comp="+str(comp))
-  cn_comp=cn.loc[cn['comp']==comp]
-  info_comp=info.loc[info['comp']==comp]
+  cn_comp=cn.loc[cn['comp']==comp].copy().reset_index(drop=True)
+  info_comp=info.loc[info['comp']==comp].copy().reset_index(drop=True)
   print(str(info_comp))
   print( str(info_comp.shape[0]))
   
   if cn_comp.shape[0]>=nind:
     if info_comp.shape[0]>500:
-      info_comp=info_comp.loc[info_comp.info_ncarriers>1]
-    carriers_comp=carriers.loc[carriers['comp']==comp]
+      info_comp=info_comp.loc[info_comp.info_ncarriers>1].copy().reset_index(drop=True)
+    carriers_comp=carriers.loc[carriers['comp']==comp].copy().reset_index(drop=True)
     print(str(info_comp))
     cn_region=cluster(comp, cn_comp, info_comp)
     region_summary=summarize_clusters(cn_region)
     for [clus, dist_clus] in region_summary[['cluster', 'dist_cluster']].drop_duplicates().values:
-      clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].reset_index()
-      clus=CNClusterExact3.CNClusterExact(clus_vars, cn_comp, carriers_comp)
+      clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
+      clus=CNClusterExact3a.CNClusterExact(clus_vars, cn_comp, carriers_comp)
       clus.fit_generic(outf1, outf2)
   
 
