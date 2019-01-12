@@ -4,17 +4,19 @@ import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import scipy.spatial.distance as ssd
 import pysam
-#from svtools.vcf.file import Vcf
-#from svtools.vcf.variant import Variant
-#import svtools.utils as su
+sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
+from svtools.vcf.file import Vcf
+from svtools.vcf.variant import Variant
+from collections import namedtuple
+import svtools.utils as su
 
 sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
 import CNClusterExact3a
 
+vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
+
 def find_connected_subgraphs(varinfo):
   
-  #merge duplicate calls
-  varinfo=varinfo.groupby(['chr', 'varstart', 'varstop']).agg({'varid': np.min, 'info_ncarriers': np.sum}).reset_index()
   varinfo.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
   varinfo.reset_index(inplace=True, drop=True)
   varinfo['comp']=0
@@ -110,58 +112,79 @@ def summarize_clusters(cn_clustered):
   return gpsub
 
 def add_arguments_to_parser(parser):
-    #parser.add_argument('-v', '--vcf', metavar='<VCF>', dest='lmerged_vcf', help="VCF file containing variants to be output")
-    parser.add_argument('-c', '--carriers', metavar='<STRING>', dest='carriers_file', type=str, 
-default='/Users/habel/halllab/sv_aggregate/cnvnator/vs_gs/carriers.rare.txt.gz', help='carriers file')
+    parser.add_argument('-v', '--vcf', metavar='<VCF>', dest='lmerged_vcf', help="VCF file containing variants to be output")
     parser.add_argument('-o', '--output', metavar='<STRING>',  dest='outfile', type=str, default='xx.txt', help='output file')
     parser.add_argument('-i', '--input', metavar='<STRING>', dest='cnfile', type=str, 
 default='/Users/habel/halllab/sv_aggregate/cnvnator/vs_gs/cnvnator.all.1.chr6.txt.gz', help='copy number file')
-    parser.add_argument('-f', '--info', metavar='<STRING>', dest='info_file', type=str, 
-default='/Users/habel/halllab/sv_aggregate/cnvnator/vs_gs/clusters.chr6.txt', help='variant info file')
     parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str, default='yy.txt', required=False, help='verbose output file')
+    parser.add_argument('-c', '--chrom', metavar='<STRING>', dest='chrom', required=True, help='chrom to analye')
+    parser.add_argument('-s', '--samples', metavar='<STRING>', dest='sample_list', required=True, help='list of samples')
+    parser.add_argument('-t', '--total_count', metavar='<INT>', type=int,  dest='total_sample_count', required=True, help='count of all samples in lmerged vcf')
 
 def command_parser():
     parser = argparse.ArgumentParser(description="cross-cohort cnv caller")
     add_arguments_to_parser(parser)
     return parser
 
-#def get_carriers(cn, lmv):
-#  vcf = Vcf()
-#  in_header = True
-#  header_lines = list()
-#  with su.InputStream(lmv) as input_stream:
-#    for line in input_stream:
-#      if in_header:
-#        header_lines.append(line)
-#        if line[0:6] == '#CHROM':
-#          in_header=False
-#          vcf.add_header(header_lines)
-#      else:
-#        v = Variant(line.rstrip().split('\t'), vcf)
-#        snamestr=v.get_info('SNAME')
-#        print(snamestr)
-#        exit(1)
+def get_info(lmv, chr, sample_list, nsamps_total):
+  vcf = Vcf()
+  in_header = True
+  header_lines = list()
+  samples=pd.read_csv(sample_list, names=['sampleid'])
+  info_set=list()
+  with su.InputStream(lmv) as input_stream:
+    for line in input_stream:
+      if in_header:
+        header_lines.append(line)
+        if line[0:6] == '#CHROM':
+          in_header=False
+          vcf.add_header(header_lines)
+      else:
+        v = Variant(line.rstrip().split('\t'), vcf)
+        snamestr=v.get_info('SNAME')
+        if v.chrom==chr:
+          sname=v.info['SNAME']
+          info_set.append(vcf_rec(v.var_id, v.chrom, v.pos, int(v.info['END']), sname.count(',')+1 , sname))
+  info_set = pd.DataFrame(data=info_set, columns=vcf_rec._fields)
+  info=info_set.groupby(['chr', 'start', 'stop']).aggregate({'varid':np.min, 'ncarriers':np.sum,  'sname': lambda x : ','.join(x)}).reset_index()
+
+  info.rename(columns={'start':'varstart', 'stop':'varstop', 'ncarriers':'info_ncarriers'}, inplace=True)
+  info['svlen']=info['varstop']-info['varstart']
+  info_large=info.loc[(info.svlen>100000) & (info.info_ncarriers<20)].copy().reset_index(drop=True)
+  info=info.loc[(info.svlen<=100000) | (info.info_ncarriers>=20)].copy().reset_index(drop=True)
+  info_large=find_connected_subgraphs(info_large)
+  info=find_connected_subgraphs(info)
+  info['gp']="info"
+  info_large['gp']="info_large"
+  info=pd.concat([info, info_large], ignore_index=True)
+  info.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
+  info.reset_index(drop=True, inplace=True)
+  ord=info[['comp', 'gp']].copy().drop_duplicates()
+  ord['rank']=range(ord.shape[0])
+  info=info.merge(ord, on=['comp', 'gp'])
+  info.drop(['comp', 'gp'], axis=1, inplace=True)
+  info.rename(columns={'rank':'comp'}, inplace=True)
+
+  ag_carriers=info[info.info_ncarriers<0.02*nsamps_total].copy().reset_index(drop=True)
+  info.drop('sname', axis=1, inplace=True)
+  ag_carriers['sname']=ag_carriers['sname'].str.replace(':.', '').str.split(',')
+  carriers = pd.DataFrame({
+          col:np.repeat(ag_carriers[col].values, ag_carriers['sname'].str.len())
+          for col in ag_carriers.columns.drop('sname')}
+  ).assign(**{'sname':np.concatenate(ag_carriers['sname'].values)})[ag_carriers.columns]
+
+  carriers=carriers[carriers['sname'].isin(samples['sampleid'])].reset_index(drop=True)
+  carriers.rename(columns={'sname':'id'}, inplace=True)
+  carriers.drop(['chr', 'varstart', 'varstop', 'svlen'], axis=1, inplace=True)
+  return [info, carriers]
+                                                                                                             
+
+    
 
 parser=command_parser()
 args=parser.parse_args()
 
-info=pd.read_table(args.info_file, names=['chr', 'varstart', 'varstop', 'varid', 'info_ncarriers'])
-info=info.groupby(['chr', 'varstart', 'varstop']).agg({'varid': np.min, 'info_ncarriers': np.sum}).reset_index()
-info['svlen']=info['varstop']-info['varstart']
-info_large=info.loc[(info.svlen>100000) & (info.info_ncarriers<20)].copy().reset_index(drop=True)
-info=info.loc[(info.svlen<=100000) | (info.info_ncarriers>=20)].copy().reset_index(drop=True)
-info_large=find_connected_subgraphs(info_large)
-info=find_connected_subgraphs(info)
-info['gp']="info"
-info_large['gp']="info_large"
-info=pd.concat([info, info_large], ignore_index=True)
-info.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
-info.reset_index(drop=True, inplace=True)
-ord=info[['comp', 'gp']].copy().drop_duplicates()
-ord['rank']=range(ord.shape[0])
-info=info.merge(ord, on=['comp', 'gp'])
-info.drop(['comp', 'gp'], axis=1, inplace=True)
-info.rename(columns={'rank':'comp'}, inplace=True)
+info, carriers=get_info(args.lmerged_vcf, args.chrom, args.sample_list, args.total_sample_count)
 component_pos=info.groupby(['comp']).agg({'chr': 'first', 'varstart': np.min, 'varstop': np.max}).reset_index()
 
 
@@ -173,17 +196,6 @@ cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])
 cn.drop([ 'varid', 'info_ncarriers'], axis=1, inplace=True)
 cn.drop_duplicates(inplace=True)
 nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
-
-#carriers=get_carriers(cn, args.lmerged_vcf)
-
-
-####################3
-carriers=pd.read_table(args.carriers_file, names=['chr', 'varstart', 'varstop', 'id'])
-carriers=carriers.merge(info, on=['chr', 'varstart', 'varstop'])
-carriers.drop(['varstart', 'varstop', 'chr'], axis=1, inplace=True)
-carriers.drop_duplicates(inplace=True)
-
-
 
 
 outf1=open(args.outfile, "w")
@@ -218,6 +230,5 @@ for comp in component_pos.comp.unique():
       clus=CNClusterExact3a.CNClusterExact(clus_vars, cn_comp, carriers_comp)
       clus.fit_generic(outf1, outf2)
   
-
 outf1.close()
 outf2.close()
