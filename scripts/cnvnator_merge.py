@@ -3,19 +3,32 @@ import pandas as pd
 import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import scipy.spatial.distance as ssd
+import pysam
+sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
+from svtools.vcf.file import Vcf
+from svtools.vcf.variant import Variant
+from collections import namedtuple
+import svtools.utils as su
+import cProfile , pstats
 
-sys.path.append('/gscmnt/gc2802/halllab/sv_aggregate/dev/svtools/scripts/cncluster_utils')
-import CNClusterExact1
+sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
+import CNClusterExact3b
+
+vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
 
 def find_connected_subgraphs(varinfo):
-  varinfo.reset_index(drop=True, inplace=True)
-  varinfo=varinfo.sort_values(['varstart', 'varstop'], ascending=[True, True]).reset_index()
-  varinfo=varinfo.groupby(['chr', 'varstart', 'varstop']).agg({'varid': np.min, 'nsamp': np.sum}).reset_index()
+  
+  varinfo.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
+  varinfo.reset_index(inplace=True, drop=True)
   varinfo['comp']=0
   maxpos=0
   clus_id=1
+  old_chr=varinfo.chr[0]
   dd=[]
   for ii in range(varinfo.shape[0]):
+    if varinfo.chr[ii]!=old_chr:
+      print("Error: merging must be done separately by chromosome\n")
+      sys.exit()
     if (maxpos==0) or  (varinfo.varstart[ii]<maxpos):
       maxpos=max(maxpos, varinfo.varstop[ii])
       dd.append(varinfo.index[ii])
@@ -38,27 +51,33 @@ def min_frac_overlap(a, b, minfrac=0.5):
   else:
     return 0
   
-def cluster(comp, cn_comp, info_comp, carriers_comp):
-  cnvsub=cn_comp.merge(info_comp, on=['comp', 'chr', 'varstart', 'varstop'])
-  cnvsub1=cnvsub.merge(carriers_comp, on=['varid', 'id', 'comp'], how='left')
-  cnvsub1['carrier']=np.where(cnvsub1['nsamp_y'].isnull(), 'non', 'carrier')
-  cnvsub1.rename(columns={'nsamp_x':'nsamp', 'cn1':'cn'}, inplace=True)
-  if info_comp.shape[0]==1:
-    cnvsub1['cluster']=1
-    cnvsub1['dist_cluster']=1
+def cluster(comp, cn_comp, info_comp, verbose):
+  
+  cnag=cn_comp.groupby(['varid']).agg({'cn' : np.var }).reset_index()
+  cnag.columns=['varid', 'cnvar']
+  cnag1=cnag.loc[cnag.cnvar>0].copy().reset_index()
+  cnvsub2=cn_comp.loc[cn_comp.varid.isin(cnag1.varid)].reset_index(drop=True)
+  nvar1=info_comp.loc[info_comp.varid.isin(cnag1.varid)].shape[0]
+  
+  if nvar1==1:
+    cnvsub2['cluster']=1
+    cnvsub2['dist_cluster']=1
   else:
-    df2=cnvsub1.pivot_table(index=['varid', 'varstart', 'varstop', 'nsamp'], columns='id', values='cn').reset_index()
-    ar=df2.iloc[:, 5:df2.shape[1]].values
+    df2=cnvsub2.pivot_table(index=['varid', 'varstart', 'varstop', 'info_ncarriers'], columns='id', values='cn').reset_index()
+    ar=df2.iloc[:, 4:df2.shape[1]].values
     dd=np.linalg.svd(ar, compute_uv=False)
     nvar=1+np.sum(np.cumsum(dd/np.sum(dd))<0.95)
     Z=linkage(ar, method='complete', metric='correlation')
     df2['cluster']=fcluster(Z, nvar, criterion='maxclust')
-    df2=df2[['varid', 'varstart', 'varstop', 'nsamp', 'cluster']]
+    df2=df2[['varid', 'varstart', 'varstop', 'info_ncarriers', 'cluster']].copy()
     df2['dist_cluster']=0
     minfrac=0.5
     for clus in df2.cluster.unique():
-      print(str(clus))
       temp=df2.loc[df2.cluster==clus]
+      if verbose:
+        print(str(clus))
+        print("cluster"+str(clus)+"\n")
+        print(str(temp))
       if temp.shape[0]==1:
         df2.loc[temp.index, 'dist_cluster']=1
       elif temp.shape[0]==2:
@@ -74,90 +93,146 @@ def cluster(comp, cn_comp, info_comp, carriers_comp):
         distArray = ssd.squareform(ar)
         Z=linkage(distArray, method='average')
         df2.loc[temp.index, 'dist_cluster']=fcluster(Z, 1-minfrac, criterion='distance')
-    cnvsub1=cnvsub1.merge(df2, on=['varid', 'varstart', 'varstop', 'nsamp'])
-  return cnvsub1[['varid', 'id', 'cn', 'varstart', 'varstop','comp', 'nsamp', 'carrier', 'cluster', 'dist_cluster']]
+    cnvsub2=cnvsub2.merge(df2, on=['varid', 'varstart', 'varstop', 'info_ncarriers'])
 
-
-def summarize_clusters(cn_clustered):
-  gpsub=cn_clustered[['varid', 'nsamp', 'varstart', 'varstop', 'comp', 'cluster', 'dist_cluster']].drop_duplicates()
+  gpsub=cnvsub2.drop(['id', 'cn', 'svlen'], axis=1).drop_duplicates()
   gpsub['size']=gpsub['varstop']-gpsub['varstart']
-  ag=gpsub.groupby(['comp', 'cluster', 'dist_cluster']).agg({'nsamp' : [np.size,  np.sum ] }).reset_index()
-  ag.columns=['comp', 'cluster', 'dist_cluster', 'num_var', 'cluster_nsamp']
+  ag=gpsub.groupby(['comp', 'cluster', 'dist_cluster']).agg({'info_ncarriers' : [np.size,  np.sum ]}).reset_index()
+  ag.columns=['comp', 'cluster', 'dist_cluster', 'cluster_nvar', 'cluster_info_ncarriers']
   gpsub=gpsub.merge(ag, on=['comp', 'cluster', 'dist_cluster'])
-  rare_clus=gpsub.loc[gpsub.cluster_nsamp<0.005*nind]
-  gpsub.loc[rare_clus.index, 'dist_cluster']=0
-  gpsub=gpsub[['varid', 'nsamp', 'varstart', 'varstop', 'comp', 'cluster', 'dist_cluster',  'size']]
-  ag=gpsub.groupby(['comp', 'cluster', 'dist_cluster']).agg({'nsamp' : [np.size,  np.sum ] }).reset_index()
-  ag.columns=['comp', 'cluster', 'dist_cluster', 'num_var', 'cluster_nsamp']
-  gpsub=gpsub.merge(ag, on=['comp', 'cluster', 'dist_cluster'])
-  gpsub['size']=gpsub['size']*gpsub['nsamp']/gpsub['cluster_nsamp']
-  gp=gpsub.groupby(['cluster', 'dist_cluster']).agg({'size': np.sum, 'varstart':np.min, 'varstop':np.max}).reset_index()
-  gp.rename(columns={'varstart':'cluster_start', 'varstop':'cluster_stop', 'size':'cluster_mean_size'}, inplace=True)
-  gpsub=gpsub.merge(gp, on=['cluster', 'dist_cluster'])
-  gpsub.sort_values(['cluster_nsamp', 'cluster_mean_size', 'cluster', 'dist_cluster', 'nsamp'], ascending=[False, True, True, True, False], inplace=True)
+  gpsub.sort_values(['cluster_info_ncarriers', 'size', 'cluster', 'dist_cluster', 'info_ncarriers'], ascending=[False, True, True, True, False], inplace=True)
   return gpsub
 
+
 def add_arguments_to_parser(parser):
-    parser.add_argument('-c', '--carriers', metavar='<STRING>', dest='carriers_file', type=str, 
-default='/Users/habel/halllab/sv_aggregate/cnvnator/vs_gs/carriers.rare.txt.gz', help='carriers file')
-    parser.add_argument('-o', '--output', metavar='<STRING>',  dest='outfile', type=str, default='xx.txt', help='output file')
-    parser.add_argument('-i', '--input', metavar='<STRING>', dest='cnfile', type=str, 
-default='/Users/habel/halllab/sv_aggregate/cnvnator/vs_gs/cnvnator.all.1.chr6.txt.gz', help='copy number file')
-    parser.add_argument('-f', '--info', metavar='<STRING>', dest='info_file', type=str, 
-default='/Users/habel/halllab/sv_aggregate/cnvnator/vs_gs/clusters.chr6.txt', help='variant info file')
-    parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str, default='yy.txt', required=False, help='verbose output file')
+    parser.add_argument('-l', '--vcf', metavar='<VCF>', dest='lmerged_vcf', help="VCF file containing variants to be output")
+    parser.add_argument('-o', '--output', metavar='<STRING>',  dest='outfile', type=str, required=True, help='output file')
+    parser.add_argument('-i', '--input', metavar='<STRING>', dest='cnfile', type=str, required=True,  help='copy number file')
+    parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str,  required=True, help='verbose output file')
+    parser.add_argument('-c', '--chrom', metavar='<STRING>', dest='chrom', required=True, help='chrom to analye')
+    parser.add_argument('-s', '--samples', metavar='<STRING>', dest='sample_list', required=True, help='list of samples')
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true')
 
 def command_parser():
     parser = argparse.ArgumentParser(description="cross-cohort cnv caller")
     add_arguments_to_parser(parser)
     return parser
 
+def get_info(lmv, chr, sample_list):
+  vcf = Vcf()
+  in_header = True
+  header_lines = list()
+  samples=pd.read_csv(sample_list, names=['sampleid'])
+  info_set=list()
+  nsamps_total=0
+  with su.InputStream(lmv) as input_stream:
+    for line in input_stream:
+      if in_header:
+        header_lines.append(line)
+        if line[0:9] == '##SAMPLE=':
+          nsamps_total+=1
+        if line[0:6] == '#CHROM':
+          in_header=False
+          vcf.add_header(header_lines)
+      else:
+        v = Variant(line.rstrip().split('\t'), vcf)
+        snamestr=v.get_info('SNAME')
+        if v.chrom==chr:
+          sname=v.info['SNAME']
+          info_set.append(vcf_rec(v.var_id, v.chrom, v.pos, int(v.info['END']), sname.count(',')+1 , sname))
+  info_set = pd.DataFrame(data=info_set, columns=vcf_rec._fields)
+  info=info_set.groupby(['chr', 'start', 'stop']).aggregate({'varid':np.min, 'ncarriers':np.sum,  'sname': lambda x : ','.join(x)}).reset_index()
+
+  info.rename(columns={'start':'varstart', 'stop':'varstop', 'ncarriers':'info_ncarriers'}, inplace=True)
+  info['svlen']=info['varstop']-info['varstart']
+  info_large=info.loc[(info.svlen>100000) & (info.info_ncarriers<20)].copy().reset_index(drop=True)
+  info=info.loc[(info.svlen<=100000) | (info.info_ncarriers>=20)].copy().reset_index(drop=True)
+  info_large=find_connected_subgraphs(info_large)
+  info=find_connected_subgraphs(info)
+  info['gp']="info"
+  info_large['gp']="info_large"
+  info=pd.concat([info, info_large], ignore_index=True)
+  info.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
+  info.reset_index(drop=True, inplace=True)
+  ord=info[['comp', 'gp']].copy().drop_duplicates()
+  ord['rank']=range(ord.shape[0])
+  info=info.merge(ord, on=['comp', 'gp'])
+  info.drop(['comp', 'gp'], axis=1, inplace=True)
+  info.rename(columns={'rank':'comp'}, inplace=True)
+
+  ag_carriers=info[info.info_ncarriers<0.02*nsamps_total].copy().reset_index(drop=True)
+  info.drop('sname', axis=1, inplace=True)
+  ag_carriers['sname']=ag_carriers['sname'].str.replace(':.', '').str.split(',')
+  carriers = pd.DataFrame({
+          col:np.repeat(ag_carriers[col].values, ag_carriers['sname'].str.len())
+          for col in ag_carriers.columns.drop('sname')}
+  ).assign(**{'sname':np.concatenate(ag_carriers['sname'].values)})[ag_carriers.columns]
+
+  carriers=carriers[carriers['sname'].isin(samples['sampleid'])].reset_index(drop=True)
+  carriers.rename(columns={'sname':'id'}, inplace=True)
+  carriers.drop(['chr', 'varstart', 'varstop', 'svlen'], axis=1, inplace=True)
+  return [info, carriers]
+
+def get_cndata(comp, component_pos, info, cntab):
+  lastcomp=min(comp+100, component_pos.shape[0]-1)
+  tabixit=cntab.fetch( component_pos.chr.values[0],
+                       max(0, component_pos.varstart.values[0]-100),
+                       min(component_pos.varstop.values[lastcomp]+100, np.max(component_pos.varstop)))
+  s = StringIO.StringIO("\n".join(tabixit))
+  cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn'])
+  cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])
+  cn.drop_duplicates(inplace=True)
+  return cn
+
+def run_from_args(args):
+  cp = cProfile.Profile()
+  info, carriers=get_info(args.lmerged_vcf, args.chrom, args.sample_list)
+  component_pos=info.groupby(['comp']).agg({'chr': 'first', 'varstart': np.min, 'varstop': np.max}).reset_index()
+
+  cntab=pysam.TabixFile(args.cnfile)
+  cn=get_cndata(0, component_pos, info, cntab)
+  nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
+
+  outf1=open(args.outfile, "w")
+  outf2=open(args.diag_outfile, "w")
+  header='\t'.join(['#comp', 'cluster', 'dist_cluster', 'start', 'stop', 'nocl', 'bic', 'mm', 'kk', 'cn_med', 'cn_mad', 'info_ncarriers', 'is_rare', 'mm_corr', 'dist','nvar', 'score', 'ptspos', 'ptsend', 'prpos', 'prend', 'is_winner'])
+  outf1.write(header)
+  outf2.write(header)
+
+  for comp in component_pos.comp.unique():
+    if (comp>0) and (comp%100==0):
+      cn=get_cndata(comp, component_pos, info, cntab)
+                      
+    print("comp="+str(comp))
+    cn_comp=cn.loc[cn['comp']==comp].copy().reset_index(drop=True)
+    info_comp=info.loc[info['comp']==comp].copy().reset_index(drop=True)
+    if (args.verbose):
+      print(str(info_comp))
+      print( str(info_comp.shape[0]))  
+  
+    if cn_comp.shape[0]>=nind:
+      if info_comp.shape[0]>10000:
+        info_comp=info_comp.loc[info_comp.info_ncarriers>10].copy().reset_index(drop=True)
+      elif info_comp.shape[0]>2000:
+        info_comp=info_comp.loc[info_comp.info_ncarriers>5].copy().reset_index(drop=True)
+      elif info_comp.shape[0]>500:
+        info_comp=info_comp.loc[info_comp.info_ncarriers>1].copy().reset_index(drop=True)
+      carriers_comp=carriers.loc[carriers['comp']==comp].copy().reset_index(drop=True)
+      region_summary=cluster(comp, cn_comp, info_comp, args.verbose)
+      for [clus, dist_clus] in region_summary[['cluster', 'dist_cluster']].drop_duplicates().values:
+        clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
+        clus_cn=cn_comp.loc[cn_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
+        clus_carriers=carriers_comp[carriers_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
+        clus=CNClusterExact3b.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
+        cp.enable()
+        clus.fit_generic(outf1, outf2)
+        cp.disable()
+  
+  outf1.close()
+  outf2.close()
+  cp.print_stats()
+
+                                                                                                             
 parser=command_parser()
 args=parser.parse_args()
-
-info=pd.read_table(args.info_file, names=['chr', 'varstart', 'varstop', 'varid', 'nsamp'])
-info=info.groupby(['chr', 'varstart', 'varstop']).agg({'varid': np.min, 'nsamp': np.sum}).reset_index()
-info['svlen']=info['varstop']-info['varstart']
-info_large=info.loc[(info.svlen>100000) & (info.nsamp<20)]
-info=info.loc[(info.svlen<=100000) | (info.nsamp>=20)]
-info_large=find_connected_subgraphs(info_large)
-info=find_connected_subgraphs(info)
-info['gp']="info"
-info_large['gp']="info_large"
-info=pd.concat([info, info_large], ignore_index=True)
-info=info.sort_values(['varstart', 'varstop'], ascending=[True, True])
-info.reset_index(drop=True, inplace=True)
-ord=info[['comp', 'gp']].drop_duplicates()
-ord['rank']=range(ord.shape[0])
-info=info.merge(ord, on=['comp', 'gp'])
-info=info[['chr', 'varstart', 'varstop', 'varid', 'nsamp', 'rank']].rename(columns={'rank':'comp'})
-
-carriers=pd.read_table(args.carriers_file, names=['chr', 'varstart', 'varstop', 'id'])
-cn=pd.read_table(args.cnfile, names=["id", "cn1", "cn2", "chr", "varstart", "varstop", "svlen", "varid", "nsamp", "comp"])[['id', 'cn1', 'cn2', 'chr', 'varstart', 'varstop']]                       
-
-carriers=carriers.merge(info, on=['chr', 'varstart', 'varstop'])[['varid', 'id', 'nsamp', 'comp']].drop_duplicates()
-cn=cn.merge(info, on=['chr', 'varstart', 'varstop'])[['id', 'cn1', 'chr', 'varstart', 'varstop', 'comp']].drop_duplicates()
-nind=cn.loc[cn.comp==0]['id'].unique().size
-
-outf1=open(args.outfile, "w")
-outf2=open(args.diag_outfile, "w")
-
-
-for comp in cn.comp.unique():
-  print("comp="+str(comp))
-  cn_comp=cn.loc[cn['comp']==comp]
-  info_comp=info.loc[info['comp']==comp]
-  print( str(info_comp.shape[0]))
-  if info_comp.shape[0]>500:
-    info_comp=info_comp.loc[info_comp.nsamp>1]
-  carriers_comp=carriers.loc[carriers['comp']==comp]
-  cn_region=cluster(comp, cn_comp, info_comp, carriers_comp)
-  region_summary=summarize_clusters(cn_region)
-  for [clus, dist_clus] in region_summary[['cluster', 'dist_cluster']].drop_duplicates().values:
-    clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].reset_index()
-    clus=CNClusterExact1.CNClusterExact(clus_vars, cn_comp, carriers_comp)
-    clus.fit_generic(outf1, outf2)
-  
-
-outf1.close()
-outf2.close()
+run_from_args(args)
