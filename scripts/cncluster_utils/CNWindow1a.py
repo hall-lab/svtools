@@ -36,35 +36,36 @@ class CNWindow(object):
     if np.abs(q_998-cn2[nsamp-1])<0.1:
       lastel=nsamp-1
     cn2=cn2[firstel:(lastel+1)]
-    #print(str(self.comp_id)+"\t"+str(firstel)+"\t"+str(lastel))
     cn2=cn2+norm.rvs(loc=0, scale=0.005, size=cn2.size)
     self.nsamp_rm_outliers=cn2.size
     self.procdata=cn2.reshape(-1, 1)
 
-  def fit_all_models(self, ncarriers):
+  def fit_all_models(self, ncarriers, verbose):
     fits=[]
     bic_col=6
     mm=1+int(2*np.max(self.procdata))
     if mm<self.nocl_max:
       self.nocl_max=mm
-    #nocl_range=np.arange(1, self.nocl_max+1, dtype='int32')
     res=self.fit_one_model(1)
     fits.append(res)
     bic_min=res[bic_col]
     cl_min=1
     nocl=2
     bic=res[bic_col]
-    print(str(nocl)+"\t"+str(bic)+"\t"+str(bic_min))
+    if verbose:
+      print(str(nocl)+"\t"+str(bic)+"\t"+str(bic_min))
     while (nocl<self.nocl_max) and (bic<=bic_min):
       res=self.fit_one_model(nocl)
       fits.append(res)
       bic=res[bic_col]
-      print(str(nocl)+"\t"+str(bic)+"\t"+str(bic_min))
+      if verbose:
+        print(str(nocl)+"\t"+str(bic)+"\t"+str(bic_min))
       if bic<bic_min:
         bic_min=bic
         nocl=nocl+1
     cl_min=nocl-1
-    print(str(cl_min))
+    if verbose:
+      print(str(cl_min))
     fits=np.vstack(fits)
     fits=np.hstack([fits, np.empty([fits.shape[0], 2], dtype='int32')])
     fits[:, 11]=ncarriers
