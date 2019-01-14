@@ -196,8 +196,8 @@ def run_from_args(args):
   outf1=open(args.outfile, "w")
   outf2=open(args.diag_outfile, "w")
   header='\t'.join(['#comp', 'cluster', 'dist_cluster', 'start', 'stop', 'nocl', 'bic', 'mm', 'kk', 'cn_med', 'cn_mad', 'info_ncarriers', 'is_rare', 'mm_corr', 'dist','nvar', 'score', 'ptspos', 'ptsend', 'prpos', 'prend', 'is_winner'])
-  outf1.write(header)
-  outf2.write(header)
+  outf1.write(header+"\n")
+  outf2.write(header+"\n")
 
   for comp in component_pos.comp.unique():
     if (comp>0) and (comp%100==0):
