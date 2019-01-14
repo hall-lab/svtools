@@ -28,7 +28,6 @@ class CNClusterExact:
     cn['chunkstop']=chunkstop
     cn['clus_id']=self.clus_id
     cn['dist_clus_id']=self.dist_clus_id
-    cn.rename(columns={'cn1': 'cn'}, inplace=True)
     return cn
 
   def fit_one_window(self, chunkstart, chunkstop, ncarriers):
@@ -140,28 +139,20 @@ class CNClusterExact:
     return
 
   def check_outliers_all(self):
-    self.carriers.to_csv('cars.csv')
-    self.clus_info.to_csv('info.csv')
-    self.cndata.to_csv('cn.csv')
-    exit(1)
-    cars1=self.carriers.merge(self.clus_info, on=['comp', 'varid', 'info_ncarriers'])
-    vars=np.unique(cars1.varid)
-    if cars1.shape[0]>0:
-      dd=self.cndata[['id', 'cn1', 'varstart', 'varstop']].copy()
-      dd=dd.merge(self.clus_info, on=['varstart', 'varstop']).reset_index(drop=True)
-      dd=dd.rename(columns={'cn1':'cn', 'varstart':'chunkstart', 'varstop':'chunkstop', 'info_ncarriers':'info_ncarriers_var', 'cluster':'clus_id', 'dist_cluster':'dist_clus_id'})
-      dd.drop(['size', 'cluster_nvar', 'cluster_info_ncarriers'], axis=1, inplace=True)
-    
-      cn1=dd.merge(self.carriers[self.carriers.varid.isin(vars)],  on=['varid', 'id', 'comp'], how='left')
+    if self.carriers.shape[0]>0:
+      
+      dd=self.cndata.drop(['svlen'], axis=1).copy()
+      dd.rename(columns={ 'varstart':'chunkstart', 'varstop':'chunkstop', 'info_ncarriers':'info_ncarriers_var'}, inplace=True)
+      cn1=dd.merge(self.carriers,  on=['varid', 'id', 'comp'], how='left')
       cn1['carrier']=np.where(cn1['info_ncarriers'].isnull(), 'non', 'carrier')
       #number of carriers of any variant in cluster
       ncar=cn1.loc[cn1.carrier=="carrier"].shape[0]
       if ncar > 0:
-        cn1_ag=cn1.groupby(['varid', 'carrier', 'clus_id', 'dist_clus_id', 'comp', 'chunkstart', 'chunkstop', 'info_ncarriers_var'])['cn'].agg({'cn_med': np.median, 'cn_mad':robust.stand_mad}).reset_index()
-        ag_carriers=cn1_ag.loc[cn1_ag.carrier=="carrier", ['varid', 'clus_id', 'dist_clus_id', 'comp', 'cn_med', 'chunkstart', 'chunkstop', 'info_ncarriers_var']].copy()
+        cn1_ag=cn1.groupby(['varid', 'carrier', 'comp', 'chunkstart', 'chunkstop', 'info_ncarriers_var'])['cn'].agg({'cn_med': np.median, 'cn_mad':robust.stand_mad}).reset_index()
+        ag_carriers=cn1_ag.loc[cn1_ag.carrier=="carrier", ['varid', 'clus_id', 'comp', 'cn_med', 'chunkstart', 'chunkstop', 'info_ncarriers_var']].copy()
         ag_carriers.rename(columns={'cn_med':'carrier_med'}, inplace=True)
         ag_non=cn1_ag.loc[cn1_ag.carrier=="non"].copy()
-        ag=ag_non.merge(ag_carriers, on=['varid', 'clus_id', 'dist_clus_id', 'comp', 'chunkstart', 'chunkstop', 'info_ncarriers_var'])
+        ag=ag_non.merge(ag_carriers, on=['varid', 'comp', 'chunkstart', 'chunkstop', 'info_ncarriers_var'])
         ag['ll']=ag['cn_med']-self.nmads*ag['cn_mad']
         ag['ul']=ag['cn_med']+self.nmads*ag['cn_mad']
         ag['dist']=(ag['cn_med']-ag['carrier_med'])/ag['cn_mad']
@@ -174,6 +165,8 @@ class CNClusterExact:
           dd2['is_outlier']=np.where(dd2['dist']<0, dd2['outlier_up'], dd2['outlier_down'])
           cts=dd2.groupby(['varid', 'is_outlier'])['comp'].count().reset_index().rename(columns={'comp':'n_outliers'})
           ag=ag.merge(cts.loc[cts.is_outlier=='outlier',['varid', 'n_outliers']].copy(), on='varid')
+          ag['clus_id']=self.clus_info.cluster.values[0]
+          ag['dist_clus_id']=self.clus_info.dist_cluster.values[0]
           if np.min(ag.n_outliers)<0.01*self.nsamp:
             if self.verbose:
               print("rare variant")

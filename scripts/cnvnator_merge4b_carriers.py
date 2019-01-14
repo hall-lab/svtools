@@ -12,7 +12,7 @@ import svtools.utils as su
 import cProfile , pstats
 
 sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
-import CNClusterExact3a
+import CNClusterExact3b
 
 vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
 
@@ -52,16 +52,14 @@ def min_frac_overlap(a, b, minfrac=0.5):
     return 0
   
 def cluster(comp, cn_comp, info_comp, verbose):
-
-  cnvsub1=cn_comp.merge(info_comp, on=['comp', 'chr', 'varstart', 'varstop'])
-  cnvsub1.rename(columns={'cn1':'cn'}, inplace=True)
-  cnag=cnvsub1.groupby(['varid']).agg({'cn' : np.var }).reset_index()
+  
+  cnag=cn_comp.groupby(['varid']).agg({'cn' : np.var }).reset_index()
   cnag.columns=['varid', 'cnvar']
   cnag1=cnag.loc[cnag.cnvar>0].copy().reset_index()
-  cnvsub2=cnvsub1.merge(cnag1, on=['varid']).reset_index()
-  info_comp=info_comp.merge(cnag1, on=['varid'])
+  cnvsub2=cn_comp.loc[cn_comp.varid.isin(cnag1.varid)].reset_index(drop=True)
+  nvar1=info_comp.loc[info_comp.varid.isin(cnag1.varid)].shape[0]
   
-  if info_comp.shape[0]==1:
+  if nvar1==1:
     cnvsub2['cluster']=1
     cnvsub2['dist_cluster']=1
   else:
@@ -96,7 +94,15 @@ def cluster(comp, cn_comp, info_comp, verbose):
         Z=linkage(distArray, method='average')
         df2.loc[temp.index, 'dist_cluster']=fcluster(Z, 1-minfrac, criterion='distance')
     cnvsub2=cnvsub2.merge(df2, on=['varid', 'varstart', 'varstop', 'info_ncarriers'])
-  return cnvsub2[['varid', 'id', 'cn', 'varstart', 'varstop','comp', 'info_ncarriers', 'cluster', 'dist_cluster']].copy()
+
+  gpsub=cnvsub2.drop(['id', 'cn', 'svlen'], axis=1).drop_duplicates()
+  gpsub['size']=gpsub['varstop']-gpsub['varstart']
+  ag=gpsub.groupby(['comp', 'cluster', 'dist_cluster']).agg({'info_ncarriers' : [np.size,  np.sum ]}).reset_index()
+  ag.columns=['comp', 'cluster', 'dist_cluster', 'cluster_nvar', 'cluster_info_ncarriers']
+  gpsub=gpsub.merge(ag, on=['comp', 'cluster', 'dist_cluster'])
+  gpsub.sort_values(['cluster_info_ncarriers', 'size', 'cluster', 'dist_cluster', 'info_ncarriers'], ascending=[False, True, True, True, False], inplace=True)
+  return gpsub
+
 
 
 def summarize_clusters(cn_clustered):  
@@ -179,7 +185,7 @@ def get_info(lmv, chr, sample_list):
                                                                                                              
 
 cp = cProfile.Profile()
-cp.enable()
+#cp.enable()
 
 parser=command_parser()
 args=parser.parse_args()
@@ -195,9 +201,9 @@ else :
   tabixit=cntab.fetch( component_pos.chr.values[0], max(0, component_pos.varstart.values[0]-10000), min(component_pos.varstop.values[100]+10000, np.max(component_pos.varstop)))
   
 s = StringIO.StringIO("\n".join(tabixit))
-cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn1'])
+cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn'])
 cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])
-cn.drop([ 'varid', 'info_ncarriers'], axis=1, inplace=True)
+#cn.drop([ 'varid', 'info_ncarriers'], axis=1, inplace=True)
 cn.drop_duplicates(inplace=True)
 nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
 
@@ -211,9 +217,8 @@ for comp in component_pos.comp.unique():
     lastcomp=min(comp+100, component_pos.shape[0]-1)
     tabixit=cntab.fetch( component_pos.chr.values[comp], max(0, component_pos.varstart.values[comp]-10000), min(component_pos.varstop.values[lastcomp]+10000, np.max(component_pos.varstop)))
     s = StringIO.StringIO("\n".join(tabixit))
-    cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn1'])
+    cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn'])
     cn=cn.merge(info,  on=['chr', 'varstart', 'varstop'])
-    cn.drop([ 'varid', 'info_ncarriers'], axis=1, inplace=True)
     cn.drop_duplicates(inplace=True)
                       
   print("comp="+str(comp))
@@ -232,15 +237,18 @@ for comp in component_pos.comp.unique():
     elif info_comp.shape[0]>500:
       info_comp=info_comp.loc[info_comp.info_ncarriers>1].copy().reset_index(drop=True)
     carriers_comp=carriers.loc[carriers['comp']==comp].copy().reset_index(drop=True)
-    cn_region=cluster(comp, cn_comp, info_comp, args.verbose)
-    region_summary=summarize_clusters(cn_region)
+    region_summary=cluster(comp, cn_comp, info_comp, args.verbose)
     for [clus, dist_clus] in region_summary[['cluster', 'dist_cluster']].drop_duplicates().values:
       clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
-      clus=CNClusterExact3a.CNClusterExact(clus_vars, cn_comp, carriers_comp, args.verbose)
+      clus_cn=cn_comp.loc[cn_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
+      clus_carriers=carriers_comp[carriers_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
+      clus=CNClusterExact3b.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
+      cp.enable()
       clus.fit_generic(outf1, outf2)
+      cp.disable()
   
 outf1.close()
 outf2.close()
 
-cp.disable()
+#cp.disable()
 cp.print_stats()
