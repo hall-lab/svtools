@@ -9,7 +9,8 @@ from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 from collections import namedtuple
 import svtools.utils as su
-import cProfile , pstats , resource
+import cProfile , pstats
+import resource 
 
 sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
 import CNClusterExact3b
@@ -174,8 +175,8 @@ def get_info(lmv, chr, sample_list):
   carriers.drop(['chr', 'varstart', 'varstop', 'svlen'], axis=1, inplace=True)
   return [info, carriers]
 
-def get_cndata(comp, component_pos, info, cntab, chunksize):
-  lastcomp=min(comp+chunksize, component_pos.shape[0]-1)
+def get_cndata(comp, component_pos, info, cntab):
+  lastcomp=min(comp+100, component_pos.shape[0]-1)
   tabixit=cntab.fetch( component_pos.chr.values[0],
                        max(0, component_pos.varstart.values[comp]-100),
                        min(component_pos.varstop.values[lastcomp]+100, np.max(component_pos.varstop)))
@@ -187,15 +188,14 @@ def get_cndata(comp, component_pos, info, cntab, chunksize):
 
 def run_from_args(args):
   #cp = cProfile.Profile()
-  sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-  chunksize=20
+  sys.stderr.write("Memory usage start: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
   info, carriers=get_info(args.lmerged_vcf, args.chrom, args.sample_list)
   component_pos=info.groupby(['comp']).agg({'chr': 'first', 'varstart': np.min, 'varstop': np.max}).reset_index()
   sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
   sys.stderr.write("cntab\n")
   cntab=pysam.TabixFile(args.cnfile)
-  cn=get_cndata(0, component_pos, info, cntab, chunksize)
-  sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+  cn=get_cndata(0, component_pos, info, cntab)
+  sys.stderr.write("Memory usage cntab: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
   nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
   print(str(nind))
   outf1=open(args.outfile, "w")
@@ -205,11 +205,11 @@ def run_from_args(args):
   outf2.write(header+"\n")
 
   for comp in component_pos.comp.unique():
-    if (comp>0) and (comp%chunksize==0):
-      cn=get_cndata(comp, component_pos, info, cntab, chunksize)
+    if (comp>0) and (comp%100==0):
+      cn=get_cndata(comp, component_pos, info, cntab)
                       
     sys.stderr.write("comp="+str(comp)+"\n")
-    sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    sys.stderr.write("Memory usage: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     cn_comp=cn.loc[cn['comp']==comp].copy().reset_index(drop=True)
     info_comp=info.loc[info['comp']==comp].copy().reset_index(drop=True)
     if (args.verbose):

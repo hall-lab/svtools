@@ -12,7 +12,7 @@ import svtools.utils as su
 import cProfile , pstats , resource
 
 sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
-import CNClusterExact3b
+import CNClusterExact3b_testing
 
 vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
 
@@ -229,7 +229,7 @@ def run_from_args(args):
         clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
         clus_cn=cn_comp.loc[cn_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
         clus_carriers=carriers_comp[carriers_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
-        clus=CNClusterExact3b.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
+        clus=CNClusterExact3b_testing.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
         #cp.enable()
         clus.fit_generic(outf1, outf2)
         #cp.disable()
