@@ -29,6 +29,8 @@ def convert_variant(v):
         convert_dup(v)
     elif v.get_info('SVTYPE')=='INV':
         convert_inv(v)
+    elif v.get_info('SVTYPE')=='INS':
+        convert_ins(v)
     elif v.get_info('SVTYPE')=='BND':
         convert_bnd(v)
 
@@ -78,21 +80,26 @@ def set_cis_prs(v):
     
 def convert_del(var):
     var.alt='<DEL>'
-    var.info['STRANDS']="+-:1"
+    var.info['STRANDS']="+-:6"
     var.ref='N'
 
 def convert_dup(var):
     var.alt='<DUP>'
-    var.info['STRANDS']="-+:1"
+    var.info['STRANDS']="-+:6"
     var.ref='N'
 
 def convert_inv(var):
     var.ref='N'
     var.alt='<INV>'
     if 'INV3' in var.info:
-        var.info['STRANDS']="++:1"
+        var.info['STRANDS']="++:6"
     else:
-        var.info['STRANDS']="--:1"
+        var.info['STRANDS']="--:6"
+
+def convert_ins(var):
+    var.ref='N'
+    var.alt='<INS>'
+    var.info['STRANDS']="+.:6"
 
 def convert_bnd(var):
     var.ref='N'
@@ -116,7 +123,6 @@ def convert_bnd(var):
         else:
             strands="++:6"
             newalt='N'+alt[ff::]
-    print(var.alt+"\t"+newalt+"\t"+strands)
     var.alt=newalt
     var.info['STRANDS']=strands
         
