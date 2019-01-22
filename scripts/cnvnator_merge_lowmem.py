@@ -18,7 +18,7 @@ import CNClusterExact3b_testing
 vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
 
 def find_connected_subgraphs(varinfo):
-  sys.stderr.write("find connected subgraphs\n")  
+
   varinfo.sort_values(['varstart', 'varstop'], ascending=[True, True], inplace=True)
   varinfo.reset_index(inplace=True, drop=True)
   varinfo['comp']=0
@@ -54,8 +54,6 @@ def min_frac_overlap(a, b, minfrac=0.5):
   
 def cluster(comp, cn_comp, info_comp, verbose):
 
-  #cn_comp.to_csv('cn_comp.csv')
-  #info_comp.to_csv('info_comp.csv')
   cnag=cn_comp.groupby(['varid']).agg({'cn' : np.var }).reset_index()
   cnag.columns=['varid', 'cnvar']
   print(str(cnag))
@@ -120,7 +118,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-s', '--samples', metavar='<STRING>', dest='sample_list', required=True, help='list of samples')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true')
     parser.add_argument('-r', '--dry_run', dest='dry_run_info_file', metavar='<STRING>', default='',  required=False, help='output info file for dry run')
-    parser.add_argument('-t', '--test_comp', dest='test_comp', type=int, required=False, default=-1, help='test comp for debuggin')
+    parser.add_argument('-t', '--test_comp', dest='test_comp', type=int, required=False, default=-1, help='start at this component for debuggin')
 
 def command_parser():
     parser = argparse.ArgumentParser(description="cross-cohort cnv caller")
@@ -128,7 +126,7 @@ def command_parser():
     return parser
 
 def get_info(lmv, chr, sample_list):
-  sys.stderr.write("get info\n")
+
   vcf = Vcf()
   in_header = True
   header_lines = list()
@@ -184,21 +182,18 @@ def get_info(lmv, chr, sample_list):
   carriers.drop(['chr', 'varstart', 'varstop', 'svlen'], axis=1, inplace=True)
   return [info, carriers]
 
-def get_cndata(comp, component_pos, info, cntab, chunksize):
-    temp=component_pos.loc[(component_pos.comp>=comp) & (component_pos.comp<comp+chunksize)].copy().reset_index(drop=True)
-    info.to_csv('info_temp.csv')
+def get_cndata(comp, component_pos, info, cntab, verbose):
+    temp=component_pos.loc[component_pos.comp==comp].copy().reset_index(drop=True)
     info_comp1=info.loc[info.comp==comp].copy().reset_index(drop=True)
     firstpos=max(0, np.min(temp['varstart'])-10)
     lastpos=min(np.max(temp['varstop'])+10, np.max(component_pos['varstop']))
     if info_comp1.shape[0]<200:
       tabixit=cntab.fetch(component_pos.chr.values[0], firstpos, lastpos)
-      sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+      if verbose:
+        sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
       s = StringIO.StringIO("\n".join(tabixit))
-      sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
       cn=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn'])
-      sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
       cn=cn.merge(info_comp1,  on=['chr', 'varstart', 'varstop'])
-      sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     else:
        length=lastpos-firstpos+10
        breaks=np.arange(start=firstpos, stop=lastpos+length/5, step=length/10)
@@ -206,18 +201,17 @@ def get_cndata(comp, component_pos, info, cntab, chunksize):
        br=br.loc[br.start<lastpos]
        dd=[]
        for ii in range(br.shape[0]):
-         sys.stderr.write("chunk "+str(ii)+"\n")
+         if verbose:
+           sys.stderr.write("chunk "+str(ii)+"\n")
          tabixit=cntab.fetch(component_pos.chr.values[0], br.start.values[ii], br.stop.values[ii])
-         sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
          s = StringIO.StringIO("\n".join(tabixit))
          cn1=pd.read_table(s,  names=['chr', 'varstart', 'varstop', 'id', 'cn'])
-         sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
          cn1=cn1.merge(info_comp1,  on=['chr', 'varstart', 'varstop'])
-         sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+         if verbose:
+           sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
          cn1.drop_duplicates(inplace=True)
          dd.append(cn1)
        cn=pd.concat(dd, ignore_index=True)
-       sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     cn.drop_duplicates(inplace=True)
     return cn
 
@@ -247,23 +241,19 @@ def prune_info(info_in):
     return info
 
                                                               
-
 def run_from_args(args):
   #cp = cProfile.Profile()
-  sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-  chunksize=1
   info, carriers=get_info(args.lmerged_vcf, args.chrom, args.sample_list)
   if args.dry_run_info_file!='':
     info.to_csv(args.dry_run_info_file)
     exit(1)
   info=prune_info(info)
   component_pos=info.groupby(['comp']).agg({'chr': 'first', 'varstart': np.min, 'varstop': np.max}).reset_index()
-  
-  sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-  sys.stderr.write("cntab\n")
+
   cntab=pysam.TabixFile(args.cnfile)
-  cn=get_cndata(0, component_pos, info, cntab, chunksize)
-  sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+  cn=get_cndata(0, component_pos, info, cntab, args.verbose)
+  if args.verbose:
+    sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
   nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
   print(str(nind))
   outf1=open(args.outfile, "w")
@@ -273,27 +263,22 @@ def run_from_args(args):
   outf2.write(header+"\n")
 
   for comp in component_pos.comp.unique():
-    if(comp>=args.test_comp) or (args.test_comp==-1):
-      if (comp>0) and (comp%chunksize==0):
-        cn=get_cndata(comp, component_pos, info, cntab, chunksize)
-                        
-      sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    if(comp>=args.test_comp) or (args.test_comp==-1):  
+      cn=get_cndata(comp, component_pos, info, cntab, args.verbose)                  
+      if args.verbose:
+        sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
       cn_comp=cn.loc[cn['comp']==comp].copy().reset_index(drop=True)
       info_comp=info.loc[info['comp']==comp].copy().reset_index(drop=True)
       sys.stderr.write("comp="+str(comp)+"\tnvar="+str(info_comp.shape[0])+"\n")
-      sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
       if (args.verbose):
         print(str(info_comp))
         print( str(info_comp.shape[0]))  
   
       if cn_comp.shape[0]>=nind:
         carriers_comp=carriers.loc[carriers['comp']==comp].copy().reset_index(drop=True)
-        sys.stderr.write("precluster\n")
         region_summary=cluster(comp, cn_comp, info_comp, args.verbose)
         if region_summary is not None:
-          sys.stderr.write("postcluster\n")
           for [clus, dist_clus] in region_summary[['cluster', 'dist_cluster']].drop_duplicates().values:
-            sys.stderr.write("cluster "+str(clus)+" "+str(dist_clus)+"\n")
             clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
             clus_cn=cn_comp.loc[cn_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
             clus_carriers=carriers_comp[carriers_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
