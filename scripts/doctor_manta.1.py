@@ -83,26 +83,39 @@ def set_cis_prs(v):
     
 def convert_del(var):
     var.alt='<DEL>'
-    var.info['STRANDS']="+-:6"
+    var.info['STRANDS']='+-:'+str(var.info['SU'])
     var.ref='N'
 
 def convert_dup(var):
     var.alt='<DUP>'
-    var.info['STRANDS']="-+:6"
+    var.info['STRANDS']='-+:'+str(var.info['SU'])
     var.ref='N'
+
+#def convert_inv(var):
+#    var.ref='N'
+#    var.alt='<INV>'
+#    if 'INV3' in var.info:
+#        var.info['STRANDS']='++:'+var.info['SU']
+#    else:
+#        var.info['STRANDS']='--:'+var.info['SU']
 
 def convert_inv(var):
     var.ref='N'
-    var.alt='<INV>'
+    strands=''
     if 'INV3' in var.info:
-        var.info['STRANDS']="++:6"
+        strands='++:'
+        var.alt='N]'+var.chrom+':'+str(var.info['END'])+']'
     else:
-        var.info['STRANDS']="--:6"
+        strands='--:'
+        var.alt='['+var.chrom+':'+str(var.info['END'])+'['
+    var.info['SVTYPE']='BND'
+    var.info['STRANDS']=strands+str(var.info['SU'])
+    
 
 def convert_ins(var, max_ins):
     var.ref='N'
     var.alt='<INS>'
-    var.info['STRANDS']="+.:6"
+    var.info['STRANDS']='+.:'+str(var.info['SU'])
     orig_len='.'
     new_len=max_ins
     if 'SVLEN' in var.info:
@@ -119,24 +132,27 @@ def convert_bnd(var):
     ff=alt.find("[")
     newalt=""
     strands=""
+    sep1, chrom2, breakpoint2=su.parse_bnd_alt_string(alt)
+    if chrom2 < var.chrom or (chrom2==var.chrom and int(breakpoint2)<int(var.pos)):
+        var.set_info('SECONDARY', True)
     if ff==0:
-        strands="--:6"
+        strands="--:"
         ff1=alt.find("[", 1)
         newalt=alt[0:(ff1+1)]+'N'
     elif ff>0:
-        strands="+-:6"
+        strands="+-:"
         newalt='N'+alt[ff::]
     else:
         ff=alt.find("]")
         if ff==0:
-            strands="-+:6"
+            strands="-+:"
             ff1=alt.find("]", 1)
             newalt=alt[0:(ff1+1)]+'N'
         else:
-            strands="++:6"
+            strands="++:"
             newalt='N'+alt[ff::]
     var.alt=newalt
-    var.info['STRANDS']=strands
+    var.info['STRANDS']=strands+str(var.info['SU'])
         
 
 def run_from_args(args):
@@ -161,6 +177,7 @@ def run_from_args(args):
           vcf.add_info('INSLEN_ORIG', '.', 'Integer', 'Original insertion length')
           vcf.add_info('CIPOS95', '2', 'Integer', 'Confidence interval (95%) around POS for imprecise variants')
           vcf.add_info('CIEND95', '2', 'Integer', 'Confidence interval (95%) around END for imprecise variants')
+          vcf.add_info('SECONDARY', '0', 'Flag', 'Secondary breakend in a multi-line variant')
           vcf_out.write(vcf.get_header()+'\n')
       else:
         v = Variant(line.rstrip().split('\t'), vcf)

@@ -1,5 +1,7 @@
+import sys, re
+sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
 from svtools.utils import parse_bnd_alt_string
-import re
+
 
 def find_all(a_str, sub):
     '''
@@ -28,7 +30,9 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
                 if l not in vcf_headers:
                     vcf_headers.append(l)
         else:
+            #sys.stderr.write(str(l)+"\n")
             A = l.rstrip().split('\t')
+            #sys.stderr.write(str(A)+'\n')
             if not include_ref and (len(A) > 8 and 'GT' in A[8]):
                 has_nonref = False
                 for sample_field in A[9:]:
@@ -64,8 +68,9 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
                             mid=A[7][pos_s:pos_e]
                             post=A[7][pos_e:]
                             A[7] = pre + mid + ',--:0' + post
-
-                        A[7] = 'SVTYPE=INV' + A[7][10:] + ';END=' + o_pos
+                        if ';END=' not in A[7]:
+                            A[7] = A[7] + ';END=' + o_pos
+                        A[7]=A[7].replace('SVTYPE=BND', 'SVTYPE=INV')
                         A[4] = '<INV>'
                         l = '\t'.join(A) + '\n'
                 vcf_lines.append(l)
@@ -119,6 +124,8 @@ def split_v(l):
         sep, chr_r, pos_r = parse_bnd_alt_string(A[4])
         m['END'] = pos_r
         pos_r = int(pos_r)
+    elif m['SVTYPE'] == 'INS':
+        pos_r=pos_l+int(m['SVLEN'])
     else:
         pos_r = int(m['END'])
 

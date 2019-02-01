@@ -1,7 +1,4 @@
-import sys
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
-
-import svtools.l_bp as l_bp
+import svtools.l_bp_ins as l_bp
 from svtools.breakpoint import Breakpoint
 import svtools.logspace as ls
 from svtools.vcf.file import Vcf
@@ -246,16 +243,6 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
     new_pos_L = new_start_L + max_i_L
     new_pos_R = new_start_R + max_i_R
     BP0=BP[c[0]]
-
-    # sometimes after looking at PRs, the left and right can be swapped.
-    # flip them back so downstream tools don't break.
-    if new_pos_R < new_pos_L and BP0.sv_type != 'BND':
-        new_pos_R, new_pos_L = new_pos_L, new_pos_R
-        cipos95, ciend95 = ciend95, cipos95
-        p_L, p_R = p_R, p_L
-        max_i_R, max_i_L = max_i_L, max_i_R
-
-
     A=BP0.l.rstrip().split('\t', 10)
 
     ALT = ''
@@ -422,7 +409,7 @@ def write_var(var, vcf_out, include_genotypes=False):
 
         invtobnd(var)
 
-    if var.alt not in ['<DEL>', '<DUP>', '<INV>', '<INS>']:
+    if var.alt not in ['<DEL>', '<DUP>', '<INV>']:
 
         var.var_id=str(v_id)+'_1'
         var.set_info('EVENT', v_id)
