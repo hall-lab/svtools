@@ -1,7 +1,4 @@
-import sys
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
-
-import svtools.l_bp as l_bp
+import svtools.l_bp_ins as l_bp
 from svtools.breakpoint import Breakpoint
 import svtools.logspace as ls
 from svtools.vcf.file import Vcf
@@ -412,7 +409,7 @@ def write_var(var, vcf_out, include_genotypes=False):
 
         invtobnd(var)
 
-    if var.alt not in ['<DEL>', '<DUP>', '<INV>', '<INS>']:
+    if var.alt not in ['<DEL>', '<DUP>', '<INV>']:
 
         var.var_id=str(v_id)+'_1'
         var.set_info('EVENT', v_id)
