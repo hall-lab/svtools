@@ -13,7 +13,7 @@ import cProfile , pstats , resource
 from scipy.ndimage.interpolation import shift
 
 sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
-import CNClusterExact3b_testing_cov
+import CNClusterExact3b_testing_cov2
 
 vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
 
@@ -242,7 +242,8 @@ def prune_info(info_in):
 
                                                               
 def run_from_args(args):
-  #cp = cProfile.Profile()
+  cp = cProfile.Profile()
+  cp.enable()
   info, carriers=get_info(args.lmerged_vcf, args.chrom, args.sample_list)
   if args.dry_run_info_file!='':
     info.to_csv(args.dry_run_info_file)
@@ -258,7 +259,7 @@ def run_from_args(args):
   print(str(nind))
   outf1=open(args.outfile, "w")
   outf2=open(args.diag_outfile, "w")
-  header='\t'.join(['#comp', 'cluster', 'dist_cluster', 'start', 'stop', 'nocl', 'bic', 'mean_sep', 'mean_offset', 'cov', 'wts', 'cn_med', 'cn_mad', 'info_ncarriers', 'is_rare', 'mm_corr', 'dist','nvar', 'score', 'ptspos', 'ptsend', 'prpos', 'prend', 'is_winner'])
+  header='\t'.join(['#comp', 'cluster', 'dist_cluster', 'start', 'stop', 'nocl', 'bic', 'mean_sep', 'mean_offset', 'cov', 'wts', 'cn_med', 'cn_mad', 'info_ncarriers', 'is_rare', 'mm_corr', 'dist', 'dip_p', 'n_outliers', 'nvar', 'score', 'ptspos', 'ptsend', 'prpos', 'prend', 'is_winner'])
   outf1.write(header+"\n")
   outf2.write(header+"\n")
 
@@ -282,14 +283,17 @@ def run_from_args(args):
             clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
             clus_cn=cn_comp.loc[cn_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
             clus_carriers=carriers_comp[carriers_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
-            clus=CNClusterExact3b_testing_cov.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
+            clus=CNClusterExact3b_testing_cov2.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
             clus.fit_generic(outf1, outf2)
   
   outf1.close()
   outf2.close()
+  cp.disable()
+  cp.print_stats()
 
                                                                                                              
 parser=command_parser()
 args=parser.parse_args()
 print(str(args))
 run_from_args(args)
+

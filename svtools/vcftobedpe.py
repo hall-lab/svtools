@@ -2,6 +2,7 @@ import argparse
 import sys
 import time
 
+sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
 import svtools.vcf.file
 import svtools.vcf.variant
 import svtools.utils as su

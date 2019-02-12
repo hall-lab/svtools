@@ -13,7 +13,7 @@ import cProfile , pstats , resource
 from scipy.ndimage.interpolation import shift
 
 sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
-import CNClusterExact3b_testing_cov
+import CNCluster_cov3
 
 vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
 
@@ -111,9 +111,8 @@ def cluster(comp, cn_comp, info_comp, verbose):
 
 def add_arguments_to_parser(parser):
     parser.add_argument('-l', '--vcf', metavar='<VCF>', dest='lmerged_vcf', help="VCF file containing variants to be output")
-    parser.add_argument('-o', '--output', metavar='<STRING>',  dest='outfile', type=str, required=True, help='output file')
+    parser.add_argument('-o', '--outprefix', metavar='<STRING>',  dest='outprefix', type=str, required=True, help='output prefix')
     parser.add_argument('-i', '--input', metavar='<STRING>', dest='cnfile', type=str, required=True,  help='copy number file')
-    parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str,  required=True, help='verbose output file')
     parser.add_argument('-c', '--chrom', metavar='<STRING>', dest='chrom', required=True, help='chrom to analye')
     parser.add_argument('-s', '--samples', metavar='<STRING>', dest='sample_list', required=True, help='list of samples')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true')
@@ -242,7 +241,8 @@ def prune_info(info_in):
 
                                                               
 def run_from_args(args):
-  #cp = cProfile.Profile()
+  cp = cProfile.Profile()
+  cp.enable()
   info, carriers=get_info(args.lmerged_vcf, args.chrom, args.sample_list)
   if args.dry_run_info_file!='':
     info.to_csv(args.dry_run_info_file)
@@ -256,11 +256,15 @@ def run_from_args(args):
     sys.stderr.write("Memory usage info: %s\n" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
   nind=np.unique(cn.loc[cn.comp==0, 'id']).shape[0]
   print(str(nind))
-  outf1=open(args.outfile, "w")
-  outf2=open(args.diag_outfile, "w")
-  header='\t'.join(['#comp', 'cluster', 'dist_cluster', 'start', 'stop', 'nocl', 'bic', 'mean_sep', 'mean_offset', 'cov', 'wts', 'cn_med', 'cn_mad', 'info_ncarriers', 'is_rare', 'mm_corr', 'dist','nvar', 'score', 'ptspos', 'ptsend', 'prpos', 'prend', 'is_winner'])
+  outf1=open(args.outprefix+".common.all.txt", "w")
+  outf2=open(args.outprefix+".common.filtered.txt", "w")
+  outf3=open(args.outprefix+".rare.all.txt", "w")
+  outf4=open(args.outprefix+".rare.filtered.txt", "w")
+  header='\t'.join(['#comp', 'cluster', 'dist_cluster', 'start', 'stop', 'nocl', 'bic', 'mean_sep', 'mean_offset', 'cov', 'wts', 'cn_med', 'cn_mad', 'info_ncarriers', 'is_rare', 'mm_corr', 'dist', 'dip_p', 'n_outliers', 'nvar', 'score', 'ptspos', 'ptsend', 'prpos', 'prend', 'is_winner'])
   outf1.write(header+"\n")
   outf2.write(header+"\n")
+  outf3.write(header+"\n")
+  outf4.write(header+"\n")
 
   for comp in component_pos.comp.unique():
     if(comp==args.test_comp) or (args.test_comp==-1):  
@@ -282,14 +286,19 @@ def run_from_args(args):
             clus_vars=region_summary.loc[(region_summary.cluster==clus) & (region_summary.dist_cluster==dist_clus)].copy().reset_index(drop=True)
             clus_cn=cn_comp.loc[cn_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
             clus_carriers=carriers_comp[carriers_comp.varid.isin(clus_vars.varid)].copy().reset_index(drop=True)
-            clus=CNClusterExact3b_testing_cov.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
-            clus.fit_generic(outf1, outf2)
+            clus=CNCluster_cov3.CNClusterExact(clus_vars, clus_cn, clus_carriers, args.verbose)
+            clus.fit_generic(outf1, outf2, outf3, outf4)
   
   outf1.close()
   outf2.close()
+  outf3.close()
+  outf4.close()
+  cp.disable()
+  cp.print_stats()
 
                                                                                                              
 parser=command_parser()
 args=parser.parse_args()
 print(str(args))
 run_from_args(args)
+

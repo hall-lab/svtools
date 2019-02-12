@@ -1,5 +1,6 @@
 import sys
 import argparse
+sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
 from svtools.bedpe import Bedpe
 import svtools.utils as su
 

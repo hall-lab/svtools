@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
-from scipy.stats import binom, norm, gamma, uniform, dirichlet
+from scipy.stats import binom, norm, gamma, uniform, dirichlet, shapiro
 import gaussian_mixture_constr
 from statsmodels import robust
+import sys
+sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
+import dip
 #from sklearn import mixture
 
 class CNWindow(object):
@@ -43,26 +46,31 @@ class CNWindow(object):
   def fit_all_models(self, ncarriers, verbose):
     fits=[]
     bic_col=6
-    mm=1+int(2*np.max(self.procdata))
-    if mm<self.nocl_max:
-      self.nocl_max=mm
+    mm=3*(np.max(self.procdata)-np.min(self.procdata))
+    if mm>self.nocl_max:
+      mm=self.nocl_max
+    #mm=1+int(2*np.max(self.procdata))
+    #if mm<self.nocl_max:
+    #  self.nocl_max=mm
     res=self.fit_one_model(1)
     fits.append(res)
     bic_min=res[bic_col]
     cl_min=1
     nocl=2
     bic=res[bic_col]
+    ksp=shapiro(self.procdata)[1]
+    dipp=dip.diptst(self.procdata[:,0])[1]
     if verbose:
-      print(str(self.start)+"\t"+str(self.stop)+"\t1\t"+str(bic)+"\t"+str(bic_min))
-    while (nocl<self.nocl_max) and (bic<=bic_min):
+      print(str(self.start)+"\t"+str(self.stop)+"\t1\t"+str(bic)+"\t"+str(bic_min)+"\t"+str(ksp)+"\t"+str(dipp))
+    while (nocl<mm): # and (bic<=bic_min):
       res=self.fit_one_model(nocl)
       fits.append(res)
       bic=res[bic_col]
       if verbose:
-        print(str(self.start)+"\t"+str(self.stop)+"\t"+str(nocl)+"\t"+str(bic)+"\t"+str(bic_min))
+        print(str(self.start)+"\t"+str(self.stop)+"\t"+str(nocl)+"\t"+str(bic)+"\t"+str(bic_min)+"\t"+str(ksp)+"\t"+str(dipp))
       if bic<bic_min:
         bic_min=bic
-        nocl=nocl+1
+      nocl=nocl+1
     cl_min=nocl-1
     if verbose:
       print(str(cl_min))
@@ -87,7 +95,7 @@ class CNWindow(object):
     aic=gmm.aic(self.procdata)
     lld=gmm.score(self.procdata)
     nn=gmm._n_parameters()
-    print(str(self.start)+"\t"+str(self.stop)+"\t"+str(nocl)+"\t"+str(bic)+"\t"+str(lld)+"\t"+str(nn)+"\t"+str(gmm.means_)+"\t"+str(gmm.covariances_)+"\t"+str(gmm.weights_)) 
+    #print(str(self.start)+"\t"+str(self.stop)+"\t"+str(nocl)+"\t"+str(bic)+"\t"+str(lld)+"\t"+str(nn)+"\t"+str(gmm.means_)+"\t"+str(gmm.covariances_)+"\t"+str(gmm.weights_)) 
     kk, mm = gmm.get_kk_mm()
     ret=np.array([self.comp_id, self.clus_id, self.clus_dist_id, self.start, self.stop, nocl, bic, mm, kk, cov, wts, self.cn_med, self.cn_mad], dtype='object')
     return ret

@@ -647,7 +647,7 @@ class GaussianMixture(BaseMixture):
           mean_params = n_features
         else:
           mean_params = n_features*2 
-        mean_params = n_features * self.n_components
+        #mean_params = n_features * self.n_components
         return int(cov_params + mean_params + self.n_components - 1)
 
     def bic(self, X):
