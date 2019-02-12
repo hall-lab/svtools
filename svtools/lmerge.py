@@ -294,6 +294,8 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
 
     if var.get_info('SVTYPE') == 'BND':
         var.set_info('EVENT', str(v_id))
+    elif var.get_info('SVTYPE') == 'INS':
+        var.set_info('END', new_pos_L)
     else:
         var.set_info('END', new_pos_R )
 
