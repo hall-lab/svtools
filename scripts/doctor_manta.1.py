@@ -3,7 +3,7 @@ import os
 import pysam
 ar=os.getcwd().split('/')
 svtpath='/'.join(ar[0:(len(ar)-1)])
-sys.path.insert(1, svtpath))
+sys.path.insert(1, svtpath)
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 from collections import namedtuple
