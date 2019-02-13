@@ -1,9 +1,9 @@
 import argparse, sys, StringIO
-import pandas as pd
-import numpy as np
-import scipy.spatial.distance as ssd
+import os
 import pysam
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
+ar=os.getcwd().split('/')
+svtpath='/'.join(ar[0:(len(ar)-1)])
+sys.path.insert(1, svtpath))
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 from collections import namedtuple
