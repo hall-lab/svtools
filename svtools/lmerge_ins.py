@@ -1,4 +1,15 @@
-import svtools.l_bp_ins as l_bp
+import sys
+import numpy as np
+import argparse
+import heapq
+import re
+import os
+
+ar=os.getcwd().split('/')
+svtpath='/'.join(ar[0:(len(ar)-1)])
+sys.path.insert(1, svtpath)
+
+import svtools.l_bp as l_bp
 from svtools.breakpoint import Breakpoint
 import svtools.logspace as ls
 from svtools.vcf.file import Vcf
@@ -6,11 +17,6 @@ from svtools.vcf.variant import Variant
 from svtools.utils import parse_bnd_alt_string, InputStream
 from svtools.exceptions import MissingProbabilitiesException
 
-import sys
-import numpy as np
-import argparse
-import heapq
-import re
 
 def null_format_string(format_string):
     null_list = []

@@ -1,5 +1,7 @@
-import sys, re
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
+import sys, re, os
+ar=os.getcwd().split('/')
+svtpath='/'.join(ar[0:(len(ar)-1)])
+sys.path.insert(1, svtpath)
 from svtools.utils import parse_bnd_alt_string
 
 
@@ -30,9 +32,7 @@ def parse_vcf(vcf_file_stream, vcf_lines, vcf_headers, add_sname=True, include_r
                 if l not in vcf_headers:
                     vcf_headers.append(l)
         else:
-            #sys.stderr.write(str(l)+"\n")
             A = l.rstrip().split('\t')
-            #sys.stderr.write(str(A)+'\n')
             if not include_ref and (len(A) > 8 and 'GT' in A[8]):
                 has_nonref = False
                 for sample_field in A[9:]:
