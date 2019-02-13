@@ -1,5 +1,6 @@
 import argparse, sys, StringIO
 import os
+import numpy as np
 import pysam
 ar=os.getcwd().split('/')
 svtpath='/'.join(ar[0:(len(ar)-1)])
