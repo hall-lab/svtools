@@ -19,11 +19,11 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-m', '--max_ins', dest='max_ins', default=1000, type=int, required=False, help='maximum insert size') 
 
 def command_parser():
-    parser = argparse.ArgumentParser(description="cross-cohort cnv caller")
+    parser = argparse.ArgumentParser(description="fix up manta vcfs for lsort and lmerge")
     add_arguments_to_parser(parser)
     return parser
 
-def convert_variant(v, max_ins):
+def convert_variant(v, max_ins, chrdict):
     set_read_counts(v)
     set_cis_prs(v)
     if v.get_info('SVTYPE')=='DEL':
@@ -35,7 +35,7 @@ def convert_variant(v, max_ins):
     elif v.get_info('SVTYPE')=='INS':
         convert_ins(v, max_ins)
     elif v.get_info('SVTYPE')=='BND':
-        convert_bnd(v)
+        convert_bnd(v, chrdict)
 
 def split_ci(ci):
      return[int(ci.split(',')[0]),  int(ci.split(',')[1])]
@@ -46,7 +46,6 @@ def uniform_pr(length):
     return pr1
 
 def set_read_counts(var):
-
     sample=var.sample_list[0]
     gt=var.genotype(sample)
     pe=0
@@ -93,13 +92,6 @@ def convert_dup(var):
     var.info['STRANDS']='-+:'+str(var.info['SU'])
     var.ref='N'
 
-#def convert_inv(var):
-#    var.ref='N'
-#    var.alt='<INV>'
-#    if 'INV3' in var.info:
-#        var.info['STRANDS']='++:'+var.info['SU']
-#    else:
-#        var.info['STRANDS']='--:'+var.info['SU']
 
 def convert_inv(var):
     var.ref='N'
@@ -121,21 +113,25 @@ def convert_ins(var, max_ins):
     orig_len='.'
     new_len=max_ins
     if 'SVLEN' in var.info:
-        svlen=int(var.get_info('SVLEN'))
-        orig_len=svlen
-        if svlen<max_ins:
-            new_len=svlen
+        orig_len=int(var.get_info('SVLEN'))
+        if orig_len<max_ins:
+            new_len=orig_len
     var.info['SVLEN']=new_len
     var.info['INSLEN_ORIG']=orig_len
         
-def convert_bnd(var):
+def convert_bnd(var, chrdict):
     var.ref='N'
     alt=var.alt
     ff=alt.find("[")
     newalt=""
     strands=""
     sep1, chrom2, breakpoint2=su.parse_bnd_alt_string(alt)
-    if chrom2 < var.chrom or (chrom2==var.chrom and int(breakpoint2)<int(var.pos)):
+#    chr1int=var.chrom
+#    chr2int=chrom2
+#    if 'chr' in chr1int:
+#        chr1int=chr1int[3:]
+#        chr2int=chr2int[3:]
+    if int(chrdict[chrom2])<int(chrdict[var.chrom]) or (chrom2==var.chrom and int(breakpoint2)<int(var.pos)):
         var.set_info('SECONDARY', True)
     if ff==0:
         strands="--:"
@@ -163,10 +159,16 @@ def run_from_args(args):
   vcf_out=sys.stdout
   in_header = True
   header_lines = list()
+  chrdict = {}
+  chrnum=1
   with su.InputStream(args.manta_vcf) as input_stream:
     for line in input_stream:
       if in_header:
         header_lines.append(line)
+        if line[0:12] == '##contig=<ID':
+          chrom=line.replace(',', '=').split('=')[2]
+          chrdict[chrom]=chrnum
+          chrnum=chrnum+1
         if line[0:6] == '#CHROM':
           in_header=False
           vcf.add_header(header_lines)
@@ -183,7 +185,7 @@ def run_from_args(args):
           vcf_out.write(vcf.get_header()+'\n')
       else:
         v = Variant(line.rstrip().split('\t'), vcf)
-        convert_variant(v, args.max_ins)
+        convert_variant(v, args.max_ins, chrdict)
         vcf_out.write(v.get_var_string()+"\n")
           
 
