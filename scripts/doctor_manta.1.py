@@ -126,11 +126,7 @@ def convert_bnd(var, chrdict):
     newalt=""
     strands=""
     sep1, chrom2, breakpoint2=su.parse_bnd_alt_string(alt)
-#    chr1int=var.chrom
-#    chr2int=chrom2
-#    if 'chr' in chr1int:
-#        chr1int=chr1int[3:]
-#        chr2int=chr2int[3:]
+
     if int(chrdict[chrom2])<int(chrdict[var.chrom]) or (chrom2==var.chrom and int(breakpoint2)<int(var.pos)):
         var.set_info('SECONDARY', True)
     if ff==0:
