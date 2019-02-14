@@ -1,6 +1,6 @@
 import sys, os
 
-ar=os.getcwd().split('/')
+ar=os.path.dirname(os.path.realpath(__file__)).split('/')
 svtpath='/'.join(ar[0:(len(ar)-1)])
 sys.path.insert(1, svtpath)
 import svtools.l_bp as l_bp
