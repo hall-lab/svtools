@@ -8,11 +8,28 @@ class InputStream(object):
         '''Create a new wrapper around a stream'''
         if string in (None, '-', 'stdin') and self.valid(string):
             self.handle = sys.stdin
-        elif string.endswith('.gz'):
-            import gzip
-            self.handle = gzip.open(string, 'rb')
+        elif string.startswith('gs:'):
+	    import gcsfs
+	    import google.auth
+	    #Note: this will only work on the cloud
+	    #If you have to run outside the cloud you could authenticate
+	    #with `gcloud auth application-default login` but this is
+	    #actually not a good idea to do as yourself.  Use a service
+	    #account if you have to do this.
+	    #See: https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login
+            credentials, project = google.auth.default()
+	    fs = gcsfs.GCSFileSystem(project=project)
+            if string.endswith('.gz'):
+                import gzip
+                self.handle = gzip.GzipFile(fileobj=fs.open(string, 'rb'))
+            else:
+                self.handle = fs.open(string, 'r')
         else:
-            self.handle = open(string, 'r')
+            if string.endswith('.gz'):
+                import gzip
+                self.handle = gzip.open(string, 'rb')
+            else:
+                self.handle = open(string, 'r')
 
     @staticmethod
     def valid(string):
