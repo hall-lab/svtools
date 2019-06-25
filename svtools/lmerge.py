@@ -1,5 +1,4 @@
 import sys
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
 
 import svtools.l_bp as l_bp
 from svtools.breakpoint import Breakpoint

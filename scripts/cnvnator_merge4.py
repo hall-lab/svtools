@@ -5,7 +5,6 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import scipy.spatial.distance as ssd
 import pysam
 
-sys.path.append('/gscmnt/gc2802/halllab/sv_aggregate/dev/svtools/scripts/cncluster_utils')
 import CNClusterExact2
 
 def find_connected_subgraphs(varinfo):

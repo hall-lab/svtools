@@ -1,5 +1,4 @@
 import sys
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
 
 import l_bp
 from exceptions import MissingProbabilitiesException
