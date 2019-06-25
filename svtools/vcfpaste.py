@@ -1,5 +1,6 @@
 import argparse, sys
 import gzip
+from svtools.utils import InputStream
 
 MAX_SPLIT = 9
 
@@ -32,10 +33,7 @@ class Vcfpaste(object):
         self.vcf_files = []
         # parse the vcf files to paste
         for path in self.vcf_file_names:
-            if path.endswith('.gz'):
-                self.vcf_files.append(gzip.open(path, 'rb'))
-            else:
-                self.vcf_files.append(open(path, 'r'))
+	    self.vcf_files.append(InputStream(path))
     
     def write_header(self, output_handle=sys.stdout):
         master = self.vcf_files[0]

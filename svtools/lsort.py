@@ -1,4 +1,5 @@
 import sys, os
+from svtools.utils import InputStream
 
 ar=os.path.dirname(os.path.realpath(__file__)).split('/')
 svtpath='/'.join(ar[0:(len(ar)-1)])
@@ -39,13 +40,7 @@ class Lsort(object):
 
         counter = 0
         for vcf_file_name in self.vcf_file_names:
-            # TODO This is very similar to what we do in vcfpaste
-            # Should abstract out in both cases so there's less repeated code
-            input_stream = None
-            if vcf_file_name.endswith('.gz'):
-                input_stream = gzip.open(vcf_file_name, 'rb')
-            else:
-                input_stream = open(vcf_file_name, 'r')
+            input_stream = InputStream(vcf_file_name)
 
             samples = l_bp.parse_vcf(input_stream, self.vcf_lines, self.vcf_headers, include_ref=self.include_ref)
             for sample in samples:
