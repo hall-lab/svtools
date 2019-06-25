@@ -5,7 +5,6 @@ from scipy.stats import binom, norm, gamma, uniform, dirichlet, shapiro
 import gaussian_mixture_constr
 from statsmodels import robust
 import sys
-sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
 import dip
 #from sklearn import mixture
 

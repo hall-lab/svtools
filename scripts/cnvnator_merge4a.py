@@ -8,7 +8,6 @@ import pysam
 #from svtools.vcf.variant import Variant
 #import svtools.utils as su
 
-sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
 import CNClusterExact3a
 
 def find_connected_subgraphs(varinfo):

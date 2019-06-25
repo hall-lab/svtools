@@ -4,14 +4,12 @@ import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import scipy.spatial.distance as ssd
 import pysam
-sys.path.insert(1,'/gscmnt/gc2802/halllab/abelhj/svtools')
 from svtools.vcf.file import Vcf
 from svtools.vcf.variant import Variant
 from collections import namedtuple
 import svtools.utils as su
 import cProfile , pstats
 
-sys.path.append('/gscmnt/gc2802/halllab/abelhj/svtools/scripts/cncluster_utils')
 import CNClusterExact3a
 
 vcf_rec = namedtuple('vcf_rec', 'varid chr start stop ncarriers sname')
