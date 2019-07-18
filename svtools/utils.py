@@ -1,5 +1,10 @@
 import sys
 import re
+import datetime
+
+def log(msg):
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %T")
+    print('[{}] {}'.format(timestamp, msg), file=sys.stderr)
 
 class InputStream(object):
     '''This class handles opening either stdin or a gzipped or non-gzipped file'''
@@ -30,6 +35,15 @@ class InputStream(object):
                 self.handle = gzip.open(string, 'rb')
             else:
                 self.handle = open(string, 'r')
+
+    def readline(self):
+	try:
+	    l = self.handle.readline()
+	except:
+	    e = sys.exc_info()[0]
+	    log("Caught unexpected error {}.  Retrying once.".format(e))
+	    l = self.handle.readline()
+	return l
 
     @staticmethod
     def valid(string):
