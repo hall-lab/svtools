@@ -39,6 +39,7 @@ class InputStream(object):
 
     def readline(self):
 	try:
+	    log("reading line")
 	    l = self.handle.readline()
 	except:
 	    e = sys.exc_info()[0]
