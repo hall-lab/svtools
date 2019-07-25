@@ -220,7 +220,7 @@ def calc_params(vcf_path, sex_chrom_names):
                                 sample_genotype.get_format('GT'),
                                 sample_genotype.get_format('CN'),
                                 sample_genotype.get_format('AB'),
-                                math.log(abs(float(var.info['SVLEN']))), log2r
+                                math.log(abs(float(var.info['SVLEN'])+.1)), log2r
                                 )
                             )
 
@@ -334,7 +334,7 @@ def load_df(var, exclude, sex, sex_chrom_names):
             cn = str(float(cn) * 2)
         log2r = math.log((float(cn)+epsilon)/2, 2)  # to avoid log(0)
         test_set.append(CN_rec(var.var_id, s, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-             var.genotype(s).get_format('GT'),  cn , var.genotype(s).get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
+             var.genotype(s).get_format('GT'),  cn , var.genotype(s).get_format('AB'), math.log(abs(float(var.info['SVLEN'])+epsilon)), log2r))
 
     test_set = pd.DataFrame(data = test_set, columns=CN_rec._fields)
     return test_set
