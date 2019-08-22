@@ -34,7 +34,7 @@ class InputStream(object):
             credentials, project = google.auth.default()
             storage_client = storage.Client(credentials=credentials, project=project_id)
             if not os.path.exists(default_workspace):
-                logger.info("Creating directory: {}".format(workspace)
+                logger.info("Creating directory: {}".format(workspace))
                 os.makedirs(default_workspace)
             (localpath, cloud_md5) = download_blob(string, google_storage_client, workspace)
             verify_download(localpath, cloud_md5)
