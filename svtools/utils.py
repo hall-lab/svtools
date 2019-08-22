@@ -38,12 +38,7 @@ class InputStream(object):
                 self.handle = open(string, 'r')
 
     def readline(self):
-	try:
-	    l = self.handle.readline()
-	except:
-	    e = sys.exc_info()[0]
-	    log("Caught unexpected error {}.  Retrying once.".format(e))
-	    l = self.handle.readline()
+	l = self.handle.readline()
 	return l
 
     @staticmethod
