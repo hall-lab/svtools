@@ -14,8 +14,9 @@ logzero.setup_default_logger(formatter=logfmt)
 class InputStream(object):
     '''This class handles opening either stdin or a gzipped or non-gzipped file'''
 
-    def __init__(self, string):
+    def __init__(self, string, tempdir):
         '''Create a new wrapper around a stream'''
+        self.tempdir = tempdir
         if string in (None, '-', 'stdin') and self.valid(string):
             self.handle = sys.stdin
             return
@@ -30,7 +31,10 @@ class InputStream(object):
 
     def download_google_file(self, string):
         default_workspace = os.path.join(os.environ['HOME'], 'bulk-download')
-        workspace = default_workspace
+        if self.tempdir != None:
+            workspace = self.tempdir
+        else:
+            workspace = default_workspace
         import google.auth
         from google.cloud import storage
         #Note: this will only work on the cloud

@@ -5,10 +5,11 @@ from svtools.utils import InputStream
 MAX_SPLIT = 9
 
 class Vcfpaste(object):
-    def __init__(self, vcf_list, master=None, sum_quals=None):
+    def __init__(self, vcf_list, master=None, sum_quals=None, tempdir=None):
         self.vcf_list = vcf_list
         self.master = master
         self.sum_quals = sum_quals
+        self.tempdir = tempdir
 
     def execute(self, output_handle=sys.stdout):
         try:
@@ -33,7 +34,7 @@ class Vcfpaste(object):
         self.vcf_files = []
         # parse the vcf files to paste
         for path in self.vcf_file_names:
-	    self.vcf_files.append(InputStream(path))
+	    self.vcf_files.append(InputStream(path, self.tempdir))
     
     def write_header(self, output_handle=sys.stdout):
         master = self.vcf_files[0]
@@ -110,6 +111,7 @@ def epilog():
 def add_arguments_to_parser(parser):
     parser.add_argument('-f', '--vcf-list', metavar='<FILE>', required=True, help='file containing a line-delimited list of VCF files to paste (required)')
     parser.add_argument('-m', '--master', metavar='<VCF>', default=None, help='VCF file to set first 8 columns of variant info (otherwise first file in --vcf-list)')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.add_argument('-q', '--sum-quals', required=False, action='store_true', help='sum QUAL scores of input VCFs as output QUAL score')
     parser.set_defaults(entry_point=run_from_args)
 
@@ -119,7 +121,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals)
+    paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals, tempdir=args.tempdir)
     paster.execute()
 
 # initialize the script
