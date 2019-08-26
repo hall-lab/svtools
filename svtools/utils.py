@@ -11,27 +11,7 @@ DEFAULT_FORMAT = '%(color)s[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d]%
 logfmt = logzero.LogFormatter(fmt=DEFAULT_FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
 logzero.setup_default_logger(formatter=logfmt)
 
-class StorageClient:
-    class __StorageClient:
-        def __init__(self):
-            #Note: this will only work on the cloud
-            #If you have to run outside the cloud you could authenticate
-            #with `gcloud auth application-default login` but this is
-            #actually not a good idea to do as yourself.  Use a service
-            #account if you have to do this.
-            #See: https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login
-            import google.auth
-            from google.cloud import storage
-            credentials, project = google.auth.default()
-            self.storage_client = storage.Client(credentials=credentials, project=project)
-        def storage_client(self):
-            return self.storage_client
-    instance = None
-    def __init__(self):
-        if not StorageClient.instance:
-            StorageClient.instance = StorageClient.__StorageClient()
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
+storage_client = None
 
 class InputStream(object):
     '''This class handles opening either stdin or a gzipped or non-gzipped file'''
@@ -60,7 +40,20 @@ class InputStream(object):
         if not os.path.exists(workspace):
             logger.info("Creating directory: {}".format(workspace))
             os.makedirs(workspace)
-        return self.download_blob(string, StorageClient().storage_client, workspace)
+        #Note: this will only work on the cloud
+        #If you have to run outside the cloud you could authenticate
+        #with `gcloud auth application-default login` but this is
+        #actually not a good idea to do as yourself.  Use a service
+        #account if you have to do this.
+        #See: https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login
+        global storage_client
+        if storage_client is None:
+          import google.auth
+          from google.cloud import storage
+          credentials, project = google.auth.default()
+          storage_client = storage.Client(credentials=credentials, project=project)
+          logger.info("Getting storage client")
+        return self.download_blob(string, storage_client, workspace)
 
     def md5(self, filepath):
         with open(filepath, 'rb') as fh:
