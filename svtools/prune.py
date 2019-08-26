@@ -119,6 +119,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-s', '--is-sorted', action='store_true', help='specify if an input file is sorted. Sort with svtools bedpesort. (default=False)')
     parser.add_argument('input', nargs='?', metavar='<BEDPE>', default=None, help='BEDPE file to read. If \'-\' or absent then defaults to stdin.')
     parser.add_argument('-o', '--output', metavar='<BEDPE>', type=argparse.FileType('w'), default=sys.stdout, help='output bedpe to write (default: stdout)')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -127,7 +128,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.input) as stream:
+    with su.InputStream(args.input, args.tempdir) as stream:
         pruner = Pruner(args.max_distance, args.eval_param)
         pruner.cluster_bedpe(stream, args.output, args.is_sorted)
 

@@ -195,6 +195,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-o', '--output', metavar='<BED12>', type=argparse.FileType('w'), default=sys.stdout, help='Output BED12 to write (default: stdout)')
     parser.add_argument('-n', '--name', metavar='<STRING>', default='BEDPE', help="The name of the track. Default is 'BEDPE'")
     parser.add_argument('-d', '--maxdist', metavar='<INT>', dest='dist', default=1000000, type=int, help='The minimum distance for drawing intrachromosomal features as if they are interchromosomal (i.e., without a line spanning the two footprints). Default is 1Mb.')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -203,7 +204,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.input) as stream:
+    with su.InputStream(args.input, args.tempdir) as stream:
         processBEDPE(stream, args.name, args.dist, args.output)
 
 if __name__ == "__main__":

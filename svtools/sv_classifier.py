@@ -622,6 +622,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-m', '--method', metavar='<STRING>', dest='method', type=str, default="large_sample", required=False, help='reclassification method, one of (large_sample, naive_bayes, hybrid)', choices=['large_sample', 'naive_bayes', 'hybrid'])
     parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str, default=None, required=False, help='text file to output method comparisons')
     parser.add_argument('--sex-chrom', metavar='<STRING>', default='chrX,chrY', help='Comma-separated list of sex chromosome names [chrX,chrY]')
+    parser.add_argument('--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def description():
@@ -639,7 +640,7 @@ def run_from_args(args):
             sys.stderr.write("Training data required for naive Bayes or hybrid classifiers\n")
             parser.print_help()
             sys.exit(1)
-    with su.InputStream(args.input) as stream:
+    with su.InputStream(args.input, args.tempdir) as stream:
         chrom_names = args.sex_chrom.strip().split(',')
         sex_chrom_names = set(chrom_names)
         for chrom in chrom_names:

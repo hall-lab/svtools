@@ -103,6 +103,7 @@ def epilog():
 
 def add_arguments_to_parser(parser):
     parser.add_argument(metavar='<VCF>', dest='input_vcf', nargs='?', default=None, help='VCF input')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -111,7 +112,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.input_vcf) as input_stream:
+    with su.InputStream(args.input_vcf, args.tempdir) as input_stream:
         updater = UpdateInfo(input_stream)
         updater.execute()
 
