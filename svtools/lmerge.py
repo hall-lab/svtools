@@ -531,7 +531,7 @@ def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genot
 
 
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted', tempdir):
+def l_cluster_by_line(file_name, tempdir, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted'):
 
     v_id = 0
 
@@ -620,12 +620,12 @@ def command_parser():
 
 def run_from_args(args):
     l_cluster_by_line(args.inFile,
+            args.tempdir,
             percent_slop=args.percent_slop,
             fixed_slop=args.fixed_slop,
             use_product=args.use_product,
             include_genotypes=args.include_genotypes,
-            weighting_scheme=args.weighting_scheme,
-            args.tempdir)
+            weighting_scheme=args.weighting_scheme)
 
 
 if __name__ == "__main__":
