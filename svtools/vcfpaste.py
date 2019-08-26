@@ -66,7 +66,7 @@ class Vcfpaste(object):
                 break
             master_v = master_line.rstrip().split('\t', MAX_SPLIT)
             if len(master_v) < 8:
-                sys.stderr.write('\nERROR: Master file {0} had less than 8 columns.\n'.format(self.vcf_files[0].name))
+                sys.stderr.write('\nERROR: Master file {0} had less than 8 columns.\n'.format(self.master))
                 exit(1)
             out_v = master_v[:8] # output array of fields
             qual = 0
