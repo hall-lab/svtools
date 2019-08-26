@@ -74,14 +74,15 @@ class Vcfpaste(object):
                 qual = float(out_v[5])
             format = None # column 9, VCF format field.
 
-            for vcf in self.vcf_files[1:]:
+            for index in 1:len(self.vcf_files)-1
+                vcf = self.vcf_files[index]
                 line = vcf.readline()
                 if not line:
                     sys.stderr.write('\nERROR: VCF files differ in length\n')
                     exit(1)
                 line_v = line.rstrip().split('\t', MAX_SPLIT)
                 if len(line_v) < 10:
-                    sys.stderr.write('\nERROR: {0} had less than 10 columns. Only the master may be an 8 column VCF.\n'.format(vcf.name))
+                    sys.stderr.write('\nERROR: {0} had less than 10 columns. Only the master may be an 8 column VCF.\n'.format(self.vcf_file_names[index]))
                     exit(1)
 
                 # set FORMAT field as format in first VCF.
