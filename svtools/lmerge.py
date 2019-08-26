@@ -541,7 +541,7 @@ def r_cluster(BP_l, sample_order, v_id, use_product, vcf, vcf_out, include_genot
 
 
 
-def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted'):
+def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False, include_genotypes=False, weighting_scheme='unweighted', tempdir):
 
     v_id = 0
 
@@ -550,7 +550,7 @@ def l_cluster_by_line(file_name, percent_slop=0, fixed_slop=0, use_product=False
     vcf = Vcf()
     vcf_out=sys.stdout
 
-    with InputStream(file_name) as vcf_stream:
+    with InputStream(file_name, tempdir) as vcf_stream:
 
         BP_l = []
         BP_sv_type = ''
@@ -620,6 +620,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--sum', dest='use_product', action='store_false', default=True, help='calculate breakpoint PDF and position using sum algorithm instead of product')
     parser.add_argument('-g', dest='include_genotypes', action='store_true', default=False, help='include original genotypes in output. When multiple variants are merged, the last will dictate the genotype field')
     parser.add_argument('-w', dest='weighting_scheme', metavar='<STRING>', default="unweighted", choices=['carrier_wt', 'evidence_wt'], help='weighting scheme (intended for use in tiered merging), options: unweighted, carrier_wt, evidence_wt')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -633,7 +634,8 @@ def run_from_args(args):
             fixed_slop=args.fixed_slop,
             use_product=args.use_product,
             include_genotypes=args.include_genotypes,
-            weighting_scheme=args.weighting_scheme)
+            weighting_scheme=args.weighting_scheme,
+            args.tempdir)
 
 
 if __name__ == "__main__":

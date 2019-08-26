@@ -16,7 +16,7 @@ storage_client = None
 class InputStream(object):
     '''This class handles opening either stdin or a gzipped or non-gzipped file'''
 
-    def __init__(self, string, tempdir):
+    def __init__(self, string = None, tempdir = None):
         '''Create a new wrapper around a stream'''
         self.tempdir = tempdir
         if string in (None, '-', 'stdin') and self.valid(string):

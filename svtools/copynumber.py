@@ -102,6 +102,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--cnvnator', metavar='<PATH>', required=True, help='path to cnvnator binary for the cnvnator used by speedseq (required)')
     parser.add_argument('-i', '--input', metavar='<VCF>', default=None, help='VCF input')
     parser.add_argument('-o', '--output', metavar='<PATH>', type=argparse.FileType('w'), default=sys.stdout, help='output VCF to write (default: stdout)')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -110,7 +111,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.input) as stream:
+    with su.InputStream(args.input, args.tempdir) as stream:
         sv_readdepth(stream, args.sample, args.root, args.window, args.output, args.cnvnator, args.coordinates)
 
 # initialize the script

@@ -40,7 +40,7 @@ class Lsort(object):
 
         counter = 0
         for vcf_file_name in self.vcf_file_names:
-            input_stream = InputStream(vcf_file_name)
+            input_stream = InputStream(vcf_file_name, self.tempdir)
 
             samples = l_bp.parse_vcf(input_stream, self.vcf_lines, self.vcf_headers, include_ref=self.include_ref)
             for sample in samples:
