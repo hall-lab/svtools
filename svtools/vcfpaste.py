@@ -75,7 +75,7 @@ class Vcfpaste(object):
             format = None # column 9, VCF format field.
 
             genotype_file_count = len(self.vcf_files)-1
-            for index in 1:genotype_file_count
+            for index in 1:genotype_file_count:
                 vcf = self.vcf_files[index]
                 line = vcf.readline()
                 if not line:
