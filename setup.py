@@ -31,7 +31,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
 
-    install_requires=['svtyper==0.7.1', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools',
+    install_requires=['svtyper==0.7.1', 'numpy', 'scipy', 'statsmodels', 'pandas==0.19.2', 'setuptools',
         'google-auth',
         'google-cloud-storage',
         'google-compute-engine',
