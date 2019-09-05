@@ -60,6 +60,7 @@ def epilog():
 def add_arguments_to_parser(parser):
     parser.add_argument('-i', '--input', metavar='<BEDPE>', default=None, help='BEDPE input (default: stdin)')
     parser.add_argument('-o', '--output', metavar='<VCF>', type=argparse.FileType('w'), default=sys.stdout, help='Output VCF to write (default: stdout)')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def command_parser():
@@ -68,7 +69,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    with su.InputStream(args.input) as stream:
+    with su.InputStream(args.input, args.tempdir) as stream:
         bedpeToVcf(stream, args.output)
 
 if __name__ == '__main__':

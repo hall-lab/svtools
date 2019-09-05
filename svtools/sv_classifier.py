@@ -220,7 +220,7 @@ def calc_params(vcf_path, sex_chrom_names):
                                 sample_genotype.get_format('GT'),
                                 sample_genotype.get_format('CN'),
                                 sample_genotype.get_format('AB'),
-                                math.log(abs(float(var.info['SVLEN']))), log2r
+                                math.log(abs(float(var.info['SVLEN'])+.1)), log2r
                                 )
                             )
 
@@ -334,7 +334,7 @@ def load_df(var, exclude, sex, sex_chrom_names):
             cn = str(float(cn) * 2)
         log2r = math.log((float(cn)+epsilon)/2, 2)  # to avoid log(0)
         test_set.append(CN_rec(var.var_id, s, var.info['SVTYPE'], abs(float(var.info['SVLEN'])), var.info['AF'],
-             var.genotype(s).get_format('GT'),  cn , var.genotype(s).get_format('AB'), math.log(abs(float(var.info['SVLEN']))), log2r))
+             var.genotype(s).get_format('GT'),  cn , var.genotype(s).get_format('AB'), math.log(abs(float(var.info['SVLEN'])+epsilon)), log2r))
 
     test_set = pd.DataFrame(data = test_set, columns=CN_rec._fields)
     return test_set
@@ -622,6 +622,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('-m', '--method', metavar='<STRING>', dest='method', type=str, default="large_sample", required=False, help='reclassification method, one of (large_sample, naive_bayes, hybrid)', choices=['large_sample', 'naive_bayes', 'hybrid'])
     parser.add_argument('-d', '--diag_file', metavar='<STRING>', dest='diag_outfile', type=str, default=None, required=False, help='text file to output method comparisons')
     parser.add_argument('--sex-chrom', metavar='<STRING>', default='chrX,chrY', help='Comma-separated list of sex chromosome names [chrX,chrY]')
+    parser.add_argument('--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.set_defaults(entry_point=run_from_args)
 
 def description():
@@ -639,7 +640,7 @@ def run_from_args(args):
             sys.stderr.write("Training data required for naive Bayes or hybrid classifiers\n")
             parser.print_help()
             sys.exit(1)
-    with su.InputStream(args.input) as stream:
+    with su.InputStream(args.input, args.tempdir) as stream:
         chrom_names = args.sex_chrom.strip().split(',')
         sex_chrom_names = set(chrom_names)
         for chrom in chrom_names:

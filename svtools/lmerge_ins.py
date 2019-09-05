@@ -1,4 +1,13 @@
 import sys
+import numpy as np
+import argparse
+import heapq
+import re
+import os
+
+ar=os.path.dirname(os.path.realpath(__file__)).split('/')
+svtpath='/'.join(ar[0:(len(ar)-1)])
+sys.path.insert(1, svtpath)
 
 import svtools.l_bp as l_bp
 from svtools.breakpoint import Breakpoint
@@ -8,11 +17,6 @@ from svtools.vcf.variant import Variant
 from svtools.utils import parse_bnd_alt_string, InputStream
 from svtools.exceptions import MissingProbabilitiesException
 
-import sys
-import numpy as np
-import argparse
-import heapq
-import re
 
 def null_format_string(format_string):
     null_list = []
@@ -245,16 +249,6 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
     new_pos_L = new_start_L + max_i_L
     new_pos_R = new_start_R + max_i_R
     BP0=BP[c[0]]
-
-    # sometimes after looking at PRs, the left and right can be swapped.
-    # flip them back so downstream tools don't break.
-    if new_pos_R < new_pos_L and BP0.sv_type != 'BND':
-        new_pos_R, new_pos_L = new_pos_L, new_pos_R
-        cipos95, ciend95 = ciend95, cipos95
-        p_L, p_R = p_R, p_L
-        max_i_R, max_i_L = max_i_L, max_i_R
-
-
     A=BP0.l.rstrip().split('\t', 10)
 
     ALT = ''
@@ -293,8 +287,6 @@ def create_merged_variant(BP, c, v_id, vcf, use_product, weighting_scheme='unwei
 
     if var.get_info('SVTYPE') == 'BND':
         var.set_info('EVENT', str(v_id))
-    elif var.get_info('SVTYPE') == 'INS':
-        var.set_info('END', new_pos_L)
     else:
         var.set_info('END', new_pos_R )
 
@@ -423,7 +415,7 @@ def write_var(var, vcf_out, include_genotypes=False):
 
         invtobnd(var)
 
-    if var.alt not in ['<DEL>', '<DUP>', '<INV>', '<INS>']:
+    if var.alt not in ['<DEL>', '<DUP>', '<INV>']:
 
         var.var_id=str(v_id)+'_1'
         var.set_info('EVENT', v_id)

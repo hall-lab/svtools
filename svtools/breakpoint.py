@@ -1,3 +1,5 @@
+import sys
+
 import l_bp
 from exceptions import MissingProbabilitiesException
 

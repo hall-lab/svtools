@@ -1,13 +1,15 @@
 import argparse, sys
 import gzip
+from svtools.utils import InputStream
 
 MAX_SPLIT = 9
 
 class Vcfpaste(object):
-    def __init__(self, vcf_list, master=None, sum_quals=None):
+    def __init__(self, vcf_list, master=None, sum_quals=None, tempdir=None):
         self.vcf_list = vcf_list
         self.master = master
         self.sum_quals = sum_quals
+        self.tempdir = tempdir
 
     def execute(self, output_handle=sys.stdout):
         try:
@@ -32,10 +34,7 @@ class Vcfpaste(object):
         self.vcf_files = []
         # parse the vcf files to paste
         for path in self.vcf_file_names:
-            if path.endswith('.gz'):
-                self.vcf_files.append(gzip.open(path, 'rb'))
-            else:
-                self.vcf_files.append(open(path, 'r'))
+	    self.vcf_files.append(InputStream(path, self.tempdir))
     
     def write_header(self, output_handle=sys.stdout):
         master = self.vcf_files[0]
@@ -67,7 +66,7 @@ class Vcfpaste(object):
                 break
             master_v = master_line.rstrip().split('\t', MAX_SPLIT)
             if len(master_v) < 8:
-                sys.stderr.write('\nERROR: Master file {0} had less than 8 columns.\n'.format(self.vcf_files[0].name))
+                sys.stderr.write('\nERROR: Master file {0} had less than 8 columns.\n'.format(self.master))
                 exit(1)
             out_v = master_v[:8] # output array of fields
             qual = 0
@@ -75,14 +74,15 @@ class Vcfpaste(object):
                 qual = float(out_v[5])
             format = None # column 9, VCF format field.
 
-            for vcf in self.vcf_files[1:]:
+            for index in range(1, len(self.vcf_files)):
+                vcf = self.vcf_files[index]
                 line = vcf.readline()
                 if not line:
                     sys.stderr.write('\nERROR: VCF files differ in length\n')
                     exit(1)
                 line_v = line.rstrip().split('\t', MAX_SPLIT)
                 if len(line_v) < 10:
-                    sys.stderr.write('\nERROR: {0} had less than 10 columns. Only the master may be an 8 column VCF.\n'.format(vcf.name))
+                    sys.stderr.write('\nERROR: {0} had less than 10 columns. Only the master may be an 8 column VCF.\n'.format(self.vcf_file_names[index]))
                     exit(1)
 
                 # set FORMAT field as format in first VCF.
@@ -112,6 +112,7 @@ def epilog():
 def add_arguments_to_parser(parser):
     parser.add_argument('-f', '--vcf-list', metavar='<FILE>', required=True, help='file containing a line-delimited list of VCF files to paste (required)')
     parser.add_argument('-m', '--master', metavar='<VCF>', default=None, help='VCF file to set first 8 columns of variant info (otherwise first file in --vcf-list)')
+    parser.add_argument('-t', '--tempdir', metavar='<DIR>', required=False, default=None, help='Directory for temp file downloads')
     parser.add_argument('-q', '--sum-quals', required=False, action='store_true', help='sum QUAL scores of input VCFs as output QUAL score')
     parser.set_defaults(entry_point=run_from_args)
 
@@ -121,7 +122,7 @@ def command_parser():
     return parser
 
 def run_from_args(args):
-    paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals)
+    paster = Vcfpaste(args.vcf_list, master=args.master, sum_quals=args.sum_quals, tempdir=args.tempdir)
     paster.execute()
 
 # initialize the script
