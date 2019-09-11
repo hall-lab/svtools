@@ -16,7 +16,7 @@ create coordinates\n\
 author: " + __author__ + "\n\
 version: " + __version__ + "\n\
 description: Generate Bed file required for copynumber annotations program")
-    parser.add_argument('-i', '--input_vcf', type=argparse.FileType('r'), default=None, help='VCF input')
+    parser.add_argument('-i', '--input_vcf', type=str, default=None, help='VCF input')
     parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help='output coordinates to write (default: stdout)')
     # parse the arguments
     args = parser.parse_args()
@@ -31,7 +31,13 @@ description: Generate Bed file required for copynumber annotations program")
     # send back the user input
     return args
 def generate_bed(vcf_file,output):
-    for line in vcf_file:
+    vcf_fh=None
+    if vcf_file.endswith('.gz'):
+        import gzip
+        vcf_fh= gzip.open(vcf_file,'rt',9)
+    else:
+        vcf_fh = open(vcf_file,'r')
+    for line in vcf_fh:
         if line[0] == '#':
                 continue
         else:
@@ -46,8 +52,9 @@ def generate_bed(vcf_file,output):
                 if int(end) < int(v[1]):
                     output.write('%s:%s-%s\n' % (v[0], end, v[1]))
                 else:
-                    output.write('%s:%s-%s\n' % (v[0], v[1], end))        
+                   output.write('%s:%s-%s\n' % (v[0], v[1], end))
 
+    vcf_fh.close()
     output.write('exit\n')
     output.close()
 # --------------------------------------
@@ -61,7 +68,7 @@ def main():
     generate_bed(args.input_vcf, args.output)
 
     # close the files
-    args.input_vcf.close()
+    #args.input_vcf.close()
 
 # initialize the script
 if __name__ == '__main__':
@@ -69,4 +76,4 @@ if __name__ == '__main__':
         sys.exit(main())
     except IOError, e:
         if e.errno != 32:  # ignore SIGPIPE
-            raise     
+            raise
