@@ -83,24 +83,11 @@ class InputStream(object):
         return dstpath
 
     def download_blob(self, cloudpath, google_storage_client, workspace):
-        bucket_name = os.path.dirname(cloudpath).split('/')[2]
-        source_blob_name = '/'.join(cloudpath.split('/')[3:])
         dstpath = self.derive_local_path(cloudpath, workspace)
-        bucket = google_storage_client.get_bucket(bucket_name)
-        blob = bucket.get_blob(source_blob_name)
-        if blob is None:
-            msg = "Did not find blob: {} in bucket: {}"
-            msg = msg.format(source_blob_name, bucket_name)
-            logger.error(msg)
-            sys.exit("[err] : {}".format(msg))
-        cloud_md5 = base64.b64decode(blob.md5_hash).encode('hex')
-        if os.path.isfile(dstpath) and self.md5s_match(dstpath, cloud_md5):
-            logger.info("File already downloaded: {}".format(dstpath))
-        else:
-            logger.info("Start download blob to file system: {}".format(dstpath))
-            blob.download_to_filename(dstpath)
-            logger.info("Finished download blob to file system")
-            self.verify_download(dstpath, cloud_md5)
+        file_obj = open(dstpath)
+        google_storage_client.download_blob_to_file(cloudpath, file_obj)
+        file_obj.close()
+        logger.info("Finished download blob to file system")
         return dstpath
 
     def readline(self):
