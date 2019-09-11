@@ -84,7 +84,7 @@ class InputStream(object):
 
     def download_blob(self, cloudpath, google_storage_client, workspace):
         dstpath = self.derive_local_path(cloudpath, workspace)
-        file_obj = open(dstpath)
+        file_obj = open(dstpath, "wb")
         google_storage_client.download_blob_to_file(cloudpath, file_obj)
         file_obj.close()
         logger.info("Finished download blob to file system")
