@@ -32,7 +32,7 @@ def generate_bed(vcf_file,output):
     vcf_fh=None
     if vcf_file == None:
         vcf_fh = sys.stdin
-    else if vcf_file.endswith('.gz'):
+    elif vcf_file.endswith('.gz'):
         import gzip
         vcf_fh= gzip.open(vcf_file,'rt',9)
     else:
