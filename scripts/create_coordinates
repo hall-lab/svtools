@@ -26,13 +26,13 @@ description: Generate Bed file required for copynumber annotations program")
         if sys.stdin.isatty():
             parser.print_help()
             exit(1)
-        else:
-            args.input_vcf = sys.stdin
     # send back the user input
     return args
 def generate_bed(vcf_file,output):
     vcf_fh=None
-    if vcf_file.endswith('.gz'):
+    if vcf_file == None:
+        vcf_fh = sys.stdin
+    else if vcf_file.endswith('.gz'):
         import gzip
         vcf_fh= gzip.open(vcf_file,'rt',9)
     else:
