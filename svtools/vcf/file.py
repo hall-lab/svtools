@@ -56,7 +56,7 @@ class Vcf(object):
                 self.other_meta.append(line.rstrip())
             elif line[0] == '#' and line[1] != '#':
                 self.sample_list = line.rstrip().split('\t')[9:]
-                for i in xrange(0, len(self.sample_list)):
+                for i in range(0, len(self.sample_list)):
                     if self.sample_list[i] not in self.sample_indices:
                         self.sample_indices[self.sample_list[i]] = i + 9
                     else:

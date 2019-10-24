@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import argparse, sys, copy, gzip, math
 import numpy as np
@@ -434,6 +435,8 @@ def sv_classify(vcf_in, vcf_out, gender_file, sex_chrom_names, exclude_file, ae_
         outf.write("varid\torig_svtype\tsvlen\tnum_pos_samps\tnb_support\tls_support\thybrid_support\thas_rd_support\n")
 
     for line in vcf_in:
+        if isinstance(line, bytes):
+            line = line.decode()
         if in_header:
             if line[0] == '#':
                 header.append(line)
@@ -543,6 +546,8 @@ def get_ae_dict(ae_path):
         ae_bedfile = open(ae_path, 'r')
     ae_dict = {}
     for line in ae_bedfile:
+        if isinstance(line, bytes):
+            line = line.decode()
         v = line.rstrip().split('\t')
         if len(v) < 4:
             continue

@@ -36,7 +36,7 @@ class BreakpointTests(TestCase):
         self.assertEqual(fixed_slop.right.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
 
         percent_slop = Breakpoint(test_line, percent_slop = 0.2)
-        print percent_slop
+        print(percent_slop)
         self.assertEqual(percent_slop.left.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
         self.assertEqual(percent_slop.right.p, [1e-100, 0.025, 0.25, 0.45, 0.25, 0.025, 1e-100])
 

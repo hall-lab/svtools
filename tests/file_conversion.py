@@ -32,7 +32,7 @@ class FileConversionBase(object):
 
     def test_forward_conversions(self):
         for test_name in self._test_names:
-            print test_name
+            print(test_name)
             self.convert_and_diff_output(self.forward_convert,
                     self.input_file_path(test_name),
                     self.expected_output_file_path(test_name))

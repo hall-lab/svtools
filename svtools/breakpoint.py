@@ -1,7 +1,7 @@
 import sys
 
-import l_bp
-from exceptions import MissingProbabilitiesException
+from . import l_bp
+from .exceptions import MissingProbabilitiesException
 
 class BreakpointInterval(object):
     '''
