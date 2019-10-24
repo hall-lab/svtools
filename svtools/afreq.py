@@ -15,7 +15,7 @@ class UpdateInfo(object):
         gt = gt_string.split('/')
         if len(gt) == 1:
             gt = gt_string.split('|')
-        return map(int, gt)
+        return [int(x) for x in gt]
 
     def execute(self, output_handle=sys.stdout):
         in_header = True

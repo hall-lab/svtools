@@ -3,6 +3,11 @@ import sys
 import os
 import svtools.utils as su 
 
+def decode(x):
+    if isinstance(x, bytes):
+        return x.decode()
+    return x
+
 class InputStreamTest(TestCase):
     def test_init_hyphen(self):
         new_handle = su.InputStream('-')
@@ -26,7 +31,7 @@ class InputStreamTest(TestCase):
         with su.InputStream(test_input) as stream:
             temporary_obj = stream
             for line in stream:
-                sys.stdout.write(line)
+                sys.stdout.write(decode(line))
         self.assertTrue(temporary_obj.closed)
 
     def test_plain_iteration(self):
@@ -36,7 +41,7 @@ class InputStreamTest(TestCase):
 
         stream = su.InputStream(test_input)
         for line in stream:
-            sys.stdout.write(line)
+            sys.stdout.write(decode(line))
         stream.close()
         self.assertTrue(stream.handle.closed)
 

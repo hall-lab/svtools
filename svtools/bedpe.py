@@ -139,7 +139,7 @@ class Bedpe(object):
 
     def retrieve_af(self):
         try:
-            af = re.split('=', ''.join(filter(lambda x: x.startswith('AF='), self.info.split(';'))))[1]
+            af = float(re.split('=', ''.join(filter(lambda x: x.startswith('AF='), self.info.split(';'))))[1])
         except IndexError:
             af = None
         return af

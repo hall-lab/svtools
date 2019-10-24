@@ -17,6 +17,8 @@ def vcfToBedpe(vcf_file, bedpe_out):
     sec_bnds = dict()
     v = []
     for line in vcf_file:
+        if isinstance(line, bytes):
+            line = line.decode()
         if in_header:
             if line[0:2] == '##':
                 if line.split('=')[0] == '##fileformat':

@@ -23,7 +23,6 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
     ],
 
     keywords='genomics structural variants sv bioinformatics',
@@ -31,7 +30,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
 
-    install_requires=['svtyper==0.7.1', 'numpy', 'scipy', 'statsmodels', 'pandas==0.19.2', 'setuptools',
+    install_requires=['svtyper==0.7.1', 'numpy', 'scipy', 'statsmodels', 'pandas', 'setuptools',
         'google-auth',
         'google-cloud-storage',
         'google-compute-engine',
