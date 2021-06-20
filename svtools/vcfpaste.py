@@ -34,7 +34,7 @@ class Vcfpaste(object):
         self.vcf_files = []
         # parse the vcf files to paste
         for path in self.vcf_file_names:
-	    self.vcf_files.append(InputStream(path, self.tempdir))
+            self.vcf_files.append(InputStream(path, self.tempdir))
     
     def write_header(self, output_handle=sys.stdout):
         master = self.vcf_files[0]
