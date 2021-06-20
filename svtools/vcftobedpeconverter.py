@@ -19,17 +19,24 @@ class VcfToBedpeConverter(object):
         '''
         chrom1 = vcf_variant.chrom
         breakpoint1 = vcf_variant.pos
-        orientation1 = orientation2 = '+'
-        sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
-        breakpoint2 = int(breakpoint2)
+        if 'MATECHROM' in vcf_variant.info:
+            chrom2 = vcf_variant.info['MATECHROM']
+            breakpoint2 = int(vcf_variant.info['MATEPOS'])
+            orientation1 = vcf_variant.info['STRAND']
+            orientation2 = vcf_variant.info['MATESTRAND']
 
-        if vcf_variant.alt.startswith(sep):
-            orientation1 = '-'
-            breakpoint1 -= 1
+        else:
+            orientation1 = orientation2 = '+'
+            sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
+            breakpoint2 = int(breakpoint2)
 
-        if sep == '[':
-            orientation2 = '-'
-            breakpoint2 -= 1
+            if vcf_variant.alt.startswith(sep):
+                orientation1 = '-'
+                breakpoint1 -= 1
+
+            if sep == '[':
+                orientation2 = '-'
+                breakpoint2 -= 1
 
         return (chrom1,
                 breakpoint1,
@@ -129,6 +136,8 @@ class VcfToBedpeConverter(object):
         # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache?
         # By adding to the variant class, perhaps?
         name = vcf_variant.var_id
+        if '_' in name:
+            name = name.split('_')[0]
         if 'EVENT' in vcf_variant.info:
             name = vcf_variant.info['EVENT']
         elif 'MATEID' in vcf_variant.info and vcf_variant.var_id.startswith('Manta'):
@@ -161,8 +170,5 @@ class VcfToBedpeConverter(object):
             ]))
         if vcf_variant.get_format_string() is not None:
             fields += [vcf_variant.get_format_string(), vcf_variant.get_gt_string()]
-        print(fields)
-        print('VARIANT', vcf_variant)
-        print(vcf_variant.get_format_string())
         return Bedpe(fields)
 
