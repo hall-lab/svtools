@@ -71,6 +71,9 @@ def vcfToBedpe(vcf_file, bedpe_out):
             bedpe_out.write(str(converter.convert(var)) + '\n')
         else:
             mate_id = var.info['MATEID']
+            if "_" in mate_id:
+                mate_id = mate_id.split('_')[0]
+
             if 'SECONDARY' in var.info:
                 if mate_id in bnds:
                     #primary
@@ -89,7 +92,7 @@ def vcfToBedpe(vcf_file, bedpe_out):
                     bedpe_out.write(str(converter.convert(var1, var)) + '\n')
                     del bnds[mate_id]
                 else:
-                    bnds.update({var.var_id:var})
+                    bnds.update({mate_id:var})
     if bnds is not None:
         for bnd in bnds:
             sys.stderr.write('Warning: missing secondary multiline variant at ID:' + bnd + '\n')

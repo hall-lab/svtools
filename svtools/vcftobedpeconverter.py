@@ -19,17 +19,24 @@ class VcfToBedpeConverter(object):
         '''
         chrom1 = vcf_variant.chrom
         breakpoint1 = vcf_variant.pos
-        orientation1 = orientation2 = '+'
-        sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
-        breakpoint2 = int(breakpoint2)
+        if 'MATECHROM' in vcf_variant.info:
+            chrom2 = vcf_variant.info['MATECHROM']
+            breakpoint2 = int(vcf_variant.info['MATEPOS'])
+            orientation1 = vcf_variant.info['STRAND']
+            orientation2 = vcf_variant.info['MATESTRAND']
 
-        if vcf_variant.alt.startswith(sep):
-            orientation1 = '-'
-            breakpoint1 -= 1
+        else:
+            orientation1 = orientation2 = '+'
+            sep, chrom2, breakpoint2 = parse_bnd_alt_string(vcf_variant.alt)
+            breakpoint2 = int(breakpoint2)
 
-        if sep == '[':
-            orientation2 = '-'
-            breakpoint2 -= 1
+            if vcf_variant.alt.startswith(sep):
+                orientation1 = '-'
+                breakpoint1 -= 1
+
+            if sep == '[':
+                orientation2 = '-'
+                breakpoint2 -= 1
 
         return (chrom1,
                 breakpoint1,
@@ -74,7 +81,7 @@ class VcfToBedpeConverter(object):
         of the tag (if it exists)
         '''
         if info_tag in vcf_variant.info:
-            span = map(int, vcf_variant.info[info_tag].split(','))
+            span = list(map(int, vcf_variant.info[info_tag].split(',')))
             if len(span) != 2:
                 raise ValueError('Invalid value for tag {0}. Require 2 values to adjust coordinates.'.format(info_tag))
             return (start + span[0], end + span[1])
@@ -129,6 +136,8 @@ class VcfToBedpeConverter(object):
         # XXX This has probably already been calculated outside of this method. May be a candidate to memoize or otherwise cache?
         # By adding to the variant class, perhaps?
         name = vcf_variant.var_id
+        if '_' in name:
+            name = name.split('_')[0]
         if 'EVENT' in vcf_variant.info:
             name = vcf_variant.info['EVENT']
         elif 'MATEID' in vcf_variant.info and vcf_variant.var_id.startswith('Manta'):
@@ -137,7 +146,7 @@ class VcfToBedpeConverter(object):
 
 
 
-        fields = map(str, [
+        fields = list(map(str, [
             c1,
             max(s1, 0),
             max(e1, 0),
@@ -158,7 +167,7 @@ class VcfToBedpeConverter(object):
             orig_alt_b,
             info_a,
             info_b,
-            ])
+            ]))
         if vcf_variant.get_format_string() is not None:
             fields += [vcf_variant.get_format_string(), vcf_variant.get_gt_string()]
         return Bedpe(fields)
