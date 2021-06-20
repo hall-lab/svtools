@@ -124,7 +124,7 @@ def parse_bnd_alt_string(alt_string):
     # NOTE The below is ugly but intended to match things like [2:222[ and capture the brackets
     result = re.findall(r'([][])(.+?)([][])', alt_string)
     assert result, "%s\n" % alt_string
-    sys.stderr.write("%s\n" % alt_string)
+    #sys.stderr.write("%s\n" % alt_string)
     sep1, region, sep2 = result[0]
     assert sep1 == sep2
     chrom2, breakpoint2 = region.rsplit(':', 1)
