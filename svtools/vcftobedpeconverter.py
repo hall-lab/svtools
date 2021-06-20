@@ -74,7 +74,7 @@ class VcfToBedpeConverter(object):
         of the tag (if it exists)
         '''
         if info_tag in vcf_variant.info:
-            span = map(int, vcf_variant.info[info_tag].split(','))
+            span = list(map(int, vcf_variant.info[info_tag].split(',')))
             if len(span) != 2:
                 raise ValueError('Invalid value for tag {0}. Require 2 values to adjust coordinates.'.format(info_tag))
             return (start + span[0], end + span[1])
@@ -137,7 +137,7 @@ class VcfToBedpeConverter(object):
 
 
 
-        fields = map(str, [
+        fields = list(map(str, [
             c1,
             max(s1, 0),
             max(e1, 0),
@@ -158,8 +158,11 @@ class VcfToBedpeConverter(object):
             orig_alt_b,
             info_a,
             info_b,
-            ])
+            ]))
         if vcf_variant.get_format_string() is not None:
             fields += [vcf_variant.get_format_string(), vcf_variant.get_gt_string()]
+        print(fields)
+        print('VARIANT', vcf_variant)
+        print(vcf_variant.get_format_string())
         return Bedpe(fields)
 

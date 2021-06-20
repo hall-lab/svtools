@@ -65,12 +65,15 @@ def vcfToBedpe(vcf_file, bedpe_out):
 
         v = line.rstrip().split('\t')
         var = svtools.vcf.variant.Variant(v, vcf)
-        var.set_info("POS", var.pos)
+        var["POS"] = var.pos
         # If there is no MATEID then assume this is a single-ended BND and simply output
         if var.info['SVTYPE'] != 'BND' or 'MATEID' not in var.info:
             bedpe_out.write(str(converter.convert(var)) + '\n')
         else:
             mate_id = var.info['MATEID']
+            if "_" in mate_id:
+                mate_id = mate_id.split('_')[0]
+                
             if 'SECONDARY' in var.info:
                 if mate_id in bnds:
                     #primary
