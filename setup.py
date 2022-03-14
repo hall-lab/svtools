@@ -31,12 +31,19 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
 
-    install_requires=['svtyper==0.7.1', 'numpy', 'scipy', 'statsmodels', 'pandas==0.19.2', 'setuptools',
-        'google-auth',
-        'google-cloud-storage',
-        'google-compute-engine',
-        'crcmod',
-        'logzero'],
+    install_requires=[
+        'svtyper==0.7.1',
+        'numpy==1.16.6',
+        'scipy==1.2.3',
+        'statsmodels==0.10.0',
+        'pandas==0.21.1',
+        'setuptools==44.1.1',
+        'google-auth==1.35.0',
+        'google-cloud-storage==1.44.0',
+        'google-compute-engine==2.8.13',
+        'crcmod==1.7',
+        'logzero==1.7.0'
+    ],
     scripts=['scripts/create_coordinates'],
 
     entry_points={
