@@ -231,22 +231,26 @@ def calc_params(vcf_path, sex_chrom_names):
     df=df[(df.log2r>=df.q_low) & (df.log2r<=df.q_high)]
     #df.to_csv('./train.csv')
     #adjust copy number for small deletions (<1kb), no strong relationship b/w cn and size for dups evident so far
-    small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) & (df.svlen>=50)].copy()
-    small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) & (df.svlen>=50)].copy()
-    het_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
-    hom_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
-    small_het_dels.loc[:,'offset']=small_het_dels.loc[:,'log2r']-het_del_mean
-    small_hom_dels.loc[:,'offset']=small_hom_dels.loc[:,'log2r']-hom_del_mean
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
-        het_del_fit=smf.ols('offset~log_len',small_het_dels).fit()
-        #print hom_del_fit.summary()
-        #print het_del_fit.summary()
-        small_hom_dels.loc[:,'log2r_adj'] = small_hom_dels.loc[:,'log2r'] - hom_del_fit.predict(small_hom_dels)
-        small_het_dels.loc[:,'log2r_adj'] = small_het_dels.loc[:,'log2r'] - het_del_fit.predict(small_het_dels)
-    small_dels=small_hom_dels.append(small_het_dels)
-    small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj']]
+    if "DEL" in df.svtype.unique().tolist():
+        small_het_dels = df[(df.svtype=="DEL") & (df.GT=="0/1") & (df.svlen<1000) & (df.svlen>=50)].copy()
+        small_hom_dels = df[(df.svtype=="DEL") & (df.GT=="1/1") & (df.svlen<1000) & (df.svlen>=50)].copy()
+        het_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="0/1") & (df.svtype=="DEL")]['log2r'])
+        hom_del_mean=np.mean(df[(df.svlen>1000) & (df.GT=="1/1") & (df.svtype=="DEL")]['log2r'])
+        small_het_dels.loc[:,'offset']=small_het_dels.loc[:,'log2r']-het_del_mean
+        small_hom_dels.loc[:,'offset']=small_hom_dels.loc[:,'log2r']-hom_del_mean
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            hom_del_fit=smf.ols('offset~log_len',small_hom_dels).fit()
+            het_del_fit=smf.ols('offset~log_len',small_het_dels).fit()
+            small_hom_dels.loc[:,'log2r_adj'] = small_hom_dels.loc[:,'log2r'] - hom_del_fit.predict(small_hom_dels)
+            small_het_dels.loc[:,'log2r_adj'] = small_het_dels.loc[:,'log2r'] - het_del_fit.predict(small_het_dels)
+        small_dels=small_hom_dels.append(small_het_dels)
+        small_dels=small_dels[['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN', 'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj']]
+    else:
+        het_del_fit = None
+        hom_del_fit = None
+        small_dels = pd.DataFrame(columns=['var_id', 'sample', 'svtype', 'svlen', 'AF', 'GT', 'CN',\
+        'log_len', 'log2r', 'q_low', 'q_high', 'log2r_adj'])
     # dels of length<100 bp are excluded here
     df1=df.loc[(df.svtype!="DEL") | (df.GT=="0/0") | (df.svlen>=1000), :].copy()
     df1.loc[:,'log2r_adj']=df1.loc[:,'log2r']
@@ -255,7 +259,6 @@ def calc_params(vcf_path, sex_chrom_names):
     params=pd.pivot_table(params, index=['sample', 'svtype'], columns='GT', values=['mean', 'var', 'len']).reset_index()
     params.columns=['sample', 'svtype', 'mean0', 'mean1', 'mean2', 'var0', 'var1', 'var2', 'len0', 'len1', 'len2']
     params['std_pooled'] = np.sqrt((params['var0']*params['len0']+params['var1']*params['len1']+params['var2']*params['len2'])/(params['len0']+params['len1']+params['len2']))
-    #params.to_csv('./params.csv')
     return (params, het_del_fit, hom_del_fit)
 
 
